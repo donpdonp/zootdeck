@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:docname="reload-icon.svg"
+   viewBox="0 0 14.999999 15"
+   version="1.1"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   width="15"
+   height="15">
+  <defs
+     id="defs9" />
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     inkscape:window-y="27"
+     fit-margin-left="0"
+     pagecolor="#ffffff"
+     fit-margin-top="0"
+     inkscape:window-maximized="1"
+     inkscape:zoom="10.12832"
+     inkscape:window-x="0"
+     inkscape:window-height="1025"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="0.052400071"
+     inkscape:cy="26.722271"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1920"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px">
+    <inkscape:grid
+       id="grid3766"
+       dotted="true"
+       originy="-682.61218"
+       enabled="true"
+       originx="-344.9375"
+       visible="true"
+       snapvisiblegridlinesonly="true"
+       type="xygrid"
+       empspacing="5"
+       spacingx="1"
+       spacingy="1" />
+  </sodipodi:namedview>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     transform="translate(-344.94,-354.745)">
+    <path
+       id="path3768"
+       style="color:#000000;text-indent:0;text-transform:none;fill:#000000;stroke-width:0.24076833"
+       inkscape:connector-curvature="0"
+       d="m 358.02107,356.35165 -2.19701,1.74558 c -1.15545,-0.96893 -2.6393,-1.55749 -4.25101,-1.55749 -3.64258,0 -6.63605,2.99371 -6.63605,6.63606 0,3.64259 2.99371,6.5684 6.63605,6.5684 2.85552,0 5.30943,-1.79483 6.23735,-4.32637 l -2.37759,-0.57933 c -0.63628,1.50044 -2.11076,2.53553 -3.85976,2.53553 -2.34124,0 -4.19851,-1.85714 -4.19851,-4.19851 0,-2.34127 1.85714,-4.26618 4.19851,-4.26618 0.86867,0 1.66685,0.26896 2.33245,0.7223 l -2.17443,1.73052 6.29007,1.16624 v -6.17715 z" />
+  </g>
+  <metadata
+     id="metadata6">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Reload icon</dc:title>
+        <dc:date>2012-07-06T14:30:15</dc:date>
+        <dc:description>simple reload / recycle icon</dc:description>
+        <dc:source>https://openclipart.org/detail/171074/reload-icon-by-mlampret-171074</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>mlampret</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>black</rdf:li>
+            <rdf:li>free</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>icons</rdf:li>
+            <rdf:li>recycle</rdf:li>
+            <rdf:li>reload</rdf:li>
+            <rdf:li>simple</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
