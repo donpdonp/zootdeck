@@ -174,7 +174,7 @@ fn heartback(nuthin: *thread.Command) void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
   if(column.refreshing) {
-    warn("column refresh in progress.\n");
+    warn("column refresh in {}.\n", if (column.inError) "error!" else "progress");
   } else {
     warn("column urlget {}\n", column.config.url);
     column.refreshing = true;
