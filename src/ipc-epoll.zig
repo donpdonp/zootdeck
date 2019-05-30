@@ -4,6 +4,7 @@ const Allocator = std.mem.Allocator;
 
 const c = @cImport({
     @cInclude("unistd.h");
+    @cInclude("errno.h");
     @cInclude("sys/epoll.h");
 });
 
@@ -52,11 +53,24 @@ pub fn dial(client: *Client, url: []u8) void {
 pub fn wait() *Client {
   const max_fds = 1;
   var events_waiting: [max_fds]c.epoll_event = undefined; //[]c.epoll_event{.data = 1};
-  var nfds = c.epoll_wait(epoll_instance, @ptrCast([*c]c.epoll_event, &events_waiting), max_fds, -1);
+  var nfds = c_int(-1);
+  while (nfds < 0) {
+    nfds = c.epoll_wait(epoll_instance, @ptrCast([*c]c.epoll_event, &events_waiting), max_fds, -1);
+    if (nfds < 0) {
+      const errnoPtr: [*c]c_int = c.__errno_location();
+      const errno = errnoPtr.*;
+      warn("epoll_wait ignoring errno {}\n", errno);
+    }
+  }
   var dsizeof: usize = @sizeOf(@typeOf(events_waiting[0].data));
   var psizeof: usize = @sizeOf(@typeOf(events_waiting[0].data.ptr));
-  warn("epoll socket ready. bitfield {b8} waiting {} align{} waiting.data {} align{}\n",
-       events_waiting[0].events, events_waiting[0].data, dsizeof, events_waiting[0].data.ptr, psizeof);
+  warn("epoll {} waiting. events[0] {b} waiting {} align{} waiting.data {} align{}\n",
+             nfds,
+             events_waiting[0].events,
+             events_waiting[0].data,
+             dsizeof,
+             events_waiting[0].data.ptr,
+             psizeof);
   var clientdata = @alignCast(@alignOf(Client), events_waiting[0].data.ptr);
   var client = @ptrCast(*Client, clientdata);
   return client;
