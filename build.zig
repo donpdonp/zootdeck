@@ -1,7 +1,17 @@
+const builtin = @import("builtin");
 const Builder = @import("std").build.Builder;
 
 pub fn build(b: *Builder) void {
   const exe = b.addExecutable("zootdeck", "src/main.zig");
+
+  // Ubuntu-x86_64
+  exe.addIncludeDir("/usr/include");
+  exe.addIncludeDir("/usr/include/x86_64-linux-gnu");
+  exe.addLibPath("/usr/lib");
+  exe.addLibPath("/usr/lib/x86_64-linux-gnu");
+  exe.setTarget(builtin.Arch.x86_64,
+                builtin.Os.linux, //buildin.Os.macosx,
+                builtin.Abi.gnu);
 
   exe.linkSystemLibrary("c");
 
