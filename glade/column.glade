@@ -96,12 +96,9 @@
       </packing>
     </child>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="column_footer">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <child>
-          <placeholder/>
-        </child>
         <child>
           <object class="GtkLabel" id="column_footer_count">
             <property name="visible">True</property>
@@ -114,15 +111,12 @@
           </packing>
         </child>
         <child>
-          <placeholder/>
-        </child>
-        <child>
           <object class="GtkEventBox" id="column_bottom_config">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <signal name="button-press-event" handler="column.config" object="column" swapped="yes"/>
             <child>
-              <object class="GtkImage">
+              <object class="GtkImage" id="column_config_icon">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="pixbuf">../img/gears.svg</property>
@@ -137,6 +131,9 @@
             <property name="position">3</property>
           </packing>
         </child>
+        <style>
+          <class name="column_footer"/>
+        </style>
       </object>
       <packing>
         <property name="expand">False</property>

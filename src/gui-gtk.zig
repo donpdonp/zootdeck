@@ -136,6 +136,9 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
   colNew.config_window = builder_get_widget(colNew.builder, c"column_config");
   warn("column added title:{} column:{}\n", colNew.main.config.title, colNew.columnbox);
+  const footer = builder_get_widget(colNew.builder, c"column_footer");
+  const config_icon = builder_get_widget(colNew.builder, c"column_config_icon");
+  c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc,config_icon), 1, 0);
   const label = builder_get_widget(colNew.builder, c"column_top_label");
   const labele = builder_get_widget(colNew.builder, c"column_top_eventbox");
   var drag = c.gtk_gesture_drag_new(labele);
