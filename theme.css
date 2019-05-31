@@ -1,7 +1,15 @@
-
 .toot_author_name {
   color: white;
-  background-color: grey;
+  background-color: #555;
+}
+
+.toot_author_url {
+  color:white; 
+  background-color: #111;
+}
+
+.toot_text {
+  color: #111;
 }
 
 .net_error {
