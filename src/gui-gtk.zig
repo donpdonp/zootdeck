@@ -11,7 +11,7 @@ const c = @cImport({
   @cInclude("gtk/gtk.h");
 });
 
-const GUIError = error{GtkFail};
+const GUIError = error{GtkInit, GladeLoad};
 var allocator: *Allocator = undefined;
 var settings: *config.Settings = undefined;
 var stop = false;
@@ -35,7 +35,7 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
   var argc: c_int = undefined;
   var argv: ?[*]?[*]?[*]u8 = null;
   var tf = c.gtk_init_check(@ptrCast([*]c_int, &argc), argv);
-  if(tf != 1) return GUIError.GtkFail;
+  if(tf != 1) return GUIError.GtkInit;
 }
 
 var myActor: *thread.Actor = undefined;
@@ -44,11 +44,11 @@ pub extern fn go(data: ?*c_void) ?*c_void {
   myActor = @ptrCast(*thread.Actor, data8);
   warn("gui-gtk thread start {*} {}\n", myActor, myActor);
   if (gui_setup()) {
-      // mainloop
-      while (!stop) {
-          mainloop();
-      }
-      gui_end();
+    // mainloop
+    while (!stop) {
+        mainloop();
+    }
+    gui_end();
   } else |err| {
       warn("gui error {}\n", err);
   }
@@ -70,7 +70,7 @@ pub fn gui_setup() !void {
   var ret = c.gtk_builder_add_from_file (myBuilder, c"glade/zootdeck.glade", @intToPtr([*c][*c]c._GError, 0));
   if (ret == 0) {
     warn("builder file fail");
-    return error.BadValue;
+    return GUIError.GladeLoad;
   }
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"login.chg", login_chg);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"login.done", login_done);
