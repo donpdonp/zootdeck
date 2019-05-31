@@ -11,10 +11,11 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
-          <object class="GtkEventBox">
+          <object class="GtkEventBox" id="column_top_eventbox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <signal name="button-press-event" handler="column.title" swapped="no"/>
+            <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
             <child>
               <object class="GtkLabel" id="column_top_label">
                 <property name="visible">True</property>
@@ -125,6 +126,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="pixbuf">../img/gears.svg</property>
+                <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
+                <signal name="drag-motion" handler="zoot_drag" swapped="no"/>
               </object>
             </child>
           </object>

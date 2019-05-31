@@ -63,6 +63,7 @@
     <property name="title" translatable="yes">Zootdeck 20190529</property>
     <property name="icon">../img/zootdeck.svg</property>
     <signal name="check-resize" handler="main_check_resize" swapped="no"/>
+    <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
     <child>
       <placeholder/>
     </child>
@@ -95,6 +96,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
+                <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
                 <child>
                   <object class="GtkButton">
                     <property name="label" translatable="yes">+</property>
@@ -102,6 +104,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <signal name="clicked" handler="actionbar.add" swapped="no"/>
+                    <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -126,6 +129,8 @@
               <object class="GtkBox" id="ZootColumns">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="spacing">5</property>
+                <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>

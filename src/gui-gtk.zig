@@ -67,14 +67,19 @@ pub fn gui_setup() !void {
     @ptrCast(*c.GtkStyleProvider, myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   myBuilder = c.gtk_builder_new();
-  var ret = c.gtk_builder_add_from_file (myBuilder, c"glade/tootdeck.glade", @intToPtr([*c][*c]c._GError, 0));
-  if (ret == 0) { return error.BadValue; }
+  var ret = c.gtk_builder_add_from_file (myBuilder, c"glade/zootdeck.glade", @intToPtr([*c][*c]c._GError, 0));
+  if (ret == 0) {
+    warn("builder file fail");
+    return error.BadValue;
+  }
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"login.chg", login_chg);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"login.done", login_done);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"actionbar.add", actionbar_add);
+  _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"main_check_resize",
                                         @ptrCast(?extern fn() void, main_check_resize));
   _ = c.gtk_builder_connect_signals(myBuilder, null);
+
 
   // set main size before resize callback happens
   var main_window = builder_get_widget(myBuilder, c"main");
@@ -132,6 +137,8 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   colNew.config_window = builder_get_widget(colNew.builder, c"column_config");
   warn("column added title:{} column:{}\n", colNew.main.config.title, colNew.columnbox);
   const label = builder_get_widget(colNew.builder, c"column_top_label");
+  const labele = builder_get_widget(colNew.builder, c"column_top_eventbox");
+  var drag = c.gtk_gesture_drag_new(labele);
   const topline_null: []u8 = std.cstr.addNullByte(allocator, colNew.main.config.title) catch unreachable;
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), topline_null.ptr);
   c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, container), colNew.columnbox, 1, 1, 0);
@@ -150,6 +157,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
                                         c"column_config.remove",
                                         @ptrCast(?extern fn() void, column_remove_btn));
+  _ = c.gtk_builder_add_callback_symbol(colNew.builder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_connect_signals(colNew.builder, null);
   c.gtk_widget_show_all(container);
 }
@@ -206,7 +214,6 @@ pub fn update_column(column: *Column) void {
     const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
     const cCountStr = util.sliceToCstr(allocator, countStr);
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
-    //c.gtk_widget_show(@ptrCast([*c]c.GtkLabel, toot_author_name), cNameDateStr);
   }
 }
 
@@ -233,15 +240,21 @@ pub fn makeTootBox(toot: config.TootType) [*c]c.GtkWidget {
   const author_name = toot.get("account").?.value.Object.get("display_name").?.value.String;
   const author_url = toot.get("account").?.value.Object.get("url").?.value.String;
   const created_at = toot.get("created_at").?.value.String;
-  const nameDateBuf = allocator.alloc(u8, 256) catch unreachable;
-  const nameDateStr = std.fmt.bufPrint(nameDateBuf, "{} {} {}",
-                          author_name, author_url, created_at) catch unreachable;
-  const cNameDateStr = util.sliceToCstr(allocator, nameDateStr);
-  const toot_author_name = builder_get_widget(builder, c"toot_author_name");
-  //c.gtk_label_set_max_width_chars(@ptrCast([*c]c.GtkLabel, toot_author_name), 10);
-  cText = util.sliceToCstr(allocator, author_name);
-  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toot_author_name), cNameDateStr);
+
+  const name_label = builder_get_widget(builder, c"toot_author_name");
+  labelBufPrint(name_label, "{}", author_name);
+  const url_label = builder_get_widget(builder, c"toot_author_url");
+  labelBufPrint(url_label, "{}", author_url);
+  const date_label = builder_get_widget(builder, c"toot_date");
+  labelBufPrint(date_label, "{}", created_at);
   return tootbox;
+}
+
+pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: ...) void {
+  const buf = allocator.alloc(u8, 256) catch unreachable;
+  const str = std.fmt.bufPrint(buf, fmt, args) catch unreachable;
+  const cStr = util.sliceToCstr(allocator, str);
+  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, label), cStr);
 }
 
 extern fn column_top_label_config(columnptr: ?*c_void) void {
@@ -308,6 +321,10 @@ extern fn actionbar_add() void {
 
 extern fn login_chg() void {
 //  warn("login_chg {}\n", text);
+}
+
+extern fn zoot_drag() void {
+  warn("zoot_drag\n");
 }
 
 extern fn column_reload(columnptr: *c_void) void {
