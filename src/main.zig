@@ -96,10 +96,10 @@ fn netback(command: *thread.Command) void {
         for(tree.root.Array.toSlice()) |jsonValue| {
           const item = jsonValue.Object;
           var id = item.get("id").?.value.String;
-          if(util.listContains(config.TootType, column.toots, item)) {
+          if(util.listContains(config.TootType, column.toots.*, item)) {
             //warn("sorted list dupe! {} \n", id);
           } else {
-            util.listSortedInsert(config.TootType, &column.toots, item, allocator);
+            util.listSortedInsert(config.TootType, column.toots, item, allocator);
           }
         }
       } else if(rootJsonType == .Object) {
@@ -129,6 +129,7 @@ fn guiback(command: *thread.Command) void {
   }
   if (command.id == 3) {
     var colInfo = allocator.create(config.ColumnInfo) catch unreachable;
+    colInfo.reset();
     settings.columns.append(colInfo) catch unreachable;
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;

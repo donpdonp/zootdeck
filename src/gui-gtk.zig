@@ -206,7 +206,8 @@ fn find_gui_column(c_column: *config.ColumnInfo) *Column {
 
 pub fn update_column(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
-    util.listCount(config.TootType, column.main.toots), if(column.main.inError) "ERROR" else "");
+                util.listCount(config.TootType, column.main.toots.*),
+                if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   var gtk_context = c.gtk_widget_get_style_context(column_toot_zone);
   c.gtk_container_foreach(@ptrCast([*c]c.GtkContainer, column_toot_zone), widget_destroy, null); // todo: avoid this
@@ -224,7 +225,7 @@ pub fn update_column(column: *Column) void {
   }
 
   const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
-  const count = util.listCount(config.TootType, column.main.toots);
+  const count = util.listCount(config.TootType, column.main.toots.*);
   const countBuf = allocator.alloc(u8, 256) catch unreachable;
   const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);

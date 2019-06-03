@@ -33,9 +33,14 @@ pub const TootList = std.LinkedList(TootType);
 
 pub const ColumnInfo = struct {
   config: *ColumnConfig,
-  toots: TootList,
+  toots: *TootList,
   refreshing: bool,
-  inError: bool
+  inError: bool,
+
+  pub fn reset(self: ColumnInfo) void {
+    var other = self;
+    other.toots = &TootList.init();
+  }
 };
 
 pub const ColumnConfig = struct {
@@ -98,7 +103,7 @@ pub fn read(json: []const u8) !Settings {
   if (root.get("columns")) |columns| {
     for(columns.value.Array.toSlice()) |value| {
       var colinfo = allocator.create(ColumnInfo) catch unreachable;
-      colinfo.toots = TootList.init();
+      colinfo.reset();
       var colconfig = allocator.create(ColumnConfig) catch unreachable;
       colinfo.config = colconfig;
       var title = value.Object.get("title").?.value.String;
