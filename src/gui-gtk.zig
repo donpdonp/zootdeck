@@ -184,24 +184,34 @@ extern fn column_top_label_title(p: *c_void) void {
 
 pub extern fn update_column_schedule(in: *c_void) c_int {
   const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
+  var column = find_gui_column(c_column);
+  update_column(column);
+  return 0;
+}
+
+pub extern fn update_column_netstatus_schedule(in: *c_void) c_int {
+  const http = @ptrCast(*config.HttpInfo, @alignCast(8,in));
+  var column = find_gui_column(http.column);
+  update_netstatus_column(http, column);
+  return 0;
+}
+
+fn find_gui_column(c_column: *config.ColumnInfo) *Column {
   var column: *Column = undefined;
   for(columns.toSlice()) |col| {
     if(col.main == c_column) column = col;
   }
-  update_column(column);
-  return 0;
+  return column;
 }
 
 pub fn update_column(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
     util.listCount(config.TootType, column.main.toots), if(column.main.inError) "ERROR" else "");
-  const column_footer_netstatus = builder_get_widget(column.builder, c"column_footer_netstatus");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   var gtk_context = c.gtk_widget_get_style_context(column_toot_zone);
   c.gtk_container_foreach(@ptrCast([*c]c.GtkContainer, column_toot_zone), widget_destroy, null); // todo: avoid this
   if(column.main.inError) {
     c.gtk_style_context_add_class(gtk_context, c"net_error");
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"network error");
   } else {
     c.gtk_style_context_remove_class(gtk_context, c"net_error");
     var current = column.main.toots.first;
@@ -219,6 +229,27 @@ pub fn update_column(column: *Column) void {
   const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
+}
+
+pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
+  warn("update_netstatus_column {} {}\n", http.url, http.response_code);
+  const column_footer_netstatus = builder_get_widget(column.builder, c"column_footer_netstatus");
+  var netmsg: [*c]const u8 = undefined;
+  if(http.response_code == 0) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"GET");
+  } else if (http.response_code >= 200 and http.response_code < 300) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"OK");
+  } else if (http.response_code >= 300 and http.response_code < 400) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"redirect");
+  } else if (http.response_code >= 400 and http.response_code < 500) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"permission err");
+  } else if (http.response_code >= 500 and http.response_code < 600) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"server err");
+  } else if (http.response_code >= 1000 and http.response_code < 1100) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"json err");
+  } else if (http.response_code == 2100) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"DNS err");
+  }
 }
 
 extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {

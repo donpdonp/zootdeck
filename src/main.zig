@@ -76,7 +76,9 @@ fn urlget(column: *config.ColumnInfo) void {
     httpInfo.token = token;
   }
   httpInfo.column = column;
+  httpInfo.response_code = 0;
   verb.http = httpInfo;
+  gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
   var netthread = thread.create(allocator, net.go, verb.*, netback) catch unreachable;
 //  defer thread.destroy(allocator, netthread);
 }
@@ -84,6 +86,7 @@ fn urlget(column: *config.ColumnInfo) void {
 fn netback(command: *thread.Command) void {
   warn("*netback tid {x} {}\n", thread.self(), command);
   if (command.id == 1) {
+    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
     var column = command.verb.http.column;
     if(command.verb.http.response_code == 200) {
       const tree = command.verb.http.tree;
@@ -174,9 +177,9 @@ fn heartback(nuthin: *thread.Command) void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
   if(column.refreshing) {
-    warn("column refresh in {}.\n", if (column.inError) "error!" else "progress");
+    warn("column {} in {}.\n", column.config.title, if (column.inError) "error!" else "progress");
   } else {
-    warn("column urlget {}\n", column.config.url);
+    warn("column {} get {}\n", column.config.title, column.config.url);
     column.refreshing = true;
     urlget(column);
   }
