@@ -195,13 +195,13 @@ pub extern fn update_column_schedule(in: *c_void) c_int {
 pub fn update_column(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
     util.listCount(config.TootType, column.main.toots), if(column.main.inError) "ERROR" else "");
+  const column_footer_netstatus = builder_get_widget(column.builder, c"column_footer_netstatus");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
-  const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
   var gtk_context = c.gtk_widget_get_style_context(column_toot_zone);
   c.gtk_container_foreach(@ptrCast([*c]c.GtkContainer, column_toot_zone), widget_destroy, null); // todo: avoid this
   if(column.main.inError) {
     c.gtk_style_context_add_class(gtk_context, c"net_error");
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), c"network error");
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"network error");
   } else {
     c.gtk_style_context_remove_class(gtk_context, c"net_error");
     var current = column.main.toots.first;
@@ -211,13 +211,14 @@ pub fn update_column(column: *Column) void {
       current = node.next;
     }
     c.gtk_widget_show(column_toot_zone);
-
-    const count = util.listCount(config.TootType, column.main.toots);
-    const countBuf = allocator.alloc(u8, 256) catch unreachable;
-    const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
-    const cCountStr = util.sliceToCstr(allocator, countStr);
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
   }
+
+  const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
+  const count = util.listCount(config.TootType, column.main.toots);
+  const countBuf = allocator.alloc(u8, 256) catch unreachable;
+  const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
+  const cCountStr = util.sliceToCstr(allocator, countStr);
+  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
 }
 
 extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
