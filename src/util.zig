@@ -89,6 +89,46 @@ test "htmlTagStrip" {
   std.testing.expect(std.mem.eql(u8, stripped, "abc"));
 }
 
+pub fn htmlEntityDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
+  var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
+  var previousStrEndMark: usize = 0;
+  const States = enum {Looking, EntityBegin, EntityFound};
+  var state = States.Looking;
+  var escStart: usize = undefined;
+  for (str) |char, idx| {
+    if (state == States.Looking and char == '&') {
+      state = States.EntityBegin;
+      escStart = idx;
+    } else if (state == States.EntityBegin) {
+      if(char == ';') {
+        const snip = str[previousStrEndMark..escStart];
+        previousStrEndMark = idx+1;
+        try newStr.append(snip);
+        const sigil = str[escStart+1..idx];
+        var newChar: u8 = undefined;
+        if (std.mem.compare(u8, sigil, "amp") == std.mem.Compare.Equal) {
+          newChar = '&';
+        }
+        try newStr.appendByte(newChar);
+        state = States.Looking;
+      } else if (idx - escStart > 4) {
+        state = States.Looking;
+      }
+    }
+  }
+  if (previousStrEndMark <= str.len) {
+    try newStr.append(str[previousStrEndMark..]);
+  }
+  warn("html entity {}\n", newStr.toSliceConst());
+  return newStr.toSliceConst();
+}
+
+test "htmlEntityParse" {
+  const allocator = std.debug.global_allocator;
+  var stripped = htmlEntityDecode("amp&amp;pam", allocator) catch unreachable;
+  std.testing.expect(std.mem.eql(u8, stripped, "amp&pam"));
+}
+
 pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
   const States = enum {Looking, EscBegin, uFound, Digit};
   const escMark = struct { position: usize, char: u8};

@@ -268,6 +268,7 @@ pub fn makeTootBox(toot: config.TootType) [*c]c.GtkWidget {
   const id = toot.get("id").?.value.String;
   const content = toot.get("content").?.value.String;
   var jDecode = util.jsonStrDecode(content, allocator)  catch unreachable;
+  //var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
   const html_trim = util.htmlTagStrip(jDecode, allocator) catch unreachable;
 
   const toottext_label = builder_get_widget(builder, c"toot_text");
