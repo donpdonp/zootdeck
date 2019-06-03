@@ -88,7 +88,7 @@ fn netback(command: *thread.Command) void {
   if (command.id == 1) {
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
     var column = command.verb.http.column;
-    if(command.verb.http.response_code == 200) {
+    if(command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
       const tree = command.verb.http.tree;
       var rootJsonType = @TagType(std.json.Value)(tree.root);
       if(rootJsonType == .Array) {
@@ -110,10 +110,8 @@ fn netback(command: *thread.Command) void {
       column.refreshing = false;
       column.config.last_check = config.now();
     } else {
-      warn("COLUMN NET HTTP FAIL {}\n", command.verb.http.response_code);
       column.inError = true;
     }
-    warn("NETBACK COLUMN TOOTS {*}\n", &column.toots);
     gui.schedule(gui.update_column_schedule, @ptrCast(*c_void, column));
   }
 }
@@ -132,7 +130,6 @@ fn guiback(command: *thread.Command) void {
     var colInfo = allocator.create(config.ColumnInfo) catch unreachable;
     colInfo.reset();
     colInfo.toots = config.TootList.init();
-    warn("colInfo main/gui create/reset check toots {*}\n", &colInfo.toots);
     settings.columns.append(colInfo) catch unreachable;
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;

@@ -79,7 +79,7 @@ pub fn htmlTagStrip(str: []const u8, allocator: *Allocator) ![]const u8 {
   return newStr.toSliceConst();
 }
 
-test "htmlStrFix" {
+test "htmlTagStrip" {
   const allocator = std.debug.global_allocator;
   var stripped = htmlTagStrip("a<p>b</p>", allocator) catch unreachable;
   std.testing.expect(std.mem.eql(u8, stripped, "ab"));
@@ -91,8 +91,9 @@ test "htmlStrFix" {
 
 pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
   const States = enum {Looking, EscBegin, uFound, Digit};
+  const escMark = struct { position: usize, char: u8};
   var state = States.Looking;
-  var escMarks = std.ArrayList(usize).init(allocator);
+  var escMarks = std.ArrayList(escMark).init(allocator);
   var escStart: usize = undefined;
   for (str) |char, idx| {
     if (state == States.Looking and char == '\\') {
@@ -101,6 +102,12 @@ pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
     } else if (state == States.EscBegin) {
       if(char == 'u' or char == 'U') {
         state = States.uFound;
+      } else if (char == '"') {
+        try escMarks.append(escMark{.position = escStart, .char = '"'});
+        state = States.Looking;
+      } else if (char == 'n') {
+        try escMarks.append(escMark{.position = escStart, .char = '\n'});
+        state = States.Looking;
       } else {
         state = States.Looking;
       }
@@ -115,7 +122,7 @@ pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
         state = States.Digit;
         const escLen = idx - escStart;
         if (escLen == 5) { // last byte of the \uXXXX code
-          try escMarks.append(escStart);
+          try escMarks.append(escMark{.position = escStart, .char = 'u'});
           state = States.Looking;
         }
       } else {
@@ -128,13 +135,23 @@ pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
   var previousStrEndMark: usize = 0;
   for(escMarks.toSlice()) |strMark, idx| {
     // copy the segment before the mark
-    const snip = str[previousStrEndMark..strMark];
+    const snip = str[previousStrEndMark..strMark.position];
     try newStr.append(snip);
-    previousStrEndMark = strMark+6;
+    if(strMark.char == 'u') {
+      previousStrEndMark = strMark.position+6;
 
-    const digits = str[strMark+2..strMark+6];
-    var decodedChar: u8 = (hexU8(digits[2]) << 4) + (hexU8(digits[3]));
-    try newStr.appendByte(decodedChar);
+      const digits = str[strMark.position+2..strMark.position+6];
+      var decodedChar: u8 = (hexU8(digits[2]) << 4) + (hexU8(digits[3]));
+      try newStr.appendByte(decodedChar);
+    }
+    if(strMark.char == '"') {
+      previousStrEndMark = strMark.position+2;
+      try newStr.appendByte('"');
+    }
+    if(strMark.char == 'n') {
+      previousStrEndMark = strMark.position+2;
+      try newStr.appendByte('\n');
+    }
   }
   // copy the segment after the last mark if there is one
   if (previousStrEndMark <= str.len) {
@@ -161,10 +178,14 @@ pub fn isHexDigit(char: u8) bool {
       or (char >= 'A' and char <= 'F');
 }
 
-test "jsonStrFix" {
+test "JSON String Decode" {
   var allocator = std.debug.global_allocator;
-  var decoded = jsonStrDecode("\\u0040p \\u003cY", allocator) catch unreachable;
+  var decoded: []const u8 = undefined;
+  decoded = jsonStrDecode("\\u0040p \\u003cY", allocator) catch unreachable;
   std.testing.expect(std.mem.eql(u8, decoded, "@p <Y"));
+
+  decoded = jsonStrDecode("a \\\"real\\\" fan.", allocator) catch unreachable;
+  std.testing.expect(std.mem.eql(u8, decoded, "a \"real\" fan."));
 }
 
 pub fn toJson(allocator: *Allocator, value: var) []const u8 {

@@ -200,13 +200,10 @@ pub extern fn update_column_netstatus_schedule(in: *c_void) c_int {
 }
 
 fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
-  warn("find_gui_column looking {*}\n", c_column);
   var column: *Column = undefined;
   for(columns.toSlice()) |col| {
-    warn("find_gui_column checking {*}\n", col.main);
     if(col.main == c_column) return col;
   }
-  warn("find_gui_column not found for {*}\n", c_column);
   return null;
 }
 
