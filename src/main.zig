@@ -96,10 +96,10 @@ fn netback(command: *thread.Command) void {
         for(tree.root.Array.toSlice()) |jsonValue| {
           const item = jsonValue.Object;
           var id = item.get("id").?.value.String;
-          if(util.listContains(config.TootType, column.toots.*, item)) {
+          if(util.listContains(config.TootType, column.toots, item)) {
             //warn("sorted list dupe! {} \n", id);
           } else {
-            util.listSortedInsert(config.TootType, column.toots, item, allocator);
+            util.listSortedInsert(config.TootType, &column.toots, item, allocator);
           }
         }
       } else if(rootJsonType == .Object) {
@@ -113,6 +113,7 @@ fn netback(command: *thread.Command) void {
       warn("COLUMN NET HTTP FAIL {}\n", command.verb.http.response_code);
       column.inError = true;
     }
+    warn("NETBACK COLUMN TOOTS {*}\n", &column.toots);
     gui.schedule(gui.update_column_schedule, @ptrCast(*c_void, column));
   }
 }
@@ -127,9 +128,11 @@ fn guiback(command: *thread.Command) void {
     column.refreshing = false;
     column.config.last_check = 0;
   }
-  if (command.id == 3) {
+  if (command.id == 3) { // add column
     var colInfo = allocator.create(config.ColumnInfo) catch unreachable;
     colInfo.reset();
+    colInfo.toots = config.TootList.init();
+    warn("colInfo main/gui create/reset check toots {*}\n", &colInfo.toots);
     settings.columns.append(colInfo) catch unreachable;
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;

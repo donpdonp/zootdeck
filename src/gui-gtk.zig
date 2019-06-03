@@ -125,15 +125,14 @@ pub extern fn add_column_schedule(in: *c_void) c_int {
 }
 
 pub fn add_column(colInfo: *config.ColumnInfo) void {
-  warn("gui.add_column {}\n", colInfo.config.title);
   const container = builder_get_widget(myBuilder, c"ZootColumns");
   const colNew = allocator.create(Column) catch unreachable;
-  columns.append(colNew) catch unreachable;
   colNew.builder = c.gtk_builder_new_from_file (c"glade/column.glade");
   colNew.columnbox = builder_get_widget(colNew.builder, c"column");
   colNew.main = colInfo;
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
   colNew.config_window = builder_get_widget(colNew.builder, c"column_config");
+  columns.append(colNew) catch unreachable;
   warn("column added title:{} column:{}\n", colNew.main.config.title, colNew.columnbox);
   const footer = builder_get_widget(colNew.builder, c"column_footer");
   const config_icon = builder_get_widget(colNew.builder, c"column_config_icon");
@@ -184,29 +183,36 @@ extern fn column_top_label_title(p: *c_void) void {
 
 pub extern fn update_column_schedule(in: *c_void) c_int {
   const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
-  var column = find_gui_column(c_column);
-  update_column(column);
+  var columnMaybe = find_gui_column(c_column);
+  if(columnMaybe) |column| {
+    update_column(column);
+  }
   return 0;
 }
 
 pub extern fn update_column_netstatus_schedule(in: *c_void) c_int {
   const http = @ptrCast(*config.HttpInfo, @alignCast(8,in));
-  var column = find_gui_column(http.column);
-  update_netstatus_column(http, column);
+  var columnMaybe = find_gui_column(http.column);
+  if(columnMaybe) |column| {
+    update_netstatus_column(http, column);
+  }
   return 0;
 }
 
-fn find_gui_column(c_column: *config.ColumnInfo) *Column {
+fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
+  warn("find_gui_column looking {*}\n", c_column);
   var column: *Column = undefined;
   for(columns.toSlice()) |col| {
-    if(col.main == c_column) column = col;
+    warn("find_gui_column checking {*}\n", col.main);
+    if(col.main == c_column) return col;
   }
-  return column;
+  warn("find_gui_column not found for {*}\n", c_column);
+  return null;
 }
 
 pub fn update_column(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
-                util.listCount(config.TootType, column.main.toots.*),
+                util.listCount(config.TootType, column.main.toots),
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   var gtk_context = c.gtk_widget_get_style_context(column_toot_zone);
@@ -225,7 +231,7 @@ pub fn update_column(column: *Column) void {
   }
 
   const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
-  const count = util.listCount(config.TootType, column.main.toots.*);
+  const count = util.listCount(config.TootType, column.main.toots);
   const countBuf = allocator.alloc(u8, 256) catch unreachable;
   const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);

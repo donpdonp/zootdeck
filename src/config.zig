@@ -33,13 +33,12 @@ pub const TootList = std.LinkedList(TootType);
 
 pub const ColumnInfo = struct {
   config: *ColumnConfig,
-  toots: *TootList,
+  toots: TootList,
   refreshing: bool,
   inError: bool,
 
   pub fn reset(self: ColumnInfo) void {
     var other = self;
-    other.toots = &TootList.init();
   }
 };
 
@@ -102,27 +101,29 @@ pub fn read(json: []const u8) !Settings {
   }
   if (root.get("columns")) |columns| {
     for(columns.value.Array.toSlice()) |value| {
-      var colinfo = allocator.create(ColumnInfo) catch unreachable;
-      colinfo.reset();
+      var colInfo = allocator.create(ColumnInfo) catch unreachable;
+      colInfo.reset();
+      colInfo.toots = TootList.init();
+      warn("colInfo config create/reste check toots {*}\n", &colInfo.toots);
       var colconfig = allocator.create(ColumnConfig) catch unreachable;
-      colinfo.config = colconfig;
+      colInfo.config = colconfig;
       var title = value.Object.get("title").?.value.String;
-      colinfo.config.title = title;
+      colInfo.config.title = title;
       var url = value.Object.get("url").?.value.String;
-      colinfo.config.url = url;
+      colInfo.config.url = url;
       var tokenTag = value.Object.get("token");
       if(tokenTag) |tokenKV| {
         if(@TagType(std.json.Value)(tokenKV.value) == .String) {
-          colinfo.config.token = tokenKV.value.String;
+          colInfo.config.token = tokenKV.value.String;
         } else {
-          colinfo.config.token = null;
+          colInfo.config.token = null;
         }
       } else {
-        colinfo.config.token = null;
+        colInfo.config.token = null;
       }
       var last_check = value.Object.get("last_check").?.value.Integer;
-      colinfo.config.last_check = last_check;
-      settings.columns.append(colinfo) catch unreachable;
+      colInfo.config.last_check = last_check;
+      settings.columns.append(colInfo) catch unreachable;
     }
   } else {
     warn("missing columns\n");
