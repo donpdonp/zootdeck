@@ -103,9 +103,8 @@ fn show_column_config() void {
   c.gtk_widget_show(column_config_window);
 }
 
-fn hide_column_config() void {
-  var column_config_window = builder_get_widget(myBuilder, c"column_config");
-  c.gtk_widget_hide(column_config_window);
+fn hide_column_config(column: *Column) void {
+  c.gtk_widget_hide(column.config_window);
 }
 
 pub extern fn show_login_schedule(in: *c_void) c_int {
@@ -174,6 +173,7 @@ pub fn column_remove(colInfo: *config.ColumnInfo) void {
   warn("gui.column_remove {}\n", colInfo.config.title);
   const container = builder_get_widget(myBuilder, c"ZootColumns");
   const column = findColumnByInfo(colInfo);
+  hide_column_config(column);
   c.gtk_container_remove(@ptrCast([*c]c.GtkContainer, container), column.columnbox);
 }
 
@@ -404,8 +404,7 @@ extern fn column_config_done(selfptr: *c_void) void {
 
   const label = builder_get_widget(column.builder, c"column_top_label");
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), cTitle);
-
-  c.gtk_widget_hide(column.config_window);
+  hide_column_config(column);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
