@@ -1,0 +1,15 @@
+{
+ "win_x" : 800,
+ "win_y" : 600,
+ "columns" : [
+   {
+    "title" : "pawoo.net public feed",
+    "url" : "pawoo.net",
+    "token" : null,
+    "last_check" : 1459678343},
+   {
+    "title" : "mastodon.social public feed",
+    "url" : "https://mastodon.social",
+    "token" : null,
+    "last_check" : 1459678357}]
+}
