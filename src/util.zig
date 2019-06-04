@@ -58,6 +58,20 @@ pub fn listCount(comptime T: type, list: std.LinkedList(T)) usize {
   return count;
 }
 
+pub fn mastodonExpandUrl(host: []const u8, allocator: *Allocator) []const u8 {
+  var url = Buffers.SimpleU8.initSize(allocator, 0) catch unreachable;
+  var filteredHost = host;
+  if(filteredHost[filteredHost.len-1] == '/') {
+    filteredHost = filteredHost[0..filteredHost.len-1];
+  }
+  if(std.mem.compare(u8, filteredHost, "https:") != std.mem.Compare.Equal) {
+    url.append("https://") catch unreachable;
+  }
+  url.append(filteredHost) catch unreachable;
+  url.append("/api/v1/timelines/public") catch unreachable;
+  return url.toSliceConst();
+}
+
 pub fn htmlTagStrip(str: []const u8, allocator: *Allocator) ![]const u8 {
   var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
   const States = enum {Looking, TagBegin};

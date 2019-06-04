@@ -70,7 +70,7 @@ fn hello() void {
 fn urlget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = column.config.url;
+  httpInfo.url = util.mastodonExpandUrl(column.config.url, allocator);
   httpInfo.token = null;
   if(column.config.token) |token| {
     httpInfo.token = token;
