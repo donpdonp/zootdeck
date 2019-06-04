@@ -13,12 +13,14 @@ const c = @cImport({
 
 pub const Time = c.time_t;
 
+// contains runtime-only values
 pub const Settings = struct {
   win_x: i64,
   win_y: i64,
   columns: std.ArrayList(*ColumnInfo)
 };
 
+// on-disk format
 pub const ConfigFile = struct {
   win_x: i64,
   win_y: i64,
