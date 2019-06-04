@@ -1,4 +1,4 @@
-## tweetdeck-alike for mastodon
+## mastodon/fediverse desktop reader
 
 * Any number of columns
 * Column Sources: User account, Site public feed
