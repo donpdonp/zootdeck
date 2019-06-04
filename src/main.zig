@@ -43,7 +43,7 @@ pub fn main() !void {
 fn initialize() !void {
   try config.init(allocator);
   try statemachine.init(allocator);
-  try db.init(allocator);
+  //try db.init(allocator);
   try thread.init(allocator);
   try gui.init(allocator, &settings);
 }
