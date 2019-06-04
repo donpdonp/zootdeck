@@ -64,7 +64,7 @@ pub fn mastodonExpandUrl(host: []const u8, allocator: *Allocator) []const u8 {
   if(filteredHost[filteredHost.len-1] == '/') {
     filteredHost = filteredHost[0..filteredHost.len-1];
   }
-  if(std.mem.compare(u8, filteredHost, "https:") != std.mem.Compare.Equal) {
+  if(std.mem.compare(u8, filteredHost[0..6], "https:") != std.mem.Compare.Equal) {
     url.append("https://") catch unreachable;
   }
   url.append(filteredHost) catch unreachable;
