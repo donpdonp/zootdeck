@@ -134,9 +134,9 @@ fn guiback(command: *thread.Command) void {
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;
     var titleBuf = allocator.alloc(u8,256) catch unreachable;
-    var title = std.fmt.bufPrint(titleBuf, "{}{}", "maintitle", settings.columns.count()) catch unreachable;
+    var title = std.fmt.bufPrint(titleBuf, "{}{}", "Column #", settings.columns.count()) catch unreachable;
     colInfo.config.title = title;
-    colInfo.config.url = "url"[0..];
+    colInfo.config.url = "https://mastodon.example"[0..];
     colInfo.config.last_check = 0;
     gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
     warn("Settings PreWrite Columns count {}\n", settings.columns.len);
@@ -178,7 +178,7 @@ fn heartback(nuthin: *thread.Command) void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
   if(column.refreshing) {
-    warn("column {} in {}.\n", column.config.title, if (column.inError) "error!" else "progress");
+    warn("column {} in {}\n", column.config.title, if (column.inError) "error!" else "progress");
   } else {
     warn("column {} get {}\n", column.config.title, column.config.url);
     column.refreshing = true;

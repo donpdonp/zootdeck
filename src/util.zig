@@ -54,7 +54,6 @@ pub fn listSortedInsert(comptime T: type, list: *std.LinkedList(T), item: T, all
 pub fn listCount(comptime T: type, list: std.LinkedList(T)) usize {
   var count = usize(0);
   var current = list.first;
-  warn("listcount first item = {*} next = {*}\n", current, if(current) |c| c.next else null);
   while(current) |item| { count = count +1; current = item.next; }
   return count;
 }

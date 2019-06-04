@@ -116,6 +116,9 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">count</property>
+            <style>
+              <class name="column_footer_count"/>
+            </style>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -209,6 +212,9 @@
                 <property name="position">1</property>
               </packing>
             </child>
+            <style>
+              <class name="column_config_title"/>
+            </style>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -226,6 +232,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">feed url</property>
+                <style>
+                  <class name="column_config_url_label"/>
+                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -238,6 +247,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <signal name="activate" handler="column_config.done" swapped="no"/>
+                <style>
+                  <class name="column_config_url_entry"/>
+                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -245,6 +257,9 @@
                 <property name="position">1</property>
               </packing>
             </child>
+            <style>
+              <class name="column_config_feed"/>
+            </style>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -266,6 +281,9 @@
             <property name="position">3</property>
           </packing>
         </child>
+        <style>
+          <class name="column_config_box"/>
+        </style>
       </object>
     </child>
   </object>

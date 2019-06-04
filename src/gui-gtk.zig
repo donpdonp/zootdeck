@@ -132,6 +132,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   colNew.main = colInfo;
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
   colNew.config_window = builder_get_widget(colNew.builder, c"column_config");
+  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, colNew.config_window), 600, 200);
   columns.append(colNew) catch unreachable;
   warn("column added title:{} column:{}\n", colNew.main.config.title, colNew.columnbox);
   const footer = builder_get_widget(colNew.builder, c"column_footer");
@@ -212,22 +213,26 @@ pub fn update_column(column: *Column) void {
                 util.listCount(config.TootType, column.main.toots),
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
-  var gtk_context = c.gtk_widget_get_style_context(column_toot_zone);
+  const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
+  var gtk_context = c.gtk_widget_get_style_context(column_footer_count_label);
   c.gtk_container_foreach(@ptrCast([*c]c.GtkContainer, column_toot_zone), widget_destroy, null); // todo: avoid this
   if(column.main.inError) {
     c.gtk_style_context_add_class(gtk_context, c"net_error");
   } else {
     c.gtk_style_context_remove_class(gtk_context, c"net_error");
-    var current = column.main.toots.first;
+  }
+  var current = column.main.toots.first;
+  if (current != null) {
     while(current) |node| {
       var tootbox = makeTootBox(node.data);
       c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, 1, 1, 0);
       current = node.next;
     }
-    c.gtk_widget_show(column_toot_zone);
+  } else {
+    // help? logo?
   }
+  c.gtk_widget_show(column_toot_zone);
 
-  const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
   const count = util.listCount(config.TootType, column.main.toots);
   const countBuf = allocator.alloc(u8, 256) catch unreachable;
   const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
