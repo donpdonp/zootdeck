@@ -7,3 +7,6 @@ run: build
 
 push:
 	pijul push donpdonp@nest.pijul.com:donpdonp/tootdeck
+
+dist:
+	DATE=`date`;echo date ${DATE}

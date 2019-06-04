@@ -300,9 +300,8 @@ pub fn boolToJson(ram: []u8, oldPtr: usize, depth: u32, value: bool, allocator: 
 pub fn intToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator: *Allocator) usize {
   var ptr = oldPtr; // params are const
   const intlen = 20;
-  var intval: c_long = value;
   var intbuf = allocator.alloc(u8, intlen) catch unreachable;
-  var intstr = std.fmt.bufPrint(intbuf, "{}", intval) catch unreachable;
+  var intstr = std.fmt.bufPrint(intbuf, "{}", value) catch unreachable;
   ptr += ramSetAt(ram, ptr, intstr);
   return ptr;
 }

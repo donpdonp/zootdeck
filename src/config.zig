@@ -87,17 +87,18 @@ pub fn read(json: []const u8) !Settings {
   var json_parser = std.json.Parser.init(allocator, false);
   var value_tree = try json_parser.parse(json);
   var settings = allocator.create(Settings) catch unreachable;
-  var configFile = allocator.create(ConfigFile) catch unreachable;
   var root = value_tree.root.Object;
   settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
   if (root.get("win_x")) |w| {
     settings.win_x = w.value.Integer;
   } else {
+    settings.win_x = 800;
   }
   if (root.get("win_y")) |h| {
     settings.win_y = h.value.Integer;
   } else {
+    settings.win_y = 600;
   }
   if (root.get("columns")) |columns| {
     for(columns.value.Array.toSlice()) |value| {
