@@ -274,6 +274,9 @@
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
             <signal name="clicked" handler="column_config.remove" swapped="no"/>
+            <style>
+              <class name="column_config_remove"/>
+            </style>
           </object>
           <packing>
             <property name="expand">False</property>
