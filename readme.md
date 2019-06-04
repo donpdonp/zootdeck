@@ -1,8 +1,13 @@
 ## tweetdeck-alike for mastodon
 
-* zig lang
+* Any number of columns
+* Column Sources: User account, Site public feed
 * GTK+
-* threaded
+
+## Roadmap
+* per-column filter language
+* create a post
+* css themes: overall, per-tag, per-host
 
 ## History
 20190604 network status indicator for each column
@@ -11,6 +16,10 @@
 
 20190529 First release
 
+
+Authenticated account access is supported but there is no UI for it yet.
+If you want to see a column from your own feed, follow these steps to get
+and access token to put into the config.json.
 
 ## steps to get an access token from a mastodon site
 
