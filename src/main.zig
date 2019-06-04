@@ -88,6 +88,8 @@ fn netback(command: *thread.Command) void {
   if (command.id == 1) {
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
     var column = command.verb.http.column;
+    column.refreshing = false;
+    column.config.last_check = config.now();
     if(command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
       const tree = command.verb.http.tree;
       var rootJsonType = @TagType(std.json.Value)(tree.root);
@@ -107,8 +109,6 @@ fn netback(command: *thread.Command) void {
           warn("netback json err {} \n", err.value.String);
         }
       }
-      column.refreshing = false;
-      column.config.last_check = config.now();
     } else {
       column.inError = true;
     }
@@ -142,8 +142,11 @@ fn guiback(command: *thread.Command) void {
     warn("Settings PreWrite Columns count {}\n", settings.columns.len);
     config.writefile(settings, "config.json");
   }
-  if (command.id == 4) {
+  if (command.id == 4) { // config done
     warn("gui col config {}\n", command.verb.guiColumnConfig.config.title);
+    const column = command.verb.guiColumnConfig;
+    column.inError = false;
+    column.config.last_check = 0;
     config.writefile(settings, "config.json");
   }
   if (command.id == 5) {
