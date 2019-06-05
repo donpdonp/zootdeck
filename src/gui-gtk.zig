@@ -320,7 +320,13 @@ extern fn column_top_label_config(columnptr: ?*c_void) void {
 
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = util.sliceToCstr(allocator, column.main.config.url);
-  var url = c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
+  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
+
+  var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
+  if(column.main.config.token) |tkn| {
+    var cToken = util.sliceToCstr(allocator, tkn);
+    c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, token_entry), cToken);
+  }
 
   var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
   var cTitle = util.sliceToCstr(allocator, column.main.config.title);
@@ -411,6 +417,10 @@ extern fn column_config_done(selfptr: *c_void) void {
   var name = c.g_type_name_from_instance(@ptrCast([*c]c.GTypeInstance, self));
   var namelen = std.mem.len(u8, name);
   var column: *Column = findColumnByConfigWindow(self);
+
+  var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
+  var cToken = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
+  column.main.config.token = util.cstrToSlice(allocator, cToken); // edit in guithread--
 
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
