@@ -1,4 +1,3 @@
-```
 ## mastodon/fediverse desktop reader
 
 * Any number of columns
@@ -41,6 +40,5 @@ Put the access_token value in the token field of config.json
     "url" : "https://mastodon.example/api/v1/timelines/home",
     "token" : "token here - see readme",
     "last_check" : 1558112041}]
-```
 
 
