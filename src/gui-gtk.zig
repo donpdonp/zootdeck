@@ -120,6 +120,11 @@ pub extern fn show_main_schedule(in: *c_void) c_int {
   return 0;
 }
 
+pub extern fn column_oauth_url_schedule(in: *c_void) c_int {
+  add_column(@ptrCast(*config.ColumnInfo, @alignCast(8,in)));
+  return 0;
+}
+
 pub extern fn add_column_schedule(in: *c_void) c_int {
   add_column(@ptrCast(*config.ColumnInfo, @alignCast(8,in)));
   return 0;
@@ -394,6 +399,7 @@ extern fn column_reload(columnptr: *c_void) void {
   var column_widget = @ptrCast([*c]c.GtkWidget, @alignCast(8,columnptr));
   var column: *Column = findColumnByBox(column_widget);
   warn("column reload found {}\n", column.main.config.title);
+
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
@@ -407,6 +413,7 @@ extern fn column_remove_btn(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
   warn("column remove {*}\n", column);
+
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
@@ -420,21 +427,35 @@ extern fn column_config_oauth(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
 
-  warn("column_config_oauth");
+  // signal crazy
+  var command = allocator.create(thread.Command) catch unreachable;
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  verb.column = column.main;
+  command.id = 6;
+  command.verb = verb;
+  thread.signal(myActor, command);
+}
+
+pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
+  warn("gui.column_config_oauth_url {}\n", colInfo.config.title);
+  const container = builder_get_widget(myBuilder, c"ZootColumns");
+  const column = findColumnByInfo(colInfo);
+
   var oauth_box = builder_get_widget(column.builder, c"column_config_oauth_box");
   var host_box = builder_get_widget(column.builder, c"column_config_host_box");
-  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
+  cgtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
 
   var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
-  var markupBuf = allocator.alloc(u8, 512) catch unreachable;
   var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
   oauth_url_buf.append("https://") catch unreachable;
   oauth_url_buf.append(column.main.config.url) catch unreachable;
   oauth_url_buf.append("/oauth/authorize") catch unreachable;
-  oauth_url_buf.append("?client_id=abc") catch unreachable;
+  oauth_url_buf.append("?client_id=") catch unreachable;
+  oauth_url_buf.append(column.main.config.oauthClientId) catch unreachable;
   oauth_url_buf.append("&amp;scope=read+write") catch unreachable;
   oauth_url_buf.append("&amp;response_type=code") catch unreachable;
   oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
+  var markupBuf = allocator.alloc(u8, 512) catch unreachable;
   var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>",
     oauth_url_buf.toSliceConst(), column.main.config.url) catch unreachable;
   var cLabel = util.sliceToCstr(allocator, markup);

@@ -13,6 +13,7 @@ const thread = @import("./thread.zig");
 const db = @import("./db.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
+const simple_buffer = @import("./simple_buffer.zig");
 
 var settings: config.Settings = undefined;
 
@@ -67,25 +68,51 @@ fn hello() void {
   warn("tootdeck {} {} tid {x}\n", @tagName(builtin.os), @tagName(builtin.arch), thread.self());
 }
 
-fn urlget(column: *config.ColumnInfo) void {
+fn columnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = util.mastodonExpandUrl(column.config.url, allocator);
   httpInfo.token = null;
-  if(column.config.token) |token| {
-    httpInfo.token = token;
+  if(column.config.token) |tokenStr| {
+    httpInfo.token = tokenStr;
   }
   httpInfo.column = column;
   httpInfo.response_code = 0;
   verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-  var netthread = thread.create(allocator, net.go, verb.*, netback) catch unreachable;
+  var netthread = thread.create(allocator, net.go, verb, netback) catch unreachable;
+//  defer thread.destroy(allocator, netthread);
+}
+
+fn oauthcolumnget(column: *config.ColumnInfo) void {
+  var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+  oauth_url_buf.append("https://") catch unreachable;
+  oauth_url_buf.append(column.config.url) catch unreachable;
+  oauth_url_buf.append("/api/v1/apps") catch unreachable;
+  oauth_url_buf.append("?client_name=zootdeck") catch unreachable;
+  oauth_url_buf.append("&amp;scope=read+write") catch unreachable;
+  oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+  httpInfo.url = oauth_url_buf.toSliceConst();
+  httpInfo.token = null;
+  if(column.config.token) |tokenStr| {
+    httpInfo.token = tokenStr;
+  }
+  httpInfo.column = column;
+  httpInfo.response_code = 0;
+  verb.oauth = httpInfo;
+  gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
+  var netthread = thread.create(allocator, net.go, verb, netback) catch unreachable;
 //  defer thread.destroy(allocator, netthread);
 }
 
 fn netback(command: *thread.Command) void {
   warn("*netback tid {x} {}\n", thread.self(), command);
   if (command.id == 1) {
+    switch(command.verb) {
+      else => warn("else\n")
+    }
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
     var column = command.verb.http.column;
     column.refreshing = false;
@@ -166,6 +193,14 @@ fn guiback(command: *thread.Command) void {
     config.writefile(settings, "config.json");
     gui.schedule(gui.column_remove_schedule, @ptrCast(*c_void, column));
   }
+  if (command.id == 6) { //oauth
+    const column = command.verb.column;
+    if (column.oauthClientId) |clientId| {
+      gui.schedule(gui.column_oauth_url_schedule, @ptrCast(*c_void, column));
+    } else {
+      oauthcolumnget(column);
+    }
+  }
 }
 
 fn heartback(nuthin: *thread.Command) void {
@@ -189,6 +224,6 @@ fn column_refresh(column: *config.ColumnInfo) void {
   } else {
     warn("column {} get {}\n", column.config.title, column.config.url);
     column.refreshing = true;
-    urlget(column);
+    columnget(column);
   }
 }

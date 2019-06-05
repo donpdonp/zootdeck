@@ -38,6 +38,8 @@ pub const ColumnInfo = struct {
   toots: TootList,
   refreshing: bool,
   inError: bool,
+  oauthClientId: ?[]const u8,
+  oauthClientSecret: ?[]const u8,
 
   pub fn reset(self: ColumnInfo) void {
     var other = self;

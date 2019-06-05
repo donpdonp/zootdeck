@@ -26,12 +26,12 @@ pub extern fn go(data: ?*c_void) ?*c_void {
   var data8 = @alignCast(@alignOf(thread.Actor), data);
   var actor = @ptrCast(*thread.Actor, data8);
   warn("net thread start {*} {}\n", actor, actor);
+
   // setup for the callback
   var command = allocator.create(thread.Command) catch unreachable;
   command.id = 1;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
-  verb.http = actor.payload.http;
-  command.verb = verb;
+  command.verb = actor.payload;
 
   if (httpget(actor.payload.http)) |body| {
     const maxlen = if(body.len > 400) 400 else body.len;

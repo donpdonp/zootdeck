@@ -14,7 +14,7 @@ const c = @cImport({
 pub const Actor = struct {
   thread_id: c.pthread_t,
   client: *ipc.Client,
-  payload: CommandVerb,
+  payload: *CommandVerb,
   recvback: fn(*Command) void
 };
 
@@ -27,6 +27,7 @@ pub const CommandVerb = packed union {
   guiColumnConfig: *config.ColumnInfo,
   login: *config.LoginInfo,
   http: *config.HttpInfo,
+  oauth: *config.HttpInfo,
   column: *config.ColumnInfo,
   idle: *u16
 };
@@ -40,7 +41,7 @@ pub fn init(allocator: *Allocator) !void {
 
 pub fn create(allocator: *Allocator,
               start: extern fn (?*c_void) ?*c_void,
-              payload: CommandVerb,
+              payload: *CommandVerb,
               recvback: fn(*Command) void
               ) !*Actor {
   var actor = try allocator.create(Actor);
