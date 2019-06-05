@@ -68,7 +68,10 @@ pub fn mastodonExpandUrl(host: []const u8, allocator: *Allocator) []const u8 {
     url.append("https://") catch unreachable;
   }
   url.append(filteredHost) catch unreachable;
-  url.append("/api/v1/timelines/public") catch unreachable;
+  if(std.mem.indexOf(u8, url.toSliceConst(), "/api/v1/timelines")) |idx| {
+  } else {
+    url.append("/api/v1/timelines/public") catch unreachable;
+  }
   return url.toSliceConst();
 }
 
