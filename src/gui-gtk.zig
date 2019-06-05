@@ -431,6 +431,10 @@ extern fn column_config_oauth(selfptr: *c_void) void {
   oauth_url_buf.append("https://") catch unreachable;
   oauth_url_buf.append(column.main.config.url) catch unreachable;
   oauth_url_buf.append("/oauth/authorize") catch unreachable;
+  oauth_url_buf.append("?client_id=abc") catch unreachable;
+  oauth_url_buf.append("&amp;scope=read+write") catch unreachable;
+  oauth_url_buf.append("&amp;response_type=code") catch unreachable;
+  oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
   var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>",
     oauth_url_buf.toSliceConst(), column.main.config.url) catch unreachable;
   var cLabel = util.sliceToCstr(allocator, markup);
