@@ -6,6 +6,7 @@ const Allocator = std.mem.Allocator;
 const thread = @import("./thread.zig");
 const util = @import("./util.zig");
 const config = @import("./config.zig");
+const simple_buffer = @import("./simple_buffer.zig");
 
 const c = @cImport({
   @cInclude("gtk/gtk.h");
@@ -159,6 +160,9 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
                                         c"column_config.remove",
                                         @ptrCast(?extern fn() void, column_remove_btn));
+  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+                                        c"column_config.oauth",
+                                        @ptrCast(?extern fn() void, column_config_oauth));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_connect_signals(colNew.builder, null);
   c.gtk_widget_show_all(container);
@@ -412,10 +416,29 @@ extern fn column_remove_btn(selfptr: *c_void) void {
   thread.signal(myActor, command);
 }
 
+extern fn column_config_oauth(selfptr: *c_void) void {
+  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
+  var column: *Column = findColumnByConfigWindow(self);
+
+  warn("column_config_oauth");
+  var oauth_box = builder_get_widget(column.builder, c"column_config_oauth_box");
+  var host_box = builder_get_widget(column.builder, c"column_config_host_box");
+  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
+
+  var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
+  var markupBuf = allocator.alloc(u8, 512) catch unreachable;
+  var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+  oauth_url_buf.append("https://") catch unreachable;
+  oauth_url_buf.append(column.main.config.url) catch unreachable;
+  oauth_url_buf.append("/oauth/authorize") catch unreachable;
+  var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>",
+    oauth_url_buf.toSliceConst(), column.main.config.url) catch unreachable;
+  var cLabel = util.sliceToCstr(allocator, markup);
+  c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
+}
+
 extern fn column_config_done(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
-  var name = c.g_type_name_from_instance(@ptrCast([*c]c.GTypeInstance, self));
-  var namelen = std.mem.len(u8, name);
   var column: *Column = findColumnByConfigWindow(self);
 
   var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
