@@ -1,3 +1,4 @@
+```
 ## mastodon/fediverse desktop reader
 
 * Any number of columns
@@ -35,7 +36,7 @@ $ curl 'https://mastodon..example/oauth/token' -d 'client_id=...' -d 'client_sec
 
 ### set in config.json
 Put the access_token value in the token field of config.json
-```
+
     "title" : "youruser@mastodon.example",
     "url" : "https://mastodon.example/api/v1/timelines/home",
     "token" : "token here - see readme",
