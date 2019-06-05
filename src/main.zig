@@ -91,23 +91,27 @@ fn netback(command: *thread.Command) void {
     column.refreshing = false;
     column.config.last_check = config.now();
     if(command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
-      const tree = command.verb.http.tree;
-      var rootJsonType = @TagType(std.json.Value)(tree.root);
-      if(rootJsonType == .Array) {
-        column.inError = false;
-        for(tree.root.Array.toSlice()) |jsonValue| {
-          const item = jsonValue.Object;
-          var id = item.get("id").?.value.String;
-          if(util.listContains(config.TootType, column.toots, item)) {
-            //warn("sorted list dupe! {} \n", id);
-          } else {
-            util.listSortedInsert(config.TootType, &column.toots, item, allocator);
+      if(command.verb.http.body.len > 0) {
+        const tree = command.verb.http.tree;
+        var rootJsonType = @TagType(std.json.Value)(tree.root);
+        if(rootJsonType == .Array) {
+          column.inError = false;
+          for(tree.root.Array.toSlice()) |jsonValue| {
+            const item = jsonValue.Object;
+            var id = item.get("id").?.value.String;
+            if(util.listContains(config.TootType, column.toots, item)) {
+              //warn("sorted list dupe! {} \n", id);
+            } else {
+              util.listSortedInsert(config.TootType, &column.toots, item, allocator);
+            }
+          }
+        } else if(rootJsonType == .Object) {
+          if(tree.root.Object.get("error")) |err| {
+            warn("netback json err {} \n", err.value.String);
           }
         }
-      } else if(rootJsonType == .Object) {
-        if(tree.root.Object.get("error")) |err| {
-          warn("netback json err {} \n", err.value.String);
-        }
+      } else { // empty body
+        column.inError = true;
       }
     } else {
       column.inError = true;

@@ -251,7 +251,7 @@ pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
   } else if (http.response_code >= 300 and http.response_code < 400) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"redirect");
   } else if (http.response_code >= 400 and http.response_code < 500) {
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"permission err");
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"404 err");
   } else if (http.response_code >= 500 and http.response_code < 600) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"server err");
   } else if (http.response_code >= 1000 and http.response_code < 1100) {

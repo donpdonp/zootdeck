@@ -33,20 +33,21 @@ pub extern fn go(data: ?*c_void) ?*c_void {
   verb.http = actor.payload.http;
   command.verb = verb;
 
-  var res = httpget(actor.payload.http);
-  if (res) |body| {
+  if (httpget(actor.payload.http)) |body| {
     const maxlen = if(body.len > 400) 400 else body.len;
     warn("net http byte {} bytes {}\n", body.len, body[0..maxlen]);
     actor.payload.http.body = body;
-    var json_parser = std.json.Parser.init(allocator, false);
-    if(json_parser.parse(body)) |value_tree| {
-      actor.payload.http.tree = value_tree;
-    } else |err| {
-      warn("net json err {}\n", err);
-      actor.payload.http.response_code = 1000;
+    if(body.len > 0) {
+      var json_parser = std.json.Parser.init(allocator, false);
+      if(json_parser.parse(body)) |value_tree| {
+        actor.payload.http.tree = value_tree;
+      } else |err| {
+        warn("net json err {}\n", err);
+        actor.payload.http.response_code = 1000;
+      }
     }
   } else |err| {
-      warn("net thread err return {}\n", err);
+      warn("net thread http err {}\n", err);
   }
   thread.signal(actor, command);
   return null;
