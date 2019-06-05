@@ -72,6 +72,10 @@ pub fn mastodonExpandUrl(host: []const u8, allocator: *Allocator) []const u8 {
   } else {
     url.append("/api/v1/timelines/public") catch unreachable;
   }
+  if(std.mem.indexOf(u8, url.toSliceConst(), "/@")) |idx| {
+    url.resize(idx) catch unreachable;
+    url.append("/api/v1/timelines/home") catch unreachable;
+  }
   return url.toSliceConst();
 }
 

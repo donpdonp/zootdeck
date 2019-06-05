@@ -62,6 +62,8 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_URL, cstr.ptr);
 
         var zero: c_long = 0;
+        var seconds: c_long = 30;
+        _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_CONNECTTIMEOUT, seconds);
         _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_SSL_VERIFYPEER, zero);
         _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_SSL_VERIFYHOST, zero);
         _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_WRITEFUNCTION, curl_write);
@@ -87,6 +89,9 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
           req.response_code = http_status;
           warn("net curl OK {}\n", http_status);
           return body_buffer.toOwnedSlice();
+        } else if (res == c.CURLcode.CURLE_OPERATION_TIMEDOUT) {
+          req.response_code = 2200;
+          return NetError.Curl;
         } else {
           const err_cstr = c.curl_easy_strerror(res);
           warn("curl ERR {} {}\n", res, std.cstr.toSliceConst(err_cstr));

@@ -251,13 +251,21 @@ pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
   } else if (http.response_code >= 300 and http.response_code < 400) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"redirect");
   } else if (http.response_code >= 400 and http.response_code < 500) {
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"404 err");
+    if(http.response_code == 401) {
+      c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"token bad");
+    } else if(http.response_code == 404) {
+      c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"404 err");
+    } else {
+      c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"4xx err");
+    }
   } else if (http.response_code >= 500 and http.response_code < 600) {
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"server err");
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"5xx err");
   } else if (http.response_code >= 1000 and http.response_code < 1100) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"json err");
   } else if (http.response_code == 2100) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"DNS err");
+  } else if (http.response_code == 2200) {
+    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"timeout err");
   }
 }
 
