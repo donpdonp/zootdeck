@@ -30,6 +30,7 @@ pub fn build(b: *Builder) void {
   exe.addLibPath("../glfw/build/src");
 
   // gtk3
+  exe.linkSystemLibrary("glib-2.0");
   exe.linkSystemLibrary("gdk-3");
   exe.linkSystemLibrary("gtk-3");
   exe.linkSystemLibrary("gobject-2.0");

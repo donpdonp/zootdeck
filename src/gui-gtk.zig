@@ -321,6 +321,12 @@ pub fn makeTootBox(toot: config.TootType) [*c]c.GtkWidget {
   return tootbox;
 }
 
+fn escapeGtkString(str: []const u8) []const u8 {
+  const str_esc_null = c.g_markup_escape_text(str.ptr, @intCast(c_long, str.len));
+  const str_esc = util.cstrToSlice(allocator, str_esc_null);
+  return str_esc;
+}
+
 pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: ...) void {
   const buf = allocator.alloc(u8, 256) catch unreachable;
   const str = std.fmt.bufPrint(buf, fmt, args) catch unreachable;
