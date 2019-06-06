@@ -235,10 +235,8 @@ fn guiback(command: *thread.Command) void {
     settings.columns.append(colInfo) catch unreachable;
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;
-    var titleBuf = allocator.alloc(u8,256) catch unreachable;
-    var title = std.fmt.bufPrint(titleBuf, "{}{}", "Column #", settings.columns.count()) catch unreachable;
-    colInfo.config.title = title;
-    colInfo.config.url = "mastodon.com.example"[0..];
+    colInfo.config.title = ""[0..];
+    colInfo.config.url = "mastodon.example.com"[0..];
     colInfo.config.last_check = 0;
     gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
     warn("Settings PreWrite Columns count {}\n", settings.columns.len);

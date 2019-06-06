@@ -99,11 +99,6 @@ pub fn schedule(func: ?extern fn(*c_void) c_int, param: *c_void) void {
   _ = c.gdk_threads_add_idle(func, param);
 }
 
-fn show_column_config() void {
-  var column_config_window = builder_get_widget(myBuilder, c"column_config");
-  c.gtk_widget_show(column_config_window);
-}
-
 fn hide_column_config(column: *Column) void {
   c.gtk_widget_hide(column.config_window);
 }
@@ -144,12 +139,11 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   const footer = builder_get_widget(colNew.builder, c"column_footer");
   const config_icon = builder_get_widget(colNew.builder, c"column_config_icon");
   c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc,config_icon), 1, 0);
-  const label = builder_get_widget(colNew.builder, c"column_top_label");
-  const labele = builder_get_widget(colNew.builder, c"column_top_eventbox");
-  var drag = c.gtk_gesture_drag_new(labele);
-  const topline_null: []u8 = std.cstr.addNullByte(allocator, colNew.main.config.title) catch unreachable;
-  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), topline_null.ptr);
+
+  refreshColumnUI(colNew);
+
   c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, container), colNew.columnbox, 1, 1, 0);
+
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
                                         c"column.title",
                                         @ptrCast(?extern fn() void, column_top_label_title));
@@ -174,6 +168,18 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   _ = c.gtk_builder_add_callback_symbol(colNew.builder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_connect_signals(colNew.builder, null);
   c.gtk_widget_show_all(container);
+}
+
+
+pub fn refreshColumnUI(column: *Column) void {
+  const label = builder_get_widget(column.builder, c"column_top_label");
+  var topline_null: []u8 = undefined;
+  if(column.main.config.title.len > 0) {
+    topline_null = std.cstr.addNullByte(allocator, column.main.config.title) catch unreachable;
+  } else {
+    topline_null = std.cstr.addNullByte(allocator, column.main.config.url) catch unreachable;
+  }
+  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), topline_null.ptr);
 }
 
 pub extern fn column_remove_schedule(in: *c_void) c_int {
@@ -430,6 +436,8 @@ extern fn column_config_oauth(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
 
+  columnConfigUpdate(column);
+
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
@@ -485,13 +493,11 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
 }
 
-extern fn column_config_done(selfptr: *c_void) void {
-  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
-  var column: *Column = findColumnByConfigWindow(self);
-
+pub fn columnConfigUpdate(column: *Column) void {
   var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
   var cToken = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
-  column.main.config.token = util.cstrToSlice(allocator, cToken); // edit in guithread--
+  const token = util.cstrToSlice(allocator, cToken);
+  column.main.config.token = if (token.len > 0) token else null; // edit in guithread--
 
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
@@ -500,9 +506,15 @@ extern fn column_config_done(selfptr: *c_void) void {
   var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
   var cTitle = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, title_entry));
   column.main.config.title = util.cstrToSlice(allocator, cTitle); // edit in guithread--
+}
 
-  const label = builder_get_widget(column.builder, c"column_top_label");
-  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), cTitle);
+extern fn column_config_done(selfptr: *c_void) void {
+  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
+  var column: *Column = findColumnByConfigWindow(self);
+
+  columnConfigUpdate(column);
+
+  refreshColumnUI(column);
   hide_column_config(column);
 
   // signal crazy

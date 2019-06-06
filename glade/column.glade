@@ -182,8 +182,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox">
-            <property name="visible">True</property>
+          <object class="GtkBox" id="column_config_title_box">
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
