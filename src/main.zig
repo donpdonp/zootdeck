@@ -140,6 +140,21 @@ fn oauthtokenback(command: *thread.Command) void {
   warn("*oauthtokenback tid {x} {}\n", thread.self(), command);
   const column = command.verb.http.column;
   const http = command.verb.http;
+  if (http.response_code >= 200 and http.response_code < 300) {
+    const tree = command.verb.http.tree;
+    var rootJsonType = @TagType(std.json.Value)(tree.root);
+    if (rootJsonType == .Object) {
+      if(tree.root.Object.get("access_token")) |cid| {
+        column.config.token = cid.value.String;
+        config.writefile(settings, "config.json");
+        column.config.last_check = 0;
+      }
+    } else {
+      warn("*oauthtokenback json err body {}\n", http.body);
+    }
+  } else {
+    warn("*oauthtokenback net err {}\n", http.response_code);
+  }
 }
 
 fn oauthback(command: *thread.Command) void {
