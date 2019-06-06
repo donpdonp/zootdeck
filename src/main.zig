@@ -72,6 +72,7 @@ fn columnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = util.mastodonExpandUrl(column.config.url, allocator);
+  httpInfo.verb = .get;
   httpInfo.token = null;
   if(column.config.token) |tokenStr| {
     httpInfo.token = tokenStr;
@@ -85,34 +86,51 @@ fn columnget(column: *config.ColumnInfo) void {
 }
 
 fn oauthcolumnget(column: *config.ColumnInfo) void {
-  var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
-  oauth_url_buf.append("https://") catch unreachable;
-  oauth_url_buf.append(column.config.url) catch unreachable;
-  oauth_url_buf.append("/api/v1/apps") catch unreachable;
-  oauth_url_buf.append("?client_name=zootdeck") catch unreachable;
-  oauth_url_buf.append("&amp;scope=read+write") catch unreachable;
-  oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = oauth_url_buf.toSliceConst();
+
+  var urlBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+  urlBuf.append("https://") catch unreachable;
+  urlBuf.append(column.config.url) catch unreachable;
+  urlBuf.append("/api/v1/apps") catch unreachable;
+  httpInfo.url = urlBuf.toSliceConst();
+  var postBodyBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+  postBodyBuf.append("client_name=zootdeck") catch unreachable;
+  postBodyBuf.append("&scope=read+write") catch unreachable;
+  postBodyBuf.append("&redirect_uris=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
+  httpInfo.post_body = postBodyBuf.toSliceConst();
   httpInfo.token = null;
-  if(column.config.token) |tokenStr| {
-    httpInfo.token = tokenStr;
-  }
   httpInfo.column = column;
   httpInfo.response_code = 0;
-  verb.oauth = httpInfo;
+  httpInfo.verb = .post;
+  verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-  var netthread = thread.create(allocator, net.go, verb, netback) catch unreachable;
+  var netthread = thread.create(allocator, net.go, verb, oauthback) catch unreachable;
 //  defer thread.destroy(allocator, netthread);
+}
+
+fn oauthback(command: *thread.Command) void {
+  warn("*oauthback tid {x} {}\n", thread.self(), command);
+  const column = command.verb.http.column;
+  const http = command.verb.http;
+  const tree = command.verb.http.tree;
+  var rootJsonType = @TagType(std.json.Value)(tree.root);
+  if (rootJsonType == .Object) {
+    if(tree.root.Object.get("client_id")) |cid| {
+      column.oauthClientId = cid.value.String;
+    }
+    if(tree.root.Object.get("client_secret")) |cid| {
+      column.oauthClientSecret = cid.value.String;
+    }
+    warn("*oauthback client id {} secret {}\n", column.oauthClientId, column.oauthClientSecret);
+  } else {
+    warn("*oauthback json err body {}\n", http.body);
+  }
 }
 
 fn netback(command: *thread.Command) void {
   warn("*netback tid {x} {}\n", thread.self(), command);
   if (command.id == 1) {
-    switch(command.verb) {
-      else => warn("else\n")
-    }
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
     var column = command.verb.http.column;
     column.refreshing = false;

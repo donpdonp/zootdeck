@@ -60,7 +60,9 @@ pub const LoginInfo = struct {
 
 pub const HttpInfo = struct {
   url: []const u8,
+  verb: enum { get, post},
   token: ?[]const u8,
+  post_body: []const u8,
   body: []const u8,
   response_code: c_long,
   tree: std.json.ValueTree,

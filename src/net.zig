@@ -54,7 +54,7 @@ pub extern fn go(data: ?*c_void) ?*c_void {
 }
 
 pub fn httpget(req: *config.HttpInfo) ![]const u8 {
-    warn("http get {} token {}\n", req.url, req.token);
+    warn("http {} {} {}\n", req.verb, req.url, if(req.token) |tk| "token" else "");
     _ = c.curl_global_init(0);
     var curl = c.curl_easy_init();
     if (curl != null) {
@@ -74,13 +74,23 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         var slist = @intToPtr([*c]c.curl_slist, 0); // 0= new list
         slist = c.curl_slist_append(slist, c"Accept: application/json");
         if(req.token) |token| {
-          warn("token {}\n", token);
+          warn("Authorization: {}\n", token);
           var authbuf = allocator.alloc(u8, 256) catch unreachable;
           var authstr = std.fmt.bufPrint(authbuf, "Authorization: bearer {}", token) catch unreachable;
           var cauthstr = util.sliceToCstr(allocator, authstr);
           slist = c.curl_slist_append(slist, cauthstr);
         }
         _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_HTTPHEADER, slist);
+
+        switch(req.verb) {
+          .get => _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_HTTPGET, c_long(1)),
+          .post => {
+            _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_POST, c_long(1));
+            const post_body_c: [*c]const u8 = util.sliceToCstr(allocator, req.post_body);
+            _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_POSTFIELDS, post_body_c);
+            warn("post body: {}\n", req.post_body);
+          }
+        }
 
         var res = c.curl_easy_perform(curl);
         if (res == c.CURLcode.CURLE_OK) {
