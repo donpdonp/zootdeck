@@ -22,3 +22,6 @@
 .column_config_url_label { padding-top: 1em }
 .column_config_url_entry {  }
 .column_config_remove { margin-top: 1em }
+
+.column_top_label { font-weight: bold; padding: 0.2em 0; }
+

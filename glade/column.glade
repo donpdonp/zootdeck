@@ -21,6 +21,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Top</property>
+                <style>
+                  <class name="column_top_label"/>
+                </style>
               </object>
             </child>
           </object>
