@@ -120,8 +120,8 @@ pub extern fn show_main_schedule(in: *c_void) c_int {
   return 0;
 }
 
-pub extern fn column_oauth_url_schedule(in: *c_void) c_int {
-  add_column(@ptrCast(*config.ColumnInfo, @alignCast(8,in)));
+pub extern fn column_config_oauth_url_schedule(in: *c_void) c_int {
+  column_config_oauth_url(@ptrCast(*config.ColumnInfo, @alignCast(8,in)));
   return 0;
 }
 
@@ -443,7 +443,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
 
   var oauth_box = builder_get_widget(column.builder, c"column_config_oauth_box");
   var host_box = builder_get_widget(column.builder, c"column_config_host_box");
-  cgtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
+  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
 
   var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
   var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
@@ -451,7 +451,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   oauth_url_buf.append(column.main.config.url) catch unreachable;
   oauth_url_buf.append("/oauth/authorize") catch unreachable;
   oauth_url_buf.append("?client_id=") catch unreachable;
-  oauth_url_buf.append(column.main.config.oauthClientId) catch unreachable;
+  oauth_url_buf.append(column.main.oauthClientId.?) catch unreachable;
   oauth_url_buf.append("&amp;scope=read+write") catch unreachable;
   oauth_url_buf.append("&amp;response_type=code") catch unreachable;
   oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;

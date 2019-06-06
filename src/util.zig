@@ -58,7 +58,7 @@ pub fn listCount(comptime T: type, list: std.LinkedList(T)) usize {
   return count;
 }
 
-pub fn mastodonExpandUrl(host: []const u8, allocator: *Allocator) []const u8 {
+pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []const u8 {
   var url = Buffers.SimpleU8.initSize(allocator, 0) catch unreachable;
   var filteredHost = host;
   if(filteredHost[filteredHost.len-1] == '/') {
@@ -68,13 +68,10 @@ pub fn mastodonExpandUrl(host: []const u8, allocator: *Allocator) []const u8 {
     url.append("https://") catch unreachable;
   }
   url.append(filteredHost) catch unreachable;
-  if(std.mem.indexOf(u8, url.toSliceConst(), "/api/v1/timelines")) |idx| {
+  if(home) {
+    url.append("/api/v1/timelines/home") catch unreachable;
   } else {
     url.append("/api/v1/timelines/public") catch unreachable;
-  }
-  if(std.mem.indexOf(u8, url.toSliceConst(), "/@")) |idx| {
-    url.resize(idx) catch unreachable;
-    url.append("/api/v1/timelines/home") catch unreachable;
   }
   return url.toSliceConst();
 }

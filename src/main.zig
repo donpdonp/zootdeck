@@ -71,7 +71,7 @@ fn hello() void {
 fn columnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = util.mastodonExpandUrl(column.config.url, allocator);
+  httpInfo.url = util.mastodonExpandUrl(column.config.url, if(column.config.token) |tk| true else false, allocator);
   httpInfo.verb = .get;
   httpInfo.token = null;
   if(column.config.token) |tokenStr| {
@@ -96,7 +96,7 @@ fn oauthcolumnget(column: *config.ColumnInfo) void {
   httpInfo.url = urlBuf.toSliceConst();
   var postBodyBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
   postBodyBuf.append("client_name=zootdeck") catch unreachable;
-  postBodyBuf.append("&scope=read+write") catch unreachable;
+  postBodyBuf.append("&scopes=read+write") catch unreachable;
   postBodyBuf.append("&redirect_uris=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
   httpInfo.post_body = postBodyBuf.toSliceConst();
   httpInfo.token = null;
@@ -113,18 +113,23 @@ fn oauthback(command: *thread.Command) void {
   warn("*oauthback tid {x} {}\n", thread.self(), command);
   const column = command.verb.http.column;
   const http = command.verb.http;
-  const tree = command.verb.http.tree;
-  var rootJsonType = @TagType(std.json.Value)(tree.root);
-  if (rootJsonType == .Object) {
-    if(tree.root.Object.get("client_id")) |cid| {
-      column.oauthClientId = cid.value.String;
+  if (http.response_code >= 200 and http.response_code < 300) {
+    const tree = command.verb.http.tree;
+    var rootJsonType = @TagType(std.json.Value)(tree.root);
+    if (rootJsonType == .Object) {
+      if(tree.root.Object.get("client_id")) |cid| {
+        column.oauthClientId = cid.value.String;
+      }
+      if(tree.root.Object.get("client_secret")) |cid| {
+        column.oauthClientSecret = cid.value.String;
+      }
+      warn("*oauthback client id {} secret {}\n", column.oauthClientId, column.oauthClientSecret);
+      gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*c_void, column));
+    } else {
+      warn("*oauthback json err body {}\n", http.body);
     }
-    if(tree.root.Object.get("client_secret")) |cid| {
-      column.oauthClientSecret = cid.value.String;
-    }
-    warn("*oauthback client id {} secret {}\n", column.oauthClientId, column.oauthClientSecret);
   } else {
-    warn("*oauthback json err body {}\n", http.body);
+    warn("*oauthback net err {}\n", http.response_code);
   }
 }
 
@@ -214,7 +219,7 @@ fn guiback(command: *thread.Command) void {
   if (command.id == 6) { //oauth
     const column = command.verb.column;
     if (column.oauthClientId) |clientId| {
-      gui.schedule(gui.column_oauth_url_schedule, @ptrCast(*c_void, column));
+      gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*c_void, column));
     } else {
       oauthcolumnget(column);
     }
