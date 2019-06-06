@@ -28,6 +28,7 @@ pub const CommandVerb = packed union {
   login: *config.LoginInfo,
   http: *config.HttpInfo,
   column: *config.ColumnInfo,
+  auth: *config.ColumnAuth,
   idle: *u16
 };
 

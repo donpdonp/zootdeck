@@ -168,6 +168,9 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
                                         c"column_config.oauth",
                                         @ptrCast(?extern fn() void, column_config_oauth));
+  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+                                        c"column_config.activate",
+                                        @ptrCast(?extern fn() void, column_config_oauth_activate));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_connect_signals(colNew.builder, null);
   c.gtk_widget_show_all(container);
@@ -432,6 +435,26 @@ extern fn column_config_oauth(selfptr: *c_void) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   verb.column = column.main;
   command.id = 6;
+  command.verb = verb;
+  thread.signal(myActor, command);
+}
+
+extern fn column_config_oauth_activate(selfptr: *c_void) void {
+  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
+  var column: *Column = findColumnByConfigWindow(self);
+
+  var token_entry = builder_get_widget(column.builder, c"column_config_authorization_entry");
+  const cAuthorization = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
+  const authorization = util.cstrToSlice(allocator, cAuthorization);
+
+  // signal crazy
+  var command = allocator.create(thread.Command) catch unreachable;
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var auth = allocator.create(config.ColumnAuth) catch unreachable;
+  auth.code = authorization;
+  auth.column = column.main;
+  verb.auth = auth;
+  command.id = 7;
   command.verb = verb;
   thread.signal(myActor, command);
 }

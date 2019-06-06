@@ -109,6 +109,39 @@ fn oauthcolumnget(column: *config.ColumnInfo) void {
 //  defer thread.destroy(allocator, netthread);
 }
 
+fn oauthtokenget(column: *config.ColumnInfo, code: []const u8) void {
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+  var urlBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+  urlBuf.append("https://") catch unreachable;
+  urlBuf.append(column.config.url) catch unreachable;
+  urlBuf.append("/oauth/token") catch unreachable;
+  httpInfo.url = urlBuf.toSliceConst();
+  var postBodyBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+  postBodyBuf.append("client_id=") catch unreachable;
+  postBodyBuf.append(column.oauthClientId.?) catch unreachable;
+  postBodyBuf.append("&client_secret=") catch unreachable;
+  postBodyBuf.append(column.oauthClientSecret.?) catch unreachable;
+  postBodyBuf.append("&grant_type=authorization_code") catch unreachable;
+  postBodyBuf.append("&code=") catch unreachable;
+  postBodyBuf.append(code) catch unreachable;
+  postBodyBuf.append("&redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
+  httpInfo.post_body = postBodyBuf.toSliceConst();
+  httpInfo.token = null;
+  httpInfo.column = column;
+  httpInfo.response_code = 0;
+  httpInfo.verb = .post;
+  verb.http = httpInfo;
+  gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
+  var netthread = thread.create(allocator, net.go, verb, oauthtokenback) catch unreachable;
+}
+
+fn oauthtokenback(command: *thread.Command) void {
+  warn("*oauthtokenback tid {x} {}\n", thread.self(), command);
+  const column = command.verb.http.column;
+  const http = command.verb.http;
+}
+
 fn oauthback(command: *thread.Command) void {
   warn("*oauthback tid {x} {}\n", thread.self(), command);
   const column = command.verb.http.column;
@@ -223,6 +256,11 @@ fn guiback(command: *thread.Command) void {
     } else {
       oauthcolumnget(column);
     }
+  }
+  if (command.id == 7) { //oauth activate
+    const auth = command.verb.auth.*;
+    warn("oauth authorization {}\n", auth.code);
+    oauthtokenget(auth.column, auth.code);
   }
 }
 

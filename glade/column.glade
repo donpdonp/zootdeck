@@ -296,7 +296,42 @@
           </packing>
         </child>
         <child>
-          <placeholder/>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">oauth token</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="column_config_token_entry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">•</property>
+                <signal name="activate" handler="column_config.done" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
         </child>
         <child>
           <object class="GtkButton" id="column_config_remove_button">
@@ -355,10 +390,10 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="column_config_token_entry">
+          <object class="GtkEntry" id="column_config_authorization_entry">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="activate" handler="column_config.done" swapped="no"/>
+            <signal name="activate" handler="column_config.activate" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>

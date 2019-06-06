@@ -69,6 +69,10 @@ pub const HttpInfo = struct {
   column: *ColumnInfo
 };
 
+pub const ColumnAuth = struct {
+  code: []const u8,
+  column: *ColumnInfo
+};
 
 const ConfigError = error{MissingParams};
 
