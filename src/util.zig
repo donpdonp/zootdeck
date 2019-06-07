@@ -136,7 +136,6 @@ pub fn htmlEntityDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
   if (previousStrEndMark <= str.len) {
     try newStr.append(str[previousStrEndMark..]);
   }
-  warn("html entity {}\n", newStr.toSliceConst());
   return newStr.toSliceConst();
 }
 

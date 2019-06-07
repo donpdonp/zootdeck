@@ -299,13 +299,13 @@ pub fn makeTootBox(toot: config.TootType) [*c]c.GtkWidget {
   const id = toot.get("id").?.value.String;
   const content = toot.get("content").?.value.String;
   var jDecode = util.jsonStrDecode(content, allocator)  catch unreachable;
-  //var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
-  const html_trim = util.htmlTagStrip(jDecode, allocator) catch unreachable;
+  var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
+  const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
+  var cText = util.sliceToCstr(allocator, html_trim);
 
   const toottext_label = builder_get_widget(builder, c"toot_text");
   //c.gtk_label_set_max_width_chars(@ptrCast([*c]c.GtkLabel, toottext_label), 10);
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
-  var cText = util.sliceToCstr(allocator, html_trim);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
   const author_name = toot.get("account").?.value.Object.get("display_name").?.value.String;
