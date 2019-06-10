@@ -4,7 +4,7 @@ const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
 const util = @import("./util.zig");
-//const SortedList = @import("./sorted_list.zig");
+const toot_list = @import("./toot_list.zig");
 var allocator: *Allocator = undefined;
 
 const c = @cImport({
@@ -27,15 +27,9 @@ pub const ConfigFile = struct {
   columns: std.ArrayList(*ColumnConfig)
 };
 
-pub const TootType = std.hash_map.HashMap([]const u8,
-                                          std.json.Value,
-                                          std.mem.hash_slice_u8,
-                                          std.mem.eql_slice_u8);
-pub const TootList = std.LinkedList(TootType);
-
 pub const ColumnInfo = struct {
   config: *ColumnConfig,
-  toots: TootList,
+  toots: toot_list.TootList,
   refreshing: bool,
   inError: bool,
   oauthClientId: ?[]const u8,
@@ -114,8 +108,7 @@ pub fn read(json: []const u8) !Settings {
     for(columns.value.Array.toSlice()) |value| {
       var colInfo = allocator.create(ColumnInfo) catch unreachable;
       colInfo.reset();
-      colInfo.toots = TootList.init();
-      warn("colInfo config create/reste check toots {*}\n", &colInfo.toots);
+      colInfo.toots = toot_list.TootList.init();
       var colconfig = allocator.create(ColumnConfig) catch unreachable;
       colInfo.config = colconfig;
       var title = value.Object.get("title").?.value.String;

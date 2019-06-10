@@ -7,6 +7,7 @@ const thread = @import("./thread.zig");
 const util = @import("./util.zig");
 const config = @import("./config.zig");
 const simple_buffer = @import("./simple_buffer.zig");
+const toot_lib = @import("./toot.zig");
 
 const c = @cImport({
   @cInclude("gtk/gtk.h");
@@ -235,7 +236,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 
 pub fn update_column_toots(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
-                util.listCount(config.TootType, column.main.toots),
+                util.listCount(toot_lib.TootType, column.main.toots),
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
@@ -258,7 +259,7 @@ pub fn update_column_toots(column: *Column) void {
   }
   c.gtk_widget_show(column_toot_zone);
 
-  const count = util.listCount(config.TootType, column.main.toots);
+  const count = util.listCount(toot_lib.TootType, column.main.toots);
   const countBuf = allocator.alloc(u8, 256) catch unreachable;
   const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);
@@ -299,7 +300,7 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
-pub fn makeTootBox(toot: config.TootType) [*c]c.GtkWidget {
+pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 

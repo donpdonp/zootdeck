@@ -341,7 +341,7 @@ pub fn structToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator:
   ptr += ramSetAt(ram, ptr, "{\n");
   inline for (info.Struct.fields) |*field_info, idx| {
     const name = field_info.name;
-    warn("struct field {} name {}\n", idx, name);
+    //warn("struct field {} name {}\n", idx, name);
     ptr += ramSetAt(ram, ptr, space(depth, allocator));
     ptr += ramSetAt(ram, ptr, "\"" ++ name ++ "\" : ");
     var fieldVal: field_info.field_type = @field(value, name);
