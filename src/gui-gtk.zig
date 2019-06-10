@@ -485,10 +485,6 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
 }
 
 pub fn columnConfigWriteGui(column: *Column) void {
-  var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
-  var cTitle = util.sliceToCstr(allocator, column.main.config.title);
-  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, title_entry), cTitle);
-
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = util.sliceToCstr(allocator, column.main.config.url);
   c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
@@ -505,18 +501,22 @@ pub fn columnConfigWriteGui(column: *Column) void {
 }
 
 pub fn columnConfigReadGui(column: *Column) void {
-  var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
-  var cTitle = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, title_entry));
-  column.main.config.title = util.cstrToSliceCopy(allocator, cTitle); // edit in guithread--
 
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
-  column.main.config.url = util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
+  const newUrl =  util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
+  if(std.mem.compare(u8, column.main.config.url, newUrl) != std.mem.Compare.Equal) {
+    // host change
+    column.main.config.url = newUrl;
 
-  // var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
-  // var cToken = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
-  // const token = util.cstrToSlice(allocator, cToken);
-  // column.main.config.token = if (token.len > 0) token else null; // edit in guithread--
+    // signal crazy
+    var command = allocator.create(thread.Command) catch unreachable;
+    var verb = allocator.create(thread.CommandVerb) catch unreachable;
+    verb.column = column.main;
+    command.id = 8;
+    command.verb = verb;
+    thread.signal(myActor, command);
+  }
 
 }
 
@@ -532,7 +532,7 @@ extern fn column_config_done(selfptr: *c_void) void {
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
-  verb.guiColumnConfig = column.main;
+  verb.column = column.main;
   command.id = 4;
   command.verb = verb;
   thread.signal(myActor, command);

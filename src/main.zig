@@ -243,8 +243,8 @@ fn guiback(command: *thread.Command) void {
     config.writefile(settings, "config.json");
   }
   if (command.id == 4) { // config done
-    warn("gui col config {}\n", command.verb.guiColumnConfig.config.title);
-    const column = command.verb.guiColumnConfig;
+    warn("gui col config {}\n", command.verb.column.config.title);
+    const column = command.verb.column;
     column.inError = false;
     column.config.last_check = 0;
     config.writefile(settings, "config.json");
@@ -274,6 +274,9 @@ fn guiback(command: *thread.Command) void {
     const auth = command.verb.auth.*;
     warn("oauth authorization {}\n", auth.code);
     oauthtokenget(auth.column, auth.code);
+  }
+  if (command.id == 8) { //column host change
+    warn("COLUMN HOST CHANGE\n");
   }
 }
 

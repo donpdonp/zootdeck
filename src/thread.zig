@@ -24,7 +24,6 @@ pub const Command = packed struct {
 };
 
 pub const CommandVerb = packed union {
-  guiColumnConfig: *config.ColumnInfo,
   login: *config.LoginInfo,
   http: *config.HttpInfo,
   column: *config.ColumnInfo,
