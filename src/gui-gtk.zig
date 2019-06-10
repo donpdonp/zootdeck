@@ -149,7 +149,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
                                         @ptrCast(?extern fn() void, column_top_label_title));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
                                         c"column.config",
-                                        @ptrCast(?extern fn() void, column_top_label_config));
+                                        @ptrCast(?extern fn() void, column_config_btn));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
                                         c"column.reload",
                                         @ptrCast(?extern fn() void, column_reload));
@@ -160,10 +160,10 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
                                         c"column_config.remove",
                                         @ptrCast(?extern fn() void, column_remove_btn));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
-                                        c"column_config.oauth",
-                                        @ptrCast(?extern fn() void, column_config_oauth));
+                                        c"column_config.oauth_btn",
+                                        @ptrCast(?extern fn() void, column_config_oauth_btn));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder,
-                                        c"column_config.activate",
+                                        c"column_config.oauth_auth_enter",
                                         @ptrCast(?extern fn() void, column_config_oauth_activate));
   _ = c.gtk_builder_add_callback_symbol(colNew.builder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_connect_signals(colNew.builder, null);
@@ -334,28 +334,13 @@ pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: ...
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, label), cStr);
 }
 
-extern fn column_top_label_config(columnptr: ?*c_void) void {
+extern fn column_config_btn(columnptr: ?*c_void) void {
   var columnbox = @ptrCast([*c]c.GtkWidget, @alignCast(8,columnptr));
-  var name = c.g_type_name_from_instance(@ptrCast([*c]c.GTypeInstance, columnbox));
-  var namelen = std.mem.len(u8, name);
   var column: *Column = findColumnByBox(columnbox);
-  warn("column_top_label_config callback found {} {}\n", name[0..namelen], column.main.config.title);
+
+  columnConfigWriteGui(column);
+
   var column_config_window = builder_get_widget(column.builder, c"column_config");
-
-  var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
-  var cUrl = util.sliceToCstr(allocator, column.main.config.url);
-  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
-
-  var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
-  if(column.main.config.token) |tkn| {
-    var cToken = util.sliceToCstr(allocator, tkn);
-    c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, token_entry), cToken);
-  }
-
-  var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
-  var cTitle = util.sliceToCstr(allocator, column.main.config.title);
-  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, title_entry), cTitle);
-
   c.gtk_widget_show(column_config_window);
 }
 
@@ -438,11 +423,11 @@ extern fn column_remove_btn(selfptr: *c_void) void {
   thread.signal(myActor, command);
 }
 
-extern fn column_config_oauth(selfptr: *c_void) void {
+extern fn column_config_oauth_btn(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
 
-  columnConfigUpdate(column);
+  columnConfigReadGui(column);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
@@ -459,7 +444,7 @@ extern fn column_config_oauth_activate(selfptr: *c_void) void {
 
   var token_entry = builder_get_widget(column.builder, c"column_config_authorization_entry");
   const cAuthorization = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
-  const authorization = util.cstrToSlice(allocator, cAuthorization);
+  const authorization = util.cstrToSliceCopy(allocator, cAuthorization);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
@@ -499,26 +484,47 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
 }
 
-pub fn columnConfigUpdate(column: *Column) void {
-  var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
-  var cToken = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
-  const token = util.cstrToSlice(allocator, cToken);
-  column.main.config.token = if (token.len > 0) token else null; // edit in guithread--
+pub fn columnConfigWriteGui(column: *Column) void {
+  var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
+  var cTitle = util.sliceToCstr(allocator, column.main.config.title);
+  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, title_entry), cTitle);
+
+  var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
+  var cUrl = util.sliceToCstr(allocator, column.main.config.url);
+  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
+
+  var token_image = builder_get_widget(column.builder, c"column_config_token_image");
+  var icon_name: [*c]const u8 = undefined;
+  if(column.main.config.token) |tkn| {
+    icon_name = c"gtk-apply";
+  } else {
+    icon_name = c"gtk-close";
+  }
+  c.gtk_image_set_from_icon_name (@ptrCast([*c]c.GtkImage, token_image),
+                                  icon_name, c.GtkIconSize.GTK_ICON_SIZE_BUTTON);
+}
+
+pub fn columnConfigReadGui(column: *Column) void {
+  var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
+  var cTitle = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, title_entry));
+  column.main.config.title = util.cstrToSliceCopy(allocator, cTitle); // edit in guithread--
 
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
-  column.main.config.url = util.cstrToSlice(allocator, cUrl); // edit in guithread--
+  column.main.config.url = util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
 
-  var title_entry = builder_get_widget(column.builder, c"column_config_title_entry");
-  var cTitle = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, title_entry));
-  column.main.config.title = util.cstrToSlice(allocator, cTitle); // edit in guithread--
+  // var token_entry = builder_get_widget(column.builder, c"column_config_token_entry");
+  // var cToken = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
+  // const token = util.cstrToSlice(allocator, cToken);
+  // column.main.config.token = if (token.len > 0) token else null; // edit in guithread--
+
 }
 
 extern fn column_config_done(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
 
-  columnConfigUpdate(column);
+  columnConfigReadGui(column);
 
   refreshColumnUI(column);
   hide_column_config(column);
@@ -535,7 +541,7 @@ extern fn column_config_done(selfptr: *c_void) void {
 extern fn login_done() void {
   var login_entry = builder_get_widget(myBuilder, c"login_label");
   var ctext: [*c]const u8 = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, login_entry));
-  var text = util.cstrToSlice(allocator, ctext);
+  var text = util.cstrToSliceCopy(allocator, ctext);
   warn("login_done {}\n", text);
   thread.signal(myActor, &thread.Command{.id = 5,
                                         .verb = &thread.CommandVerb{

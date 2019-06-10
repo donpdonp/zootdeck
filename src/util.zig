@@ -13,7 +13,7 @@ pub fn sliceToCstr(allocator: *Allocator, str: []const u8) [*]u8 {
   return str_null.ptr;
 }
 
-pub fn cstrToSlice(allocator: *Allocator, cstr: [*c]const u8) []const u8 {
+pub fn cstrToSliceCopy(allocator: *Allocator, cstr: [*c]const u8) []const u8 {
   var i: usize = std.mem.len(u8, cstr);
   var ram = allocator.alloc(u8, i) catch unreachable;
   std.mem.copy(u8, ram, cstr[0..i]);
@@ -61,19 +61,24 @@ pub fn listCount(comptime T: type, list: std.LinkedList(T)) usize {
 pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []const u8 {
   var url = Buffers.SimpleU8.initSize(allocator, 0) catch unreachable;
   var filteredHost = host;
-  if(filteredHost[filteredHost.len-1] == '/') {
-    filteredHost = filteredHost[0..filteredHost.len-1];
-  }
-  if(std.mem.compare(u8, filteredHost[0..6], "https:") != std.mem.Compare.Equal) {
-    url.append("https://") catch unreachable;
-  }
-  url.append(filteredHost) catch unreachable;
-  if(home) {
-    url.append("/api/v1/timelines/home") catch unreachable;
+  if (filteredHost.len > 0) {
+    if(filteredHost[filteredHost.len-1] == '/') {
+      filteredHost = filteredHost[0..filteredHost.len-1];
+    }
+    if(std.mem.compare(u8, filteredHost[0..6], "https:") != std.mem.Compare.Equal) {
+      url.append("https://") catch unreachable;
+    }
+    url.append(filteredHost) catch unreachable;
+    if(home) {
+      url.append("/api/v1/timelines/home") catch unreachable;
+    } else {
+      url.append("/api/v1/timelines/public") catch unreachable;
+    }
+    return url.toSliceConst();
   } else {
-    url.append("/api/v1/timelines/public") catch unreachable;
+    warn("mastodonExpandUrl given empty host!\n");
+    return "";
   }
-  return url.toSliceConst();
 }
 
 pub fn htmlTagStrip(str: []const u8, allocator: *Allocator) ![]const u8 {
