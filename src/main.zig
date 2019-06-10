@@ -150,6 +150,7 @@ fn oauthtokenback(command: *thread.Command) void {
         column.config.token = cid.value.String;
         config.writefile(settings, "config.json");
         column.config.last_check = 0;
+        gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*c_void, column));
       }
     } else {
       warn("*oauthtokenback json err body {}\n", http.body);
@@ -279,6 +280,9 @@ fn guiback(command: *thread.Command) void {
   }
   if (command.id == 8) { //column host change
     const column = command.verb.column;
+    // partial reset
+    column.oauthClientId = null;
+    column.oauthClientSecret = null;
     gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, column));
     // throw out toots in the toot list not from the new host
 
@@ -295,7 +299,7 @@ fn heartback(nuthin: *thread.Command) void {
     if(since > refresh) {
       column_refresh(column);
     } else {
-      warn("col {} is fresh for {} sec\n", column.config.title, refresh-since);
+      warn("col {} is fresh for {} sec\n", column.config.url, refresh-since);
     }
   }
 }

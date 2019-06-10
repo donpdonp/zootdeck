@@ -45,6 +45,13 @@ pub const ColumnConfig = struct {
   url: []const u8,
   token: ?[]const u8,
   last_check: Time,
+
+  pub fn makeTitle(column: *ColumnConfig, alloc: *Allocator) []const u8 {
+    const addon = if(column.token) |tkn| "user@" else "";
+    const string = alloc.alloc(u8, column.url.len + addon.len) catch unreachable;
+    const out = std.fmt.bufPrint(string, "{}{}", addon, column.url) catch unreachable;
+    return out;
+  }
 };
 
 pub const LoginInfo = struct {

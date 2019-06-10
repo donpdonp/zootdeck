@@ -5,8 +5,11 @@ const Allocator = std.mem.Allocator;
 
 const Buffers = @import("./simple_buffer.zig");
 
+pub fn sliceAddNull(allocator: *Allocator, str: []const u8) []const u8 {
+  return std.cstr.addNullByte(allocator, str) catch unreachable;
+}
+
 pub fn sliceToCstr(allocator: *Allocator, str: []const u8) [*]u8 {
-  //const str_null: []u8 = std.cstr.addNullByte(allocator, colNew.config.title) catch unreachable;
   var str_null: []u8 = allocator.alloc(u8, str.len+1) catch unreachable;
   std.mem.copy(u8, str_null[0..], str);
   str_null[str.len] = 0;

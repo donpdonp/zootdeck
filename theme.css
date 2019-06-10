@@ -12,6 +12,8 @@
   color: #111;
 }
 
+.toot_date { background: #aaa; color: #666; }
+
 .net_error {
   background-color: red;
 }

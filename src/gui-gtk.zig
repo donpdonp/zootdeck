@@ -182,12 +182,8 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 pub fn update_column_ui(column: *Column) void {
   const label = builder_get_widget(column.builder, c"column_top_label");
   var topline_null: []u8 = undefined;
-  if(column.main.config.title.len > 0) {
-    topline_null = std.cstr.addNullByte(allocator, column.main.config.title) catch unreachable;
-  } else {
-    topline_null = std.cstr.addNullByte(allocator, column.main.config.url) catch unreachable;
-  }
-  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), topline_null.ptr);
+  const title_null = util.sliceAddNull(allocator, column.main.config.makeTitle(allocator));
+  c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), title_null.ptr);
 }
 
 pub extern fn column_remove_schedule(in: *c_void) c_int {
@@ -213,6 +209,15 @@ pub extern fn update_column_toots_schedule(in: *c_void) c_int {
   var columnMaybe = find_gui_column(c_column);
   if(columnMaybe) |column| {
     update_column_toots(column);
+  }
+  return 0;
+}
+
+pub extern fn update_column_config_oauth_finalize_schedule(in: *c_void) c_int {
+  const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
+  var columnMaybe = find_gui_column(c_column);
+  if(columnMaybe) |column| {
+    column_config_oauth_finalize(column);
   }
   return 0;
 }
@@ -442,26 +447,6 @@ extern fn column_config_oauth_btn(selfptr: *c_void) void {
   thread.signal(myActor, command);
 }
 
-extern fn column_config_oauth_activate(selfptr: *c_void) void {
-  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
-  var column: *Column = findColumnByConfigWindow(self);
-
-  var token_entry = builder_get_widget(column.builder, c"column_config_authorization_entry");
-  const cAuthorization = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
-  const authorization = util.cstrToSliceCopy(allocator, cAuthorization);
-
-  // signal crazy
-  var command = allocator.create(thread.Command) catch unreachable;
-  var verb = allocator.create(thread.CommandVerb) catch unreachable;
-  var auth = allocator.create(config.ColumnAuth) catch unreachable;
-  auth.code = authorization;
-  auth.column = column.main;
-  verb.auth = auth;
-  command.id = 7;
-  command.verb = verb;
-  thread.signal(myActor, command);
-}
-
 pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   warn("gui.column_config_oauth_url {}\n", colInfo.config.title);
   const container = builder_get_widget(myBuilder, c"ZootColumns");
@@ -486,6 +471,33 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
     oauth_url_buf.toSliceConst(), column.main.config.url) catch unreachable;
   var cLabel = util.sliceToCstr(allocator, markup);
   c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
+}
+
+extern fn column_config_oauth_activate(selfptr: *c_void) void {
+  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
+  var column: *Column = findColumnByConfigWindow(self);
+
+  var token_entry = builder_get_widget(column.builder, c"column_config_authorization_entry");
+  const cAuthorization = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
+  const authorization = util.cstrToSliceCopy(allocator, cAuthorization);
+
+  // signal crazy
+  var command = allocator.create(thread.Command) catch unreachable;
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var auth = allocator.create(config.ColumnAuth) catch unreachable;
+  auth.code = authorization;
+  auth.column = column.main;
+  verb.auth = auth;
+  command.id = 7;
+  command.verb = verb;
+  thread.signal(myActor, command);
+}
+
+pub fn column_config_oauth_finalize(column: *Column) void {
+  var oauth_box = builder_get_widget(column.builder, c"column_config_oauth_box");
+  var host_box = builder_get_widget(column.builder, c"column_config_host_box");
+  c.gtk_container_remove(@ptrCast([*c]c.GtkContainer, host_box), oauth_box);
+  columnConfigWriteGui(column);
 }
 
 pub fn columnConfigWriteGui(column: *Column) void {
