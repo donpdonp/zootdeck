@@ -259,14 +259,11 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
   var ptr = usize(0);
   const T = comptime @typeOf(value);
   const info = comptime @typeInfo(T);
-  warn("toJsonStep value typeId {} typeName {}\n", @typeId(T), @typeName(T));
-  warn("typeId {}\n", @typeId(@typeOf(value)));
 
   if (@typeId(T) == builtin.TypeId.Struct) {
     if(comptime std.meta.trait.hasFn("toSlice")(T)) {
       ptr += ramSetAt(ram, ptr, toJsonStep(value.toSlice(), depth, allocator));
     } else {
-      warn("struct {}\n", @typeId(@typeOf(value)));
       depth += 1;
       ptr += structToJson(ram, ptr, depth, value, allocator);
     }
@@ -280,10 +277,8 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
   } else if (@typeId(T) == builtin.TypeId.Pointer) {
     if(info.Pointer.size == builtin.TypeInfo.Pointer.Size.Slice) {
       if(info.Pointer.child == u8) {
-        warn("slice of u8 {}bytes\n", value.len);
         ptr += strToJson(ram, ptr, depth, value);
       } else {
-        warn("slice of {} items\n", value.len);
         depth += 1;
         ptr += arrayishToJson(ram, ptr, depth, value, allocator);
       }
@@ -292,7 +287,6 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
       ptr += ramSetAt(ram, ptr, toJsonStep(value.*, depth, allocator));
     }
   } else if (@typeId(T) == builtin.TypeId.Array) {
-    warn("{}\n", @typeId(T));
     if(info.Array.child == u8) {
       depth += 1;
       ptr += strToJson(ram, ptr, depth, value);
