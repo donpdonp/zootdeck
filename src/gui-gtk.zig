@@ -498,6 +498,7 @@ pub fn column_config_oauth_finalize(column: *Column) void {
   var host_box = builder_get_widget(column.builder, c"column_config_host_box");
   c.gtk_container_remove(@ptrCast([*c]c.GtkContainer, host_box), oauth_box);
   columnConfigWriteGui(column);
+  update_column_ui(column);
 }
 
 pub fn columnConfigWriteGui(column: *Column) void {
