@@ -73,8 +73,6 @@ pub fn gui_setup() !void {
     warn("builder file fail");
     return GUIError.GladeLoad;
   }
-  _ = c.gtk_builder_add_callback_symbol(myBuilder, c"login.chg", login_chg);
-  _ = c.gtk_builder_add_callback_symbol(myBuilder, c"login.done", login_done);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"actionbar.add", actionbar_add);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"main_check_resize",
@@ -116,12 +114,21 @@ pub extern fn show_main_schedule(in: *c_void) c_int {
 }
 
 pub extern fn column_config_oauth_url_schedule(in: *c_void) c_int {
-  column_config_oauth_url(@ptrCast(*config.ColumnInfo, @alignCast(8,in)));
+  const column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
+  column_config_oauth_url(column);
+  return 0;
+}
+
+pub extern fn update_column_ui_schedule(in: *c_void) c_int {
+  const columnInfo = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
+  const column = findColumnByInfo(columnInfo);
+  update_column_ui(column);
   return 0;
 }
 
 pub extern fn add_column_schedule(in: *c_void) c_int {
-  add_column(@ptrCast(*config.ColumnInfo, @alignCast(8,in)));
+  const column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
+  add_column(column);
   return 0;
 }
 
@@ -140,7 +147,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   const config_icon = builder_get_widget(colNew.builder, c"column_config_icon");
   c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc,config_icon), 1, 0);
 
-  refreshColumnUI(colNew);
+  update_column_ui(colNew);
 
   c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, container), colNew.columnbox, 1, 1, 0);
 
@@ -171,7 +178,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 }
 
 
-pub fn refreshColumnUI(column: *Column) void {
+pub fn update_column_ui(column: *Column) void {
   const label = builder_get_widget(column.builder, c"column_top_label");
   var topline_null: []u8 = undefined;
   if(column.main.config.title.len > 0) {
@@ -200,11 +207,11 @@ extern fn column_top_label_title(p: *c_void) void {
   warn("column_top_label_title {}\n", p);
 }
 
-pub extern fn update_column_schedule(in: *c_void) c_int {
+pub extern fn update_column_toots_schedule(in: *c_void) c_int {
   const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
   var columnMaybe = find_gui_column(c_column);
   if(columnMaybe) |column| {
-    update_column(column);
+    update_column_toots(column);
   }
   return 0;
 }
@@ -226,7 +233,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
   return null;
 }
 
-pub fn update_column(column: *Column) void {
+pub fn update_column_toots(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
                 util.listCount(config.TootType, column.main.toots),
                 if(column.main.inError) "ERROR" else "");
@@ -387,10 +394,6 @@ extern fn actionbar_add() void {
   thread.signal(myActor, &thread.Command{.id = 3, .verb = &thread.CommandVerb{.idle = undefined}});
 }
 
-extern fn login_chg() void {
-//  warn("login_chg {}\n", text);
-}
-
 extern fn zoot_drag() void {
   warn("zoot_drag\n");
 }
@@ -526,7 +529,7 @@ extern fn column_config_done(selfptr: *c_void) void {
 
   columnConfigReadGui(column);
 
-  refreshColumnUI(column);
+  update_column_ui(column);
   hide_column_config(column);
 
   // signal crazy
@@ -536,16 +539,6 @@ extern fn column_config_done(selfptr: *c_void) void {
   command.id = 4;
   command.verb = verb;
   thread.signal(myActor, command);
-}
-
-extern fn login_done() void {
-  var login_entry = builder_get_widget(myBuilder, c"login_label");
-  var ctext: [*c]const u8 = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, login_entry));
-  var text = util.cstrToSliceCopy(allocator, ctext);
-  warn("login_done {}\n", text);
-  thread.signal(myActor, &thread.Command{.id = 5,
-                                        .verb = &thread.CommandVerb{
-                                          .login = &config.LoginInfo{.username = "a", .password = "b"}}});
 }
 
 fn signal_connect(window: [*c]c.GtkWidget, action: []const u8, fun: fn() void) !void {

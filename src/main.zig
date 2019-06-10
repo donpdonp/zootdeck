@@ -214,7 +214,7 @@ fn netback(command: *thread.Command) void {
     } else {
       column.inError = true;
     }
-    gui.schedule(gui.update_column_schedule, @ptrCast(*c_void, column));
+    gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
   }
 }
 
@@ -276,7 +276,10 @@ fn guiback(command: *thread.Command) void {
     oauthtokenget(auth.column, auth.code);
   }
   if (command.id == 8) { //column host change
-    warn("COLUMN HOST CHANGE\n");
+    const column = command.verb.column;
+    gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, column));
+    // throw out toots in the toot list not from the new host
+
   }
 }
 
