@@ -436,6 +436,12 @@ extern fn column_config_oauth_btn(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
 
+  var oauth_box = builder_get_widget(column.builder, c"column_config_oauth_box");
+  var host_box = builder_get_widget(column.builder, c"column_config_host_box");
+  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
+  var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
+  c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), c"contacting server...");
+
   columnConfigReadGui(column);
 
   // signal crazy
@@ -453,8 +459,6 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   const column = findColumnByInfo(colInfo);
 
   var oauth_box = builder_get_widget(column.builder, c"column_config_oauth_box");
-  var host_box = builder_get_widget(column.builder, c"column_config_host_box");
-  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
 
   var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
   var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
