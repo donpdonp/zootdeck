@@ -54,7 +54,7 @@ pub fn create(
   const null_pattr = @intToPtr([*c]const c.union_pthread_attr_t, 0);
   var terr = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
   if (terr == 0) {
-      warn("created {*} {} client {}\n", &actor, actor, &actor.client);
+      warn("created thread#{}\n", actor.thread_id);
       var err = actors.append(actor.*);
       return actor;
   } else {

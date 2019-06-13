@@ -46,9 +46,9 @@ pub const ColumnConfig = struct {
   token: ?[]const u8,
   last_check: Time,
 
-  pub fn makeTitle(column: *ColumnConfig, alloc: *Allocator) []const u8 {
+  pub fn makeTitle(column: *ColumnConfig) []const u8 {
     const addon = if(column.token) |tkn| "user@" else "";
-    const string = alloc.alloc(u8, column.url.len + addon.len) catch unreachable;
+    const string = allocator.alloc(u8, column.url.len + addon.len) catch unreachable;
     const out = std.fmt.bufPrint(string, "{}{}", addon, column.url) catch unreachable;
     return out;
   }

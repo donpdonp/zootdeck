@@ -60,7 +60,6 @@ fn statewalk() void {
   }
 
   if(statemachine.state == statemachine.States.Setup) {
-    warn("the setup stuff\n");
     statemachine.setState(statemachine.States.Running);
   }
 }
@@ -304,9 +303,9 @@ fn heartback(nuthin: *thread.Command) void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
   if(column.refreshing) {
-    warn("column {} in {}\n", column.config.title, if (column.inError) "error!" else "progress");
+    warn("column {} in {}\n", column.config.makeTitle(), if (column.inError) "error!" else "progress");
   } else {
-    warn("column {} get {}\n", column.config.title, column.config.url);
+    warn("column http get {}\n", column.config.makeTitle());
     column.refreshing = true;
     columnget(column);
   }

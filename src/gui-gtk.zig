@@ -135,46 +135,46 @@ pub extern fn add_column_schedule(in: *c_void) c_int {
 
 pub fn add_column(colInfo: *config.ColumnInfo) void {
   const container = builder_get_widget(myBuilder, c"ZootColumns");
-  const colNew = allocator.create(Column) catch unreachable;
-  colNew.builder = c.gtk_builder_new_from_file (c"glade/column.glade");
-  colNew.columnbox = builder_get_widget(colNew.builder, c"column");
-  colNew.main = colInfo;
+  const column = allocator.create(Column) catch unreachable;
+  column.builder = c.gtk_builder_new_from_file (c"glade/column.glade");
+  column.columnbox = builder_get_widget(column.builder, c"column");
+  column.main = colInfo;
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
-  colNew.config_window = builder_get_widget(colNew.builder, c"column_config");
-  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, colNew.config_window), 600, 200);
-  columns.append(colNew) catch unreachable;
-  warn("column added title:{} column:{}\n", colNew.main.config.title, colNew.columnbox);
-  const footer = builder_get_widget(colNew.builder, c"column_footer");
-  const config_icon = builder_get_widget(colNew.builder, c"column_config_icon");
+  column.config_window = builder_get_widget(column.builder, c"column_config");
+  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, column.config_window), 600, 200);
+  columns.append(column) catch unreachable;
+  warn("column added {}\n", column.main.config.makeTitle());
+  const footer = builder_get_widget(column.builder, c"column_footer");
+  const config_icon = builder_get_widget(column.builder, c"column_config_icon");
   c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc,config_icon), 1, 0);
 
-  update_column_ui(colNew);
+  update_column_ui(column);
 
-  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, container), colNew.columnbox, 1, 1, 0);
+  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, container), column.columnbox, 1, 1, 0);
 
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column.title",
                                         @ptrCast(?extern fn() void, column_top_label_title));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column.config",
                                         @ptrCast(?extern fn() void, column_config_btn));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column.reload",
                                         @ptrCast(?extern fn() void, column_reload));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column_config.done",
                                         @ptrCast(?extern fn() void, column_config_done));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column_config.remove",
                                         @ptrCast(?extern fn() void, column_remove_btn));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column_config.oauth_btn",
                                         @ptrCast(?extern fn() void, column_config_oauth_btn));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder,
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column_config.oauth_auth_enter",
                                         @ptrCast(?extern fn() void, column_config_oauth_activate));
-  _ = c.gtk_builder_add_callback_symbol(colNew.builder, c"zoot_drag", zoot_drag);
-  _ = c.gtk_builder_connect_signals(colNew.builder, null);
+  _ = c.gtk_builder_add_callback_symbol(column.builder, c"zoot_drag", zoot_drag);
+  _ = c.gtk_builder_connect_signals(column.builder, null);
   c.gtk_widget_show_all(container);
 }
 
@@ -182,7 +182,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 pub fn update_column_ui(column: *Column) void {
   const label = builder_get_widget(column.builder, c"column_top_label");
   var topline_null: []u8 = undefined;
-  const title_null = util.sliceAddNull(allocator, column.main.config.makeTitle(allocator));
+  const title_null = util.sliceAddNull(allocator, column.main.config.makeTitle());
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), title_null.ptr);
 }
 
