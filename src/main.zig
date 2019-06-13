@@ -29,9 +29,8 @@ pub fn main() !void {
 
   if (config.readfile("config.json")) |config_data| {
     settings = config_data;
-    warn("settings colcount {}\n", settings.columns.count());
-    var guiThread = thread.create(allocator, gui.go, undefined, guiback) catch unreachable;
-    var heartbeatThread = thread.create(allocator, heartbeat.go, undefined, heartback) catch unreachable;
+    var guiThread = thread.create(gui.go, undefined, guiback);
+    var heartbeatThread = thread.create(heartbeat.go, undefined, heartback);
 
     while(true) {
       statewalk();
@@ -83,8 +82,7 @@ fn columnget(column: *config.ColumnInfo) void {
   httpInfo.response_code = 0;
   verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-  var netthread = thread.create(allocator, net.go, verb, netback) catch unreachable;
-//  defer thread.destroy(allocator, netthread);
+  var netthread = thread.create(net.go, verb, netback) catch unreachable;
 }
 
 fn oauthcolumnget(column: *config.ColumnInfo) void {
@@ -107,7 +105,7 @@ fn oauthcolumnget(column: *config.ColumnInfo) void {
   httpInfo.verb = .post;
   verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-  var netthread = thread.create(allocator, net.go, verb, oauthback) catch unreachable;
+  var netthread = thread.create(net.go, verb, oauthback) catch unreachable;
 //  defer thread.destroy(allocator, netthread);
 }
 
@@ -135,7 +133,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8) void {
   httpInfo.verb = .post;
   verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-  var netthread = thread.create(allocator, net.go, verb, oauthtokenback) catch unreachable;
+  var netthread = thread.create(net.go, verb, oauthtokenback) catch unreachable;
 }
 
 fn oauthtokenback(command: *thread.Command) void {

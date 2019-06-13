@@ -2,6 +2,7 @@
 const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
+var allocator: *Allocator = undefined;
 const ipc = @import("./ipc-epoll.zig");
 const config = @import("./config.zig");
 
@@ -33,24 +34,25 @@ pub const CommandVerb = packed union {
 
 var actors: std.ArrayList(Actor) = undefined;
 
-pub fn init(allocator: *Allocator) !void {
+pub fn init(myAllocator: *Allocator) !void {
+  allocator = myAllocator;
   actors = std.ArrayList(Actor).init(allocator);
   try ipc.init();
 }
 
-pub fn create(allocator: *Allocator,
-              start: extern fn (?*c_void) ?*c_void,
-              payload: *CommandVerb,
-              recvback: fn(*Command) void
+pub fn create(
+              startFn: extern fn (?*c_void) ?*c_void,
+              startParams: *CommandVerb,
+              recvback: fn(*Command) void,
               ) !*Actor {
   var actor = try allocator.create(Actor);
   actor.client = ipc.newClient(allocator);
-  actor.payload = payload;
+  actor.payload = startParams; //unused
   ipc.dial(actor.client, "");
   actor.recvback = recvback;
   //ipc.register(actor.client, recvback);
   const null_pattr = @intToPtr([*c]const c.union_pthread_attr_t, 0);
-  var terr = c.pthread_create(&actor.thread_id, null_pattr, start, actor);
+  var terr = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
   if (terr == 0) {
       warn("created {*} {} client {}\n", &actor, actor, &actor.client);
       var err = actors.append(actor.*);
@@ -61,7 +63,7 @@ pub fn create(allocator: *Allocator,
   return error.BadValue;
 }
 
-pub fn destroy(allocator: *Allocator, actor: *Actor) void {
+pub fn destroy(actor: *Actor) void {
   warn("thread.destroy {}\n", actor);
 }
 
