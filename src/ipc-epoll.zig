@@ -62,15 +62,11 @@ pub fn wait() *Client {
       warn("epoll_wait ignoring errno {}\n", errno);
     }
   }
-  var dsizeof: usize = @sizeOf(@typeOf(events_waiting[0].data));
-  var psizeof: usize = @sizeOf(@typeOf(events_waiting[0].data.ptr));
-  warn("epoll {} fd ready. events[0] {b} waiting {} align{} waiting.data {} align{}\n",
+  warn("epoll {} fd ready. events[0] {b} waiting {} waiting.data {}\n",
              nfds,
              events_waiting[0].events,
              events_waiting[0].data,
-             dsizeof,
-             events_waiting[0].data.ptr,
-             psizeof);
+             events_waiting[0].data.ptr);
   var clientdata = @alignCast(@alignOf(Client), events_waiting[0].data.ptr);
   var client = @ptrCast(*Client, clientdata);
   return client;

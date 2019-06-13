@@ -450,6 +450,7 @@ extern fn column_config_oauth_btn(selfptr: *c_void) void {
   verb.column = column.main;
   command.id = 6;
   command.verb = verb;
+  warn("column_config_oauth_btn cmd vrb {*}\n", command.verb.column);
   thread.signal(myActor, command);
 }
 
@@ -522,7 +523,6 @@ pub fn columnConfigWriteGui(column: *Column) void {
 }
 
 pub fn columnConfigReadGui(column: *Column) void {
-
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
   const newUrl =  util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
@@ -538,7 +538,6 @@ pub fn columnConfigReadGui(column: *Column) void {
     command.verb = verb;
     thread.signal(myActor, command);
   }
-
 }
 
 extern fn column_config_done(selfptr: *c_void) void {

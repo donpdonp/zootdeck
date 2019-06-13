@@ -29,7 +29,7 @@ pub const CommandVerb = packed union {
   http: *config.HttpInfo,
   column: *config.ColumnInfo,
   auth: *config.ColumnAuth,
-  idle: *u16
+  idle: u16
 };
 
 var actors: std.ArrayList(Actor) = undefined;

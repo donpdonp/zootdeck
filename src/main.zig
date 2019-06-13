@@ -44,6 +44,7 @@ pub fn main() !void {
 
 fn initialize() !void {
   try config.init(allocator);
+  try heartbeat.init(allocator);
   try statemachine.init(allocator);
   //try db.init(allocator);
   try thread.init(allocator);
@@ -219,7 +220,7 @@ fn netback(command: *thread.Command) void {
 }
 
 fn guiback(command: *thread.Command) void {
-  warn("*guiback tid {x} {}\n", thread.self(), command);
+  warn("*guiback tid {x} {*}\n", thread.self(), command);
   if (command.id == 1) {
     gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[]u8{1}));
   }
