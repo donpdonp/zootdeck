@@ -353,8 +353,7 @@ extern fn column_config_btn(columnptr: ?*c_void) void {
 
   columnConfigWriteGui(column);
 
-  var column_config_window = builder_get_widget(column.builder, c"column_config");
-  c.gtk_widget_show(column_config_window);
+  c.gtk_widget_show(column.config_window);
 }
 
 fn findColumnByInfo(info: *config.ColumnInfo) *Column {

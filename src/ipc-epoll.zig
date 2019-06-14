@@ -62,7 +62,7 @@ pub fn wait() *Client {
       warn("epoll_wait ignoring errno {}\n", errno);
     }
   }
-  warn("epoll {} fd ready. events[0] {b} waiting {} waiting.data {}\n",
+  warn("epoll {} fd ready. fd[0] events {b} data {} data.ptr {}\n",
              nfds,
              events_waiting[0].events,
              events_waiting[0].data,

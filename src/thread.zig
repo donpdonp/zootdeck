@@ -79,13 +79,17 @@ pub fn wait() void {
 
   var bufArray = []u8{0} ** 16; // arbitrary receive buffer
   const buf: []u8 = ipc.read(client, bufArray[0..]);
-  const b8: *[@sizeOf(usize)]u8 = @ptrCast(*[@sizeOf(usize)]u8, buf.ptr);
-  var command: *Command = std.mem.bytesAsValue(*Command, b8).*;
-
-  for(actors.toSlice()) |actor| { // todo: hashtable
-    if(actor.client == client) {
-      actor.recvback(command);
-      break;
+  if(buf.len == 0) {
+    // todo: skip read() and pass ptr with event_data
+    warn("thread.wait ipc.read no socket payload! DEFLECTED!\n");
+  } else {
+    const b8: *[@sizeOf(usize)]u8 = @ptrCast(*[@sizeOf(usize)]u8, buf.ptr);
+    var command: *Command = std.mem.bytesAsValue(*Command, b8).*;
+    for(actors.toSlice()) |actor| { // todo: hashtable
+      if(actor.client == client) {
+        actor.recvback(command);
+        break;
+      }
     }
   }
 }
