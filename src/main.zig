@@ -66,7 +66,7 @@ fn statewalk() void {
 }
 
 fn hello() void {
-  warn("tootdeck {} {} tid {x}\n", @tagName(builtin.os), @tagName(builtin.arch), thread.self());
+  warn("zootdeck {} {} tid {x}\n", @tagName(builtin.os), @tagName(builtin.arch), thread.self());
 }
 
 fn columnget(column: *config.ColumnInfo) void {

@@ -1,15 +1,16 @@
-## mastodon/fediverse desktop reader
+## fediverse desktop reader
 
+### Features
 * Any number of columns
 * Column Sources: User account, Site public feed
 * GTK+
 
-## Roadmap
+### Roadmap
 * per-column filter language
 * create a post
 * css themes: overall, per-tag, per-host
 
-## History
+### History
 20190613 oauth steps in config panel
 20190604 network status indicator for each column
          better json escape handling
@@ -18,3 +19,17 @@
 20190529 First release
 
 
+### Build instructions
+```
+$ git clone https://github.com/donpdonp/zootdeck
+Cloning into 'zootdeck'...
+
+$ cd zootdeck
+
+$ make
+zig build
+
+$ ./zootdeck
+zootdeck linux x86_64 tid 7f565d1caf00
+STATE: Init
+```
