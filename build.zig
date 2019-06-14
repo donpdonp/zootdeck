@@ -24,11 +24,6 @@ pub fn build(b: *Builder) void {
   exe.addIncludeDir("/usr/include/cairo");
   exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include/");
 
-  // opengl
-  exe.addIncludeDir("../glfw/include");
-  exe.addIncludeDir("../glfw/deps");
-  exe.addLibPath("../glfw/build/src");
-
   // gtk3
   exe.linkSystemLibrary("glib-2.0");
   exe.linkSystemLibrary("gdk-3");
@@ -41,18 +36,9 @@ pub fn build(b: *Builder) void {
   exe.linkSystemLibrary("dl");
   exe.linkSystemLibrary("X11");
   exe.linkSystemLibrary("pthread");
-  exe.linkSystemLibrary("glfw3");
 
   // net
   exe.linkSystemLibrary("curl");
-
-  // nng
-  exe.addIncludeDir("../nng/include");
-  exe.addLibPath("../nng/build");
-  exe.linkSystemLibrary("nng");
-
-  // lmdb
-  exe.linkSystemLibrary("lmdb");
 
   exe.setOutputDir(".");
   b.default_step.dependOn(&exe.step);
