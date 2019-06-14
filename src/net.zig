@@ -12,7 +12,6 @@ const c = @cImport({
   @cInclude("unistd.h");
   @cInclude("pthread.h");
   @cInclude("curl/curl.h");
-  @cInclude("nng/nng.h");
 });
 
 const NetError = error{
