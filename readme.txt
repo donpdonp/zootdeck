@@ -1,14 +1,16 @@
-## fediverse desktop reader
+## Zootdeck fediverse desktop reader
+https://donpdonp.github.io/zootdeck/
 
 ### Features
 * Any number of columns
 * Column Sources: User account, Site public feed
-* GTK+
+* linux/GTK+
 
 ### Roadmap
 * per-column filter language
 * create a post
 * css themes: overall, per-tag, per-host
+* osx/windows
 
 ### History
 20190613 oauth steps in config panel
