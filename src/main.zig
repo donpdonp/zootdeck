@@ -53,15 +53,16 @@ fn initialize() !void {
 
 fn statewalk() void {
   if(statemachine.state == statemachine.States.Init) {
+    statemachine.setState(statemachine.States.Setup); // transition
     gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[]u8{1}));
     for(settings.columns.toSlice()) |column| {
       gui.schedule(gui.add_column_schedule, column);
     }
-    statemachine.setState(statemachine.States.Setup);
   }
 
   if(statemachine.state == statemachine.States.Setup) {
-    statemachine.setState(statemachine.States.Running);
+    statemachine.setState(statemachine.States.Running); // transition
+    columns_net_freshen();
   }
 }
 
@@ -289,7 +290,10 @@ fn guiback(command: *thread.Command) void {
 
 fn heartback(nuthin: *thread.Command) void {
   warn("*heartback tid {x} {}\n", thread.self(), nuthin);
+  columns_net_freshen();
+}
 
+fn columns_net_freshen() void {
   for(settings.columns.toSlice()) |column, idx| {
     var now = config.now();
     const refresh = 60;
