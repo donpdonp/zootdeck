@@ -138,6 +138,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   const column = allocator.create(Column) catch unreachable;
   column.builder = c.gtk_builder_new_from_file (c"glade/column.glade");
   column.columnbox = builder_get_widget(column.builder, c"column");
+  //c.gtk_widget_set_size_request(column.columnbox, 800, -1);
   column.main = colInfo;
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
   column.config_window = builder_get_widget(column.builder, c"column_config");
@@ -256,7 +257,7 @@ pub fn update_column_toots(column: *Column) void {
   if (current != null) {
     while(current) |node| {
       var tootbox = makeTootBox(node.data);
-      c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, 1, 1, 0);
+      c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, c.gtk_true(), c.gtk_true(), 0);
       current = node.next;
     }
   } else {
@@ -317,7 +318,7 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   var cText = util.sliceToCstr(allocator, html_trim);
 
   const toottext_label = builder_get_widget(builder, c"toot_text");
-  //c.gtk_label_set_max_width_chars(@ptrCast([*c]c.GtkLabel, toottext_label), 10);
+  c.gtk_label_set_width_chars(@ptrCast([*c]c.GtkLabel, toottext_label), 10);
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
