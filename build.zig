@@ -31,6 +31,9 @@ pub fn build(b: *Builder) void {
   exe.linkSystemLibrary("gobject-2.0");
   exe.linkSystemLibrary("gmodule-2.0");
 
+  // qt5
+  exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");
+
   // opengl
   //exe.addObjectFile("ext/glad.o"); // build glad.c by hand for now
   exe.linkSystemLibrary("dl");
