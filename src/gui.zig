@@ -8,9 +8,9 @@ const toot_lib = @import("./toot.zig");
 const thread = @import("./thread.zig");
 
 const gtk = @import("./gui/gtk.zig");
-const qt = @import("./gui/qt.zig");
+const libui = @import("./gui/libui.zig");
 
-const guilib = gtk;
+const guilib = libui;
 
 const GUIError = error{Init};
 const Column = gtk.Column;
