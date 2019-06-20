@@ -1,13 +1,13 @@
-// gui-gtk.zig
+// GTK+
 const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
-const thread = @import("./thread.zig");
-const util = @import("./util.zig");
-const config = @import("./config.zig");
-const simple_buffer = @import("./simple_buffer.zig");
-const toot_lib = @import("./toot.zig");
+const thread = @import("../thread.zig");
+const util = @import("../util.zig");
+const config = @import("../config.zig");
+const simple_buffer = @import("../simple_buffer.zig");
+const toot_lib = @import("../toot.zig");
 
 const c = @cImport({
   @cInclude("gtk/gtk.h");
