@@ -44,16 +44,23 @@ pub fn gui_setup(actor: *thread.Actor) !void {
 }
 
 fn build() void {
-    var w = c.uiNewWindow(c"Tootdeck", 320, 240, 0);
-    c.uiWindowSetMargined(w, 1);
-    const f: ?extern fn (*c.uiWindow, *c_void) c_int = onClosing;
-    c.uiWindowOnClosing(w, f, null);
-    var control = @ptrCast(*c.uiControl, @alignCast(8, w));
-    c.uiControlShow(control);
-    c.uiMain();
+  var window = c.uiNewWindow(c"Tootdeck", 320, 240, 0);
+  c.uiWindowSetMargined(window, 1);
+  const f: ?extern fn (*c.uiWindow, *c_void) c_int = onClosing;
+  c.uiWindowOnClosing(window, f, null);
+
+  var hbox = c.uiNewHorizontalBox();
+  c.uiWindowSetChild(window, @ptrCast(*c.uiControl, @alignCast(8, hbox)));
+
+  var label = c.uiNewLabel(c"z1");
+  c.uiLabelSetText(label, c"zoooot");
+  c.uiBoxAppend(hbox, @ptrCast(*c.uiControl, @alignCast(8, label)), 0);
+  var control = @ptrCast(*c.uiControl, @alignCast(8, window));
+  c.uiControlShow(control);
 }
 
 pub fn mainloop() void {
+  c.uiMain();
 }
 
 pub fn gui_end() void {
