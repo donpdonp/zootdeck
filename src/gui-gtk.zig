@@ -85,7 +85,8 @@ pub fn gui_setup() !void {
   var main_window = builder_get_widget(myBuilder, c"main");
   var w = @intCast(c.gint, settings.win_x);
   var h = @intCast(c.gint, settings.win_y);
-  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
+  c.gtk_widget_set_size_request(main_window, w, h);
+//  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
 }
 
 fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8)[*]c.GtkWidget {
@@ -315,10 +316,13 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   var jDecode = util.jsonStrDecode(content, allocator)  catch unreachable;
   var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
   const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
+  var line_limit = 50/columns.len;
+  warn("makeTootBox {} columns, {} line_limit\n", columns.len, line_limit);
+  const html_wrapped = hardWrap(html_trim, line_limit) catch unreachable;
   var cText = util.sliceToCstr(allocator, html_trim);
 
   const toottext_label = builder_get_widget(builder, c"toot_text");
-  c.gtk_label_set_width_chars(@ptrCast([*c]c.GtkLabel, toottext_label), 10);
+  c.gtk_label_set_line_wrap_mode(@ptrCast([*c]c.GtkLabel, toottext_label), c.PangoWrapMode.PANGO_WRAP_WORD_CHAR);
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
@@ -333,6 +337,19 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   const date_label = builder_get_widget(builder, c"toot_date");
   labelBufPrint(date_label, "{}", created_at);
   return tootbox;
+}
+
+fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
+  var wrapped = try simple_buffer.SimpleU8.initSize(allocator, 0);
+  var short_lines = str.len / limit;
+  var extra_bytes = str.len % limit;
+  var idx = usize(0);
+  while(idx < short_lines) : (idx += 1) {
+    try wrapped.append(str[limit*idx .. limit*(idx+1)]);
+    try wrapped.append("\n");
+  }
+  try wrapped.append(str[limit*idx .. (limit*idx)+extra_bytes]);
+  return wrapped.toSliceConst();
 }
 
 fn escapeGtkString(str: []const u8) []const u8 {
