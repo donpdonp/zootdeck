@@ -312,6 +312,18 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   const tootbox = builder_get_widget(builder, c"tootbox");
 
   const id = toot.get("id").?.value.String;
+
+  const author_name = toot.get("account").?.value.Object.get("display_name").?.value.String;
+  const author_url = toot.get("account").?.value.Object.get("url").?.value.String;
+  const created_at = toot.get("created_at").?.value.String;
+
+  const name_label = builder_get_widget(builder, c"toot_author_name");
+  labelBufPrint(name_label, "{}", author_name);
+  const url_label = builder_get_widget(builder, c"toot_author_url");
+  labelBufPrint(url_label, "{}", author_url);
+  const date_label = builder_get_widget(builder, c"toot_date");
+  labelBufPrint(date_label, "{}", created_at);
+
   const content = toot.get("content").?.value.String;
   var jDecode = util.jsonStrDecode(content, allocator)  catch unreachable;
   var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
@@ -326,16 +338,6 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
-  const author_name = toot.get("account").?.value.Object.get("display_name").?.value.String;
-  const author_url = toot.get("account").?.value.Object.get("url").?.value.String;
-  const created_at = toot.get("created_at").?.value.String;
-
-  const name_label = builder_get_widget(builder, c"toot_author_name");
-  labelBufPrint(name_label, "{}", author_name);
-  const url_label = builder_get_widget(builder, c"toot_author_url");
-  labelBufPrint(url_label, "{}", author_url);
-  const date_label = builder_get_widget(builder, c"toot_date");
-  labelBufPrint(date_label, "{}", created_at);
   return tootbox;
 }
 
