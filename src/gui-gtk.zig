@@ -85,8 +85,8 @@ pub fn gui_setup() !void {
   var main_window = builder_get_widget(myBuilder, c"main");
   var w = @intCast(c.gint, settings.win_x);
   var h = @intCast(c.gint, settings.win_y);
-  c.gtk_widget_set_size_request(main_window, w, h);
-//  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
+//  c.gtk_widget_set_size_request(main_window, w, h);
+  c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
 }
 
 fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8)[*]c.GtkWidget {
@@ -139,12 +139,12 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   const column = allocator.create(Column) catch unreachable;
   column.builder = c.gtk_builder_new_from_file (c"glade/column.glade");
   column.columnbox = builder_get_widget(column.builder, c"column");
-  //c.gtk_widget_set_size_request(column.columnbox, 800, -1);
   column.main = colInfo;
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
   column.config_window = builder_get_widget(column.builder, c"column_config");
   c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, column.config_window), 600, 200);
   columns.append(column) catch unreachable;
+  columns_resize();
   warn("column added {}\n", column.main.config.makeTitle());
   const footer = builder_get_widget(column.builder, c"column_footer");
   const config_icon = builder_get_widget(column.builder, c"column_config_icon");
@@ -180,6 +180,15 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   c.gtk_widget_show_all(container);
 }
 
+pub fn columns_resize() void {
+  const container = builder_get_widget(myBuilder, c"ZootColumns");
+  var app_width = c.gtk_widget_get_allocated_width(container);
+  var col_width = @divTrunc(app_width, @intCast(c_int, columns.len));
+  warn("columns_resize app_width {} col_len {} col_width {}\n", app_width, columns.len, col_width);
+  for(columns.toSlice()) |col| {
+    //c.gtk_widget_set_size_request(col.columnbox, col_width, -1);
+  }
+}
 
 pub fn update_column_ui(column: *Column) void {
   const label = builder_get_widget(column.builder, c"column_top_label");
@@ -410,8 +419,15 @@ extern fn main_check_resize(selfptr: *c_void) void {
   var h: c.gint = undefined;
   var w: c.gint = undefined;
   c.gtk_window_get_size(@ptrCast([*c]c.GtkWindow, self), &w, &h);
-  settings.win_x = w;
-  settings.win_y = h;
+  if(w != settings.win_x) {
+    warn("resize, win_x {} != w {}\n", settings.win_x, w);
+    settings.win_x = w;
+//    columns_resize();
+  }
+  if(h != settings.win_y) {
+    settings.win_y = h;
+//    columns_resize();
+  }
 }
 
 extern fn actionbar_add() void {
