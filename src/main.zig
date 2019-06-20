@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 const warn = std.debug.warn;
 const allocator = std.heap.c_allocator;
 
-const gui = @import("./gui/gtk.zig");
+const gui = @import("./gui/qt.zig");
 const net = @import("./net.zig");
 const heartbeat = @import("./heartbeat.zig");
 const config = @import("./config.zig");
