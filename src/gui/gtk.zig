@@ -3,11 +3,11 @@ const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
-const thread = @import("../thread.zig");
 const util = @import("../util.zig");
 const config = @import("../config.zig");
 const simple_buffer = @import("../simple_buffer.zig");
 const toot_lib = @import("../toot.zig");
+const thread = @import("../thread.zig");
 
 const c = @cImport({
   @cInclude("gtk/gtk.h");
@@ -16,8 +16,8 @@ const c = @cImport({
 const GUIError = error{GtkInit, GladeLoad};
 var allocator: *Allocator = undefined;
 var settings: *config.Settings = undefined;
-var stop = false;
 pub const queue = std.ArrayList(u8).init(allocator);
+var myActor: *thread.Actor = undefined;
 
 pub const Column = struct {
   builder: [*c]c.GtkBuilder,
@@ -30,6 +30,10 @@ var columns:std.ArrayList(*Column) = undefined;
 var myBuilder: *c.GtkBuilder = undefined;
 var myCssProvider: [*c]c.GtkCssProvider = undefined;
 
+pub fn libname() []const u8 {
+  return "GTK";
+}
+
 pub fn init(alloca: *Allocator, set: *config.Settings) !void {
   settings = set;
   allocator = alloca;
@@ -40,33 +44,14 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
   if(tf != 1) return GUIError.GtkInit;
 }
 
-var myActor: *thread.Actor = undefined;
-pub extern fn go(data: ?*c_void) ?*c_void {
-  var data8 = @alignCast(@alignOf(thread.Actor), data);
-  myActor = @ptrCast(*thread.Actor, data8);
-  warn("gui-gtk thread start {*} {}\n", myActor, myActor);
-  if (gui_setup()) {
-    // mainloop
-    while (!stop) {
-        mainloop();
-    }
-    gui_end();
-  } else |err| {
-      warn("gui error {}\n", err);
-  }
-  return null;
-}
-
-pub fn gui_setup() !void {
+pub fn gui_setup(actor: *thread.Actor) !void {
+  myActor = actor;
   // GtkCssProvider *cssProvider = gtk_css_provider_new();
   myCssProvider = c.gtk_css_provider_new();
-// gtk_css_provider_load_from_path(cssProvider, "theme.css", NULL);
   _ = c.gtk_css_provider_load_from_path(myCssProvider, c"theme.css", null);
-// gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-//                                GTK_STYLE_PROVIDER(cssProvider),
-//                                GTK_STYLE_PROVIDER_PRIORITY_USER);
   c.gtk_style_context_add_provider_for_screen(c.gdk_screen_get_default(),
-    @ptrCast(*c.GtkStyleProvider, myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
+                         @ptrCast(*c.GtkStyleProvider, myCssProvider),
+                         c.GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   myBuilder = c.gtk_builder_new();
   var ret = c.gtk_builder_add_from_file (myBuilder, c"glade/zootdeck.glade", @intToPtr([*c][*c]c._GError, 0));
