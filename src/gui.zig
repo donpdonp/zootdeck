@@ -7,13 +7,13 @@ const config = @import("./config.zig");
 const toot_lib = @import("./toot.zig");
 const thread = @import("./thread.zig");
 
-const gtk = @import("./gui/gtk.zig");
+//const gtk = @import("./gui/gtk.zig");
 const libui = @import("./gui/libui.zig");
 
 const guilib = libui;
 
 const GUIError = error{Init};
-const Column = gtk.Column;
+const Column = guilib.Column;
 var columns:std.ArrayList(*Column) = undefined;
 var allocator: *Allocator = undefined;
 var settings: *config.Settings = undefined;
@@ -22,7 +22,7 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
   settings = set;
   allocator = alloca;
   columns = std.ArrayList(*Column).init(allocator);
-  try gtk.init(alloca, set);
+  try guilib.init(alloca, set);
 }
 
 var myActor: *thread.Actor = undefined;
