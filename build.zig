@@ -39,6 +39,12 @@ pub fn build(b: *Builder) void {
   // exe.linkSystemLibrary("ui");
   // exe.addLibPath("../libui/build/out");
 
+  // glfw (local)
+  exe.addIncludeDir("../glfw/include");
+  exe.addIncludeDir("../glfw/deps");
+  exe.linkSystemLibrary("glfw3");
+  exe.addLibPath("../glfw/build/src");
+
   // opengl
   //exe.addObjectFile("ext/glad.o"); // build glad.c by hand for now
   exe.linkSystemLibrary("dl");
