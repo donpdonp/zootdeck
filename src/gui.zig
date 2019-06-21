@@ -7,10 +7,10 @@ const config = @import("./config.zig");
 const toot_lib = @import("./toot.zig");
 const thread = @import("./thread.zig");
 
-//const gtk = @import("./gui/gtk.zig");
+const gtk = @import("./gui/gtk.zig");
 const libui = @import("./gui/libui.zig");
 
-const guilib = libui;
+const guilib = gtk;
 
 const GUIError = error{Init};
 const Column = guilib.Column;
