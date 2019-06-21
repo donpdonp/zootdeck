@@ -1,4 +1,4 @@
-// gl.zig
+// glfw.zig
 const std = @import("std");
 const builtin = @import("builtin");
 const warn = std.debug.warn;
@@ -10,6 +10,7 @@ const config = @import("../config.zig");
 const GUIError = error{Init, Setup};
 
 const c = @cImport({
+  @cInclude("nanovg.h");
   @cInclude("glad/glad.h");
   @cInclude("GLFW/glfw3.h");
   @cInclude("GLFW/glfw3native.h");
@@ -25,7 +26,7 @@ var myActor: *thread.Actor = undefined;
 var mainWindow: *c.struct_GLFWwindow = undefined;
 
 pub fn libname() []const u8 {
-  return "gl";
+  return "glfw";
 }
 
 pub fn init(alloca: *Allocator, set: *config.Settings) !void {
@@ -37,9 +38,10 @@ pub fn gui_setup(actor: *thread.Actor) !void {
   var ver_cstr = c.glfwGetVersionString();
   var initOk = c.glfwInit();
   if (initOk == c.GLFW_TRUE) {
-    warn("GUI init {} vulkan{}\n", std.cstr.toSliceConst(ver_cstr), c.glfwVulkanSupported());
+    warn("GLFW init {} {}\n", std.cstr.toSliceConst(ver_cstr),
+                             if(c.glfwVulkanSupported() == 1) "vulkan" else "");
 
-    var windowMaybe = c.glfwCreateWindow(240, 380, c"Window title", null, null);
+    var windowMaybe = c.glfwCreateWindow(640, 380, c"Window title", null, null);
     if (windowMaybe) |window| {
       c.glfwMakeContextCurrent(window);
       //@compileLog(@sizeOf(c.struct_nk_context));
@@ -68,15 +70,16 @@ pub fn gui_setup(actor: *thread.Actor) !void {
       return GUIError.Setup;
     }
   } else {
-    warn("init not ok {}\n", initOk);
+    warn("GLFW init not ok {}\n", initOk);
     return GUIError.Setup;
   }
 }
 
 pub fn mainloop() void {
-  _ = c.glfwWindowShouldClose(mainWindow);
-  c.glfwWaitEventsTimeout(1);
-  c.glfwSwapBuffers(mainWindow);
+  while( c.glfwWindowShouldClose(mainWindow) == 0) {
+    c.glfwWaitEventsTimeout(1);
+    c.glfwSwapBuffers(mainWindow);
+  }
 }
 
 pub fn gui_end() void {

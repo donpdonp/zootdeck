@@ -39,9 +39,10 @@ pub fn build(b: *Builder) void {
   // exe.linkSystemLibrary("ui");
   // exe.addLibPath("../libui/build/out");
 
-  // glfw (local)
+  // nanovg/glfw (local)
   exe.addIncludeDir("../glfw/include");
   exe.addIncludeDir("../glfw/deps");
+  exe.addIncludeDir("../nanovg/src");
   exe.linkSystemLibrary("glfw3");
   exe.addLibPath("../glfw/build/src");
 
