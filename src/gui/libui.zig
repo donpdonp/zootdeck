@@ -91,7 +91,7 @@ pub extern fn show_main_schedule(in: *c_void) c_int {
 
 pub extern fn add_column_schedule(in: *c_void) c_int {
   warn("libui add column\n");
-  var column_vbox = c.uiNewVerticalBox();
+  var column_vbox = c.uiNewVerticalBox(); // crashes here
   var url_label = c.uiNewLabel(c"site.xyz");
   c.uiBoxAppend(column_vbox, @ptrCast(*c.uiControl, @alignCast(8, url_label)), 0);
 

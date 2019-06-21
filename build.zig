@@ -35,9 +35,9 @@ pub fn build(b: *Builder) void {
   exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");
 
   // libui (local)
-  exe.addIncludeDir("../libui");
-  exe.linkSystemLibrary("ui");
-  exe.addLibPath("../libui/build/out");
+  // exe.addIncludeDir("../libui");
+  // exe.linkSystemLibrary("ui");
+  // exe.addLibPath("../libui/build/out");
 
   // opengl
   //exe.addObjectFile("ext/glad.o"); // build glad.c by hand for now

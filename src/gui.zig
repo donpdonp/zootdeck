@@ -8,7 +8,6 @@ const toot_lib = @import("./toot.zig");
 const thread = @import("./thread.zig");
 
 const gtk = @import("./gui/gtk.zig");
-const libui = @import("./gui/libui.zig");
 
 const guilib = gtk;
 
