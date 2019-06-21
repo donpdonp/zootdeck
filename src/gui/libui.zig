@@ -11,6 +11,7 @@ const c = @cImport({
 });
 
 const GUIError = error{Init, Setup};
+var columnbox: *c.uiControl = undefined;
 
 pub const Column = struct {
 //  builder: [*c]c.GtkBuilder,
@@ -44,19 +45,22 @@ pub fn gui_setup(actor: *thread.Actor) !void {
 }
 
 fn build() void {
-  var window = c.uiNewWindow(c"Tootdeck", 320, 240, 0);
+  var window = c.uiNewWindow(c"Zootdeck", 320, 240, 0);
   c.uiWindowSetMargined(window, 1);
   const f: ?extern fn (*c.uiWindow, *c_void) c_int = onClosing;
   c.uiWindowOnClosing(window, f, null);
 
   var hbox = c.uiNewHorizontalBox();
   c.uiWindowSetChild(window, @ptrCast(*c.uiControl, @alignCast(8, hbox)));
+  columnbox = @ptrCast(*c.uiControl, @alignCast(8, hbox));
 
-  var label = c.uiNewLabel(c"z1");
-  c.uiLabelSetText(label, c"zoooot");
-  c.uiBoxAppend(hbox, @ptrCast(*c.uiControl, @alignCast(8, label)), 0);
-  var control = @ptrCast(*c.uiControl, @alignCast(8, window));
-  c.uiControlShow(control);
+  var controls_vbox = c.uiNewVerticalBox();
+  c.uiBoxAppend(hbox, @ptrCast(*c.uiControl, @alignCast(8, controls_vbox)), 0);
+
+  var addButton = c.uiNewButton(c"+");
+  c.uiBoxAppend(controls_vbox, @ptrCast(*c.uiControl, @alignCast(8, addButton)), 0);
+
+  c.uiControlShow(@ptrCast(*c.uiControl, @alignCast(8, window)));
 }
 
 pub fn mainloop() void {
@@ -72,7 +76,11 @@ export fn onClosing(w: *c.uiWindow, data: *c_void) c_int {
   return 1;
 }
 
-pub fn schedule(func: ?extern fn(*c_void) c_int, param: *c_void) void {
+pub fn schedule(funcMaybe: ?extern fn(*c_void) c_int, param: *c_void) void {
+  if(funcMaybe) |func| {
+    warn("schedule FUNC {}\n", func);
+    _ = func(@ptrCast(*c_void, &c"w"));
+  }
 }
 
 pub extern fn show_main_schedule(in: *c_void) c_int {
@@ -80,6 +88,7 @@ pub extern fn show_main_schedule(in: *c_void) c_int {
 }
 
 pub extern fn add_column_schedule(in: *c_void) c_int {
+  warn("libui add column\n");
   return 0;
 }
 
