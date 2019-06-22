@@ -8,9 +8,9 @@ const thread = @import("../thread.zig");
 const config = @import("../config.zig");
 
 const GUIError = error{Init, Setup};
+var vg : [*c]c.NVGcontext = undefined;
 
 const c = @cImport({
-  @cInclude("nanovg.h");
   @cInclude("glad/glad.h");
   @cInclude("GLFW/glfw3.h");
   @cInclude("GLFW/glfw3native.h");
@@ -36,47 +36,32 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
 
 pub fn gui_setup(actor: *thread.Actor) !void {
   var ver_cstr = c.glfwGetVersionString();
-  var initOk = c.glfwInit();
-  if (initOk == c.GLFW_TRUE) {
-    warn("GLFW init {} {}\n", std.cstr.toSliceConst(ver_cstr),
-                             if(c.glfwVulkanSupported() == 1) "vulkan" else "");
+  warn("GLFW init {} {}\n", std.cstr.toSliceConst(ver_cstr),
+                           if(c.glfwVulkanSupported() == 1) "vulkan" else "");
 
-    var windowMaybe = c.glfwCreateWindow(640, 380, c"Window title", null, null);
-    if (windowMaybe) |window| {
+  if (c.glfwInit() == c.GLFW_TRUE) {
+    var title = c"Zootdeck";
+    if (c.glfwCreateWindow(640, 380, title, null, null)) |window| {
       c.glfwMakeContextCurrent(window);
-      //@compileLog(@sizeOf(c.struct_nk_context));
-      //var nk_context: c.nk_context = c.nk_context{};
-      //_ = c.nk_init_fixed();
-      //var font: c.FT_Face = c.get_font();
+      mainWindow = window;
+
       var width: c_int = 0;
       var height: c_int = 0;
       c.glfwGetFramebufferSize(window, &width, &height);
       warn("framebuf w {} h {}\n", width, height);
-      // //typedef void (*GLFWglproc)(void);
-      // //GLFWAPI GLFWglproc glfwGetProcAddress(const char* procname)
-      // var addrfind = c.glfwGetProcAddress; //'extern fn(?&const u8) ?extern fn() void'
-      // //var tmap = middle(addrfind);
-      // //typedef void* (* GLADloadproc)(const char *name);
-      // var procwut = c.GLADloadproc(adapt); //'?extern fn(?&const u8) ?&c_void'
-      // //GLAPI int gladLoadGLLoader(GLADloadproc);
-      // _ = c.gladLoadGLLoader(procwut);
-      // _ = c.glViewport(0, 0, width, height);
 
-      // var x11 = c.glfwGetWaylandDisplay(); //glfwGetX11Display();
-
-      mainWindow = window;
     } else {
-      warn("window init fail\n");
+      warn("GLFW create window fail\n");
       return GUIError.Setup;
     }
   } else {
-    warn("GLFW init not ok {}\n", initOk);
+    warn("GLFW init not ok\n");
     return GUIError.Setup;
   }
 }
 
 pub fn mainloop() void {
-  while( c.glfwWindowShouldClose(mainWindow) == 0) {
+  while(c.glfwWindowShouldClose(mainWindow) == 0) {
     c.glfwWaitEventsTimeout(1);
     c.glfwSwapBuffers(mainWindow);
   }
