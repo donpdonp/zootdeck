@@ -11,7 +11,7 @@ const GUIError = error{Init, Setup};
 var vg : [*c]c.NVGcontext = undefined;
 
 const c = @cImport({
-  @cInclude("glad/glad.h");
+  @cInclude("vulkan/vulkan.h");
   @cInclude("GLFW/glfw3.h");
   @cInclude("GLFW/glfw3native.h");
 });
@@ -37,14 +37,15 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
 pub fn gui_setup(actor: *thread.Actor) !void {
   var ver_cstr = c.glfwGetVersionString();
   warn("GLFW init {} {}\n", std.cstr.toSliceConst(ver_cstr),
-                           if(c.glfwVulkanSupported() == 1) "vulkan" else "");
+                           if(c.glfwVulkanSupported() == 1) "vulkan" else "novulkan");
 
+  _ = c.glfwSetErrorCallback(glfw_error);
   if (c.glfwInit() == c.GLFW_TRUE) {
     var title = c"Zootdeck";
     if (c.glfwCreateWindow(640, 380, title, null, null)) |window| {
       c.glfwMakeContextCurrent(window);
       mainWindow = window;
-
+      vulkanInit(window);
       var width: c_int = 0;
       var height: c_int = 0;
       c.glfwGetFramebufferSize(window, &width, &height);
@@ -58,6 +59,32 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     warn("GLFW init not ok\n");
     return GUIError.Setup;
   }
+}
+
+pub fn vulkanInit(window: *c.struct_GLFWwindow) void {
+  var count: c_int = -1;
+  warn("GLFS EXT GO\n");
+  var extensions = c.glfwGetRequiredInstanceExtensions(@ptrCast([*c]u32, &count));
+  if (count == 0) {
+    var errcode = c.glfwGetError(null);
+    if(errcode == c.GLFW_NOT_INITIALIZED) {
+      warn("vulkan ERR! GLFW NOT INITIALIZED {}\n", errcode);
+    }
+    if(errcode == c.GLFW_PLATFORM_ERROR) {
+      warn("vulkan ERR! GLFW PLATFORM ERROR {}\n", errcode);
+    }
+    var description: [*c]const u8 = undefined;
+    _ = c.glfwGetError(&description);
+    warn("*_ err {}\n", description);
+  } else {
+    warn("PRE EXT count {}\n", count);
+    warn("vulkan extensions {}\n", extensions);
+    warn("POST EXT\n");
+  }
+}
+
+extern fn glfw_error(code: c_int, description: [*c]const u8) void {
+  warn("**GLFW ErrorBack! {}\n", description);
 }
 
 pub fn mainloop() void {
