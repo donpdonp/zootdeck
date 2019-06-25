@@ -13,7 +13,6 @@ var vg : [*c]c.NVGcontext = undefined;
 const c = @cImport({
   @cInclude("vulkan/vulkan.h");
   @cInclude("GLFW/glfw3.h");
-  @cInclude("GLFW/glfw3native.h");
 });
 
 pub const Column = struct {
@@ -37,7 +36,7 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
 pub fn gui_setup(actor: *thread.Actor) !void {
   var ver_cstr = c.glfwGetVersionString();
   warn("GLFW init {} {}\n", std.cstr.toSliceConst(ver_cstr),
-                           if(c.glfwVulkanSupported() == 1) "vulkan" else "novulkan");
+                           if(c.glfwVulkanSupported() == c.GLFW_TRUE) "vulkan" else "novulkan");
 
   _ = c.glfwSetErrorCallback(glfw_error);
   if (c.glfwInit() == c.GLFW_TRUE) {
