@@ -8,6 +8,7 @@ const config = @import("../config.zig");
 const simple_buffer = @import("../simple_buffer.zig");
 const toot_lib = @import("../toot.zig");
 const thread = @import("../thread.zig");
+const json_lib = @import("../json.zig");
 
 const c = @cImport({
   @cInclude("gtk/gtk.h");
@@ -318,7 +319,7 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   labelBufPrint(date_label, "{}", created_at);
 
   const content = toot.get("content").?.value.String;
-  var jDecode = util.jsonStrDecode(content, allocator)  catch unreachable;
+  var jDecode = json_lib.jsonStrDecode(content, allocator)  catch unreachable;
   var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
   const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
   var line_limit = 50/columns.len;

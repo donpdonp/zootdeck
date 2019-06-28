@@ -180,7 +180,7 @@ fn netback(command: *thread.Command) void {
             if(column.toots.contains(item)) {
             } else {
               column.toots.sortedInsert(item, allocator);
-              //cache_update(item);
+              cache_update(item);
             }
           }
         } else if(rootJsonType == .Object) {
@@ -196,6 +196,13 @@ fn netback(command: *thread.Command) void {
     }
     gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
   }
+}
+
+fn cache_update(item: toot.TootType) void {
+  var account = item.get("account").?.value.Object;
+  warn("cache {}\n", account);
+  //if (std.fs.File.openWrite(filename)) |*file| {
+  //}
 }
 
 fn guiback(command: *thread.Command) void {

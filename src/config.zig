@@ -4,6 +4,7 @@ const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
 const util = @import("./util.zig");
+const Json = @import("./json.zig");
 const toot_list = @import("./toot_list.zig");
 var allocator: *Allocator = undefined;
 
@@ -17,7 +18,8 @@ pub const Time = c.time_t;
 pub const Settings = struct {
   win_x: i64,
   win_y: i64,
-  columns: std.ArrayList(*ColumnInfo)
+  columns: std.ArrayList(*ColumnInfo),
+  config_path: []const u8,
 };
 
 // on-disk format
@@ -152,7 +154,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
   }
   if (std.fs.File.openWrite(filename)) |*file| {
     warn("config.write toJson\n");
-    var data = util.toJson(allocator, configFile);
+    var data = Json.toJson(allocator, configFile);
     file.write(data) catch unreachable;
     warn("config saved. {} {} bytes\n", filename, data.len);
     file.close();
