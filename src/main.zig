@@ -90,7 +90,7 @@ fn columnget(column: *config.ColumnInfo) void {
 fn oauthcolumnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  auth.oauthUrl(allocator, httpInfo, column.config.url);
+  auth.oauthClientRegister(allocator, httpInfo, column.config.url);
   httpInfo.token = null;
   httpInfo.column = column;
   httpInfo.response_code = 0;
@@ -104,21 +104,8 @@ fn oauthcolumnget(column: *config.ColumnInfo) void {
 fn oauthtokenget(column: *config.ColumnInfo, code: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  var urlBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
-  urlBuf.append("https://") catch unreachable;
-  urlBuf.append(column.config.url) catch unreachable;
-  urlBuf.append("/oauth/token") catch unreachable;
-  httpInfo.url = urlBuf.toSliceConst();
-  var postBodyBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
-  postBodyBuf.append("client_id=") catch unreachable;
-  postBodyBuf.append(column.oauthClientId.?) catch unreachable;
-  postBodyBuf.append("&client_secret=") catch unreachable;
-  postBodyBuf.append(column.oauthClientSecret.?) catch unreachable;
-  postBodyBuf.append("&grant_type=authorization_code") catch unreachable;
-  postBodyBuf.append("&code=") catch unreachable;
-  postBodyBuf.append(code) catch unreachable;
-  postBodyBuf.append("&redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
-  httpInfo.post_body = postBodyBuf.toSliceConst();
+  auth.oauthTokenUpgrade(allocator, httpInfo, column.config.url, code,
+                         column.oauthClientId.?, column.oauthClientSecret.?);
   httpInfo.token = null;
   httpInfo.column = column;
   httpInfo.response_code = 0;
