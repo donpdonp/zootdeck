@@ -7,4 +7,3 @@ pub const TootType = std.hash_map.HashMap([]const u8,
                                           std.json.Value,
                                           std.mem.hash_slice_u8,
                                           std.mem.eql_slice_u8);
-

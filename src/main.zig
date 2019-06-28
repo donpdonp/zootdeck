@@ -4,6 +4,8 @@ const builtin = @import("builtin");
 const warn = std.debug.warn;
 const allocator = std.heap.c_allocator;
 
+const simple_buffer = @import("./simple_buffer.zig");
+const auth = @import("./auth.zig");
 const gui = @import("./gui.zig");
 const net = @import("./net.zig");
 const heartbeat = @import("./heartbeat.zig");
@@ -13,7 +15,6 @@ const thread = @import("./thread.zig");
 const db = @import("./db.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
-const simple_buffer = @import("./simple_buffer.zig");
 const toot_list = @import("./toot_list.zig");
 const toot = @import("./toot.zig");
 
@@ -89,17 +90,7 @@ fn columnget(column: *config.ColumnInfo) void {
 fn oauthcolumnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-
-  var urlBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
-  urlBuf.append("https://") catch unreachable;
-  urlBuf.append(column.config.url) catch unreachable;
-  urlBuf.append("/api/v1/apps") catch unreachable;
-  httpInfo.url = urlBuf.toSliceConst();
-  var postBodyBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
-  postBodyBuf.append("client_name=zootdeck") catch unreachable;
-  postBodyBuf.append("&scopes=read+write") catch unreachable;
-  postBodyBuf.append("&redirect_uris=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
-  httpInfo.post_body = postBodyBuf.toSliceConst();
+  auth.oauthUrl(allocator, httpInfo, column.config.url);
   httpInfo.token = null;
   httpInfo.column = column;
   httpInfo.response_code = 0;
@@ -200,9 +191,9 @@ fn netback(command: *thread.Command) void {
             const item = jsonValue.Object;
             var id = item.get("id").?.value.String;
             if(column.toots.contains(item)) {
-              //warn("sorted list dupe! {} \n", id);
             } else {
               column.toots.sortedInsert(item, allocator);
+              //cache_update(item);
             }
           }
         } else if(rootJsonType == .Object) {
@@ -273,9 +264,9 @@ fn guiback(command: *thread.Command) void {
     }
   }
   if (command.id == 7) { //oauth activate
-    const auth = command.verb.auth.*;
-    warn("oauth authorization {}\n", auth.code);
-    oauthtokenget(auth.column, auth.code);
+    const myAuth = command.verb.auth.*;
+    warn("oauth authorization {}\n", myAuth.code);
+    oauthtokenget(myAuth.column, myAuth.code);
   }
   if (command.id == 8) { //column host change
     const column = command.verb.column;
