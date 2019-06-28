@@ -12,11 +12,12 @@ const heartbeat = @import("./heartbeat.zig");
 const config = @import("./config.zig");
 const state = @import("./statemachine.zig");
 const thread = @import("./thread.zig");
-const db = @import("./db.zig");
+const db = @import("./db/file.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
 const toot_list = @import("./toot_list.zig");
 const toot = @import("./toot.zig");
+const json_lib = @import("./json.zig");
 
 var settings: config.Settings = undefined;
 
@@ -47,7 +48,7 @@ fn initialize() !void {
   try config.init(allocator);
   try heartbeat.init(allocator);
   try statemachine.init(allocator);
-  //try db.init(allocator);
+  try db.init(allocator);
   try thread.init(allocator);
   try gui.init(allocator, &settings);
 }
@@ -200,9 +201,8 @@ fn netback(command: *thread.Command) void {
 
 fn cache_update(item: toot.TootType) void {
   var account = item.get("account").?.value.Object;
-  warn("cache {}\n", account);
-  //if (std.fs.File.openWrite(filename)) |*file| {
-  //}
+  const acct: []const u8= account.get("acct").?.value.String;
+  db.write(acct, "", "", allocator) catch unreachable;
 }
 
 fn guiback(command: *thread.Command) void {

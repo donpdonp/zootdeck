@@ -1,4 +1,5 @@
 const std = @import("std");
+const warn = std.debug.warn;
 const builtin = @import("builtin");
 const Allocator = std.mem.Allocator;
 const Buffers = @import("./simple_buffer.zig");
@@ -119,6 +120,14 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
     } else {
       depth += 1;
       ptr += structToJson(ram, ptr, depth, value, allocator);
+    }
+  } else if (@typeId(T) == builtin.TypeId.Union) {
+    if (info.Union.tag_type) |UnionTagType| {
+      inline for (info.Union.fields) |u_field| {
+        if (@enumToInt(UnionTagType(value)) == u_field.enum_field.?.value) {
+          // TODO
+        }
+      }
     }
   } else if (@typeId(T) == builtin.TypeId.Optional) {
     if(value) |val| {

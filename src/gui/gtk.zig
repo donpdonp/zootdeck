@@ -323,7 +323,7 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
   const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
   var line_limit = 50/columns.len;
-  warn("makeTootBox {} columns, {} line_limit\n", columns.len, line_limit);
+  //warn("makeTootBox {} columns, {} line_limit\n", columns.len, line_limit);
   const html_wrapped = hardWrap(html_trim, line_limit) catch unreachable;
   var cText = util.sliceToCstr(allocator, html_trim);
 
