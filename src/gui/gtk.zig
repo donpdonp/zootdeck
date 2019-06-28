@@ -237,7 +237,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 
 pub fn update_column_toots(column: *Column) void {
   warn("update_column {} {} toots {}\n", column.main.config.title,
-                util.listCount(toot_lib.TootType, column.main.toots),
+                column.main.toots.count(),
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
@@ -248,7 +248,7 @@ pub fn update_column_toots(column: *Column) void {
   } else {
     c.gtk_style_context_remove_class(gtk_context, c"net_error");
   }
-  var current = column.main.toots.first;
+  var current = column.main.toots.first();
   if (current != null) {
     while(current) |node| {
       var tootbox = makeTootBox(node.data);
@@ -260,9 +260,8 @@ pub fn update_column_toots(column: *Column) void {
   }
   c.gtk_widget_show(column_toot_zone);
 
-  const count = util.listCount(toot_lib.TootType, column.main.toots);
   const countBuf = allocator.alloc(u8, 256) catch unreachable;
-  const countStr = std.fmt.bufPrint(countBuf, "{} toots", count) catch unreachable;
+  const countStr = std.fmt.bufPrint(countBuf, "{} toots", column.main.toots.count()) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
 }

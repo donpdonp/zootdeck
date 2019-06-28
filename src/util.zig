@@ -4,7 +4,6 @@ const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
 const Buffers = @import("./simple_buffer.zig");
-const Lists = @import("./linked_list.zig");
 
 pub fn sliceAddNull(allocator: *Allocator, str: []const u8) []const u8 {
   return std.cstr.addNullByte(allocator, str) catch unreachable;
@@ -24,42 +23,8 @@ pub fn cstrToSliceCopy(allocator: *Allocator, cstr: [*c]const u8) []const u8 {
   return ram;
 }
 
-pub fn listContains(comptime T: type, list: Lists.LinkedList(T), item: T) bool {
-  var ptr = list.first;
-  while(ptr) |listItem| {
-    if(tootIdSame(T, listItem.data, item)) {
-      return true;
-    }
-    ptr = listItem.next;
-  }
-  return false;
-}
-
-fn tootIdSame(comptime T: type, a: T, b: T) bool {
+pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
   return std.mem.eql(u8, a.get("id").?.value.String, b.get("id").?.value.String);
-}
-
-pub fn listSortedInsert(comptime T: type, list: *Lists.LinkedList(T), item: T, allocator: *Allocator) void {
-  const itemDate = item.get("created_at").?.value.String;
-  const node = list.createNode(item, allocator) catch unreachable;
-  var current = list.first;
-  while(current) |listItem| {
-    const listItemDate = listItem.data.get("created_at").?.value.String;
-    if(std.mem.compare(u8, itemDate, listItemDate) == std.mem.Compare.GreaterThan) {
-      list.insertBefore(listItem, node);
-      return;
-    } else {
-    }
-    current = listItem.next;
-  }
-  list.append(node);
-}
-
-pub fn listCount(comptime T: type, list: Lists.LinkedList(T)) usize {
-  var count = usize(0);
-  var current = list.first;
-  while(current) |item| { count = count +1; current = item.next; }
-  return count;
 }
 
 pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []const u8 {

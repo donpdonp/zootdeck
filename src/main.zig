@@ -199,10 +199,10 @@ fn netback(command: *thread.Command) void {
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
             var id = item.get("id").?.value.String;
-            if(util.listContains(toot.TootType, column.toots, item)) {
+            if(column.toots.contains(item)) {
               //warn("sorted list dupe! {} \n", id);
             } else {
-              util.listSortedInsert(toot.TootType, &column.toots, item, allocator);
+              column.toots.sortedInsert(item, allocator);
             }
           }
         } else if(rootJsonType == .Object) {
