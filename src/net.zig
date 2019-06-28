@@ -103,7 +103,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
           return NetError.Curl;
         } else {
           const err_cstr = c.curl_easy_strerror(res);
-          warn("curl ERR {} {}\n", res, std.cstr.toSliceConst(err_cstr));
+          warn("curl ERR {} {}\n", res, util.cstrToSliceCopy(allocator, err_cstr));
           if(res == c.CURLcode.CURLE_COULDNT_RESOLVE_HOST) {
             req.response_code = 2100;
             return NetError.DNS;

@@ -54,7 +54,7 @@ fn initialize() !void {
 fn statewalk() void {
   if(statemachine.state == statemachine.States.Init) {
     statemachine.setState(statemachine.States.Setup); // transition
-    gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[]u8{1}));
+    gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[_]u8{1}));
     for(settings.columns.toSlice()) |column| {
       gui.schedule(gui.add_column_schedule, column);
     }
@@ -223,7 +223,7 @@ fn netback(command: *thread.Command) void {
 fn guiback(command: *thread.Command) void {
   warn("*guiback tid {x} {*}\n", thread.self(), command);
   if (command.id == 1) {
-    gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[]u8{1}));
+    gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[_]u8{1}));
   }
   if (command.id == 2) { // refresh button
     const column = command.verb.column;

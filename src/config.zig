@@ -84,7 +84,7 @@ pub fn init(alloc: *Allocator) !void {
 }
 
 pub fn readfile(filename: []const u8) !Settings {
-  if (std.os.File.openWriteNoClobber(filename, std.os.File.default_mode)) |*file| {
+  if (std.fs.File.openWriteNoClobber(filename, std.fs.File.default_mode)) |*file| {
     try file.write("{}\n");
     warn("Warning: creating new {}\n", filename);
     file.close();
@@ -150,7 +150,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
   for(settings.columns.toSlice()) |column, idx| {
     configFile.columns.append(column.config) catch unreachable;
   }
-  if (std.os.File.openWrite(filename)) |*file| {
+  if (std.fs.File.openWrite(filename)) |*file| {
     warn("config.write toJson\n");
     var data = util.toJson(allocator, configFile);
     file.write(data) catch unreachable;

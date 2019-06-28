@@ -77,7 +77,7 @@ pub fn wait() void {
   var cptr_zigbug = cp_int & 0x00000000ffffffff; // override unallocated ram marker of 0xaaaaaaaa
   var client = @intToPtr(*ipc.Client, cptr_zigbug);
 
-  var bufArray = []u8{0} ** 16; // arbitrary receive buffer
+  var bufArray = [_]u8{0} ** 16; // arbitrary receive buffer
   const buf: []u8 = ipc.read(client, bufArray[0..]);
   if(buf.len == 0) {
     // todo: skip read() and pass ptr with event_data
@@ -96,7 +96,7 @@ pub fn wait() void {
 
 pub fn signal(actor: *Actor, command: *Command) void {
   const command_addr_bytes = @ptrCast(*const [@sizeOf(*Command)]u8, &command) ;
-  warn("signaling from tid {x} command bytes {x8} len{} {}\n", actor.thread_id, command_addr_bytes, command_addr_bytes.len, command);
+  warn("signaling from tid {x} command bytes {x} len{} {}\n", actor.thread_id, command_addr_bytes, command_addr_bytes.len, command);
   ipc.send(actor.client, command_addr_bytes);
 }
 
