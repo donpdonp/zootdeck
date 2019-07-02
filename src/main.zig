@@ -13,6 +13,7 @@ const config = @import("./config.zig");
 const state = @import("./statemachine.zig");
 const thread = @import("./thread.zig");
 const db = @import("./db/lmdb.zig");
+const dbfile = @import("./db/file.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
 const toot_list = @import("./toot_list.zig");
@@ -49,6 +50,7 @@ fn initialize() !void {
   try heartbeat.init(allocator);
   try statemachine.init(allocator);
   try db.init(allocator);
+  try dbfile.init(allocator);
   try thread.init(allocator);
   try gui.init(allocator, &settings);
 }
@@ -86,6 +88,17 @@ fn columnget(column: *config.ColumnInfo) void {
   verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
   var netthread = thread.create(net.go, verb, netback) catch unreachable;
+}
+
+fn photoget(url: []const u8) void {
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+  httpInfo.url = url;
+  httpInfo.verb = .get;
+  httpInfo.token = null;
+  httpInfo.response_code = 0;
+  verb.http = httpInfo;
+  var netthread = thread.create(net.go, verb, photonetback) catch unreachable;
 }
 
 fn oauthcolumnget(column: *config.ColumnInfo) void {
@@ -199,6 +212,10 @@ fn netback(command: *thread.Command) void {
   }
 }
 
+fn photonetback(command: *thread.Command) void {
+  warn("photonetback!\n");
+}
+
 fn cache_update(item: toot.TootType) void {
   var account = item.get("account").?.value.Object;
   const acct: []const u8 = account.get("acct").?.value.String;
@@ -206,6 +223,10 @@ fn cache_update(item: toot.TootType) void {
   db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
   const name: []const u8 = account.get("display_name").?.value.String;
   db.write(acct, "name", name, allocator) catch unreachable;
+  if(dbfile.has(acct, "photo", allocator)) {
+  } else {
+    photoget(avatar_url);
+  }
 }
 
 fn guiback(command: *thread.Command) void {

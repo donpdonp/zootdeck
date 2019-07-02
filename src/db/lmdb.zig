@@ -10,7 +10,6 @@ const c = @cImport({
 
 var env: *c.MDB_env = undefined;
 const dbpath = "./db";
-//const dbs = std.hash_map.AutoHashMap([]const u8, *c.MDB_dbi);
 
 pub fn init(allocator: *Allocator) !void {
   var mdb_ret: c_int = 0;

@@ -11,6 +11,17 @@ pub fn init(allocator: *Allocator) !void {
   };
 }
 
+pub fn has(namespace: []const u8, key: []const u8, allocator: *Allocator) bool {
+  var keypath = std.fmt.allocPrint(allocator, "{}/{}/{}", cache_dir, namespace, key) catch unreachable;
+  var found = false;
+  if (std.fs.File.openRead(keypath)) |*file| {
+    found = true;
+  } else |err| {
+    warn("dbfile did not find {}\n", keypath);
+  }
+  return found;
+}
+
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
   var dirpath = try std.fmt.allocPrint(allocator, "{}/{}", cache_dir, namespace);
   std.fs.makeDir(dirpath) catch { };
