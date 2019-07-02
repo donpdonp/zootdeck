@@ -44,6 +44,8 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
   warn("lmdb write {} {}={}\n", namespace, key, value);
   var dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
   ret = c.mdb_dbi_open(txnptr.*, util.sliceToCstr(allocator, namespace), c.MDB_CREATE, dbiptr.*);
+  //var mdbKey = c.MDB_val{.mv_size = value.len, .mv_data = value.ptr};
+  //ret = c.mdb_put(txnptr.*, dbiptr.*, mdbKey, value, 0);
   ret = c.mdb_txn_commit(txnptr.*);
   if (ret != 0) {
     return error.lmdb;
