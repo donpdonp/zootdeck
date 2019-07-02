@@ -10,6 +10,7 @@ const c = @cImport({
 
 var env: *c.MDB_env = undefined;
 const dbpath = "./db";
+//const dbs = std.hash_map.AutoHashMap([]const u8, *c.MDB_dbi);
 
 pub fn init(allocator: *Allocator) !void {
   var mdb_ret: c_int = 0;
@@ -40,12 +41,15 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
   if (ret != 0) {
     return error.lmdb;
   }
-  if(ctxnMaybe) |txn| {
-    warn("lmdb write {} {} {}\n", namespace, key, value);
-    ret = c.mdb_txn_commit(txn.*);
-    if (ret != 0) {
-      return error.lmdb;
-    }
+  warn("lmdb write {} {}={}\n", namespace, key, value);
+  var dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
+  ret = c.mdb_dbi_open(txnptr.*, util.sliceToCstr(allocator, namespace), c.MDB_CREATE, dbiptr.*);
+  ret = c.mdb_txn_commit(txnptr.*);
+  if (ret != 0) {
+    return error.lmdb;
+  } else {
+    warn("mdb txn COMMIT!\n");
+    _ = c.mdb_dbi_close(env, dbiptr.*);
   }
   var zigfool=false;
   if(zigfool) return error.shutup;
