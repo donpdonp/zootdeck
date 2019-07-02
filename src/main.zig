@@ -201,8 +201,11 @@ fn netback(command: *thread.Command) void {
 
 fn cache_update(item: toot.TootType) void {
   var account = item.get("account").?.value.Object;
-  const acct: []const u8= account.get("acct").?.value.String;
-  db.write(acct, "photo", "jpg-data-here", allocator) catch unreachable;
+  const acct: []const u8 = account.get("acct").?.value.String;
+  const avatar_url: []const u8 = account.get("avatar").?.value.String;
+  db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
+  const name: []const u8 = account.get("display_name").?.value.String;
+  db.write(acct, "name", name, allocator) catch unreachable;
 }
 
 fn guiback(command: *thread.Command) void {
