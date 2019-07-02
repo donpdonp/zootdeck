@@ -12,9 +12,13 @@ pub fn init(allocator: *Allocator) !void {
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
-  const buf = try allocator.alloc(u8, cache_dir.len + namespace.len + 1);
-  var dir = try std.fmt.bufPrint(buf, "{}/{}", cache_dir, namespace);
-  std.fs.makeDir(dir) catch { };
-  //if (std.fs.File.openWrite(filename)) |*file| {
-  //}
+  var dirpath = try std.fmt.allocPrint(allocator, "{}/{}", cache_dir, namespace);
+  std.fs.makeDir(dirpath) catch { };
+  var keypath = try std.fmt.allocPrint(allocator, "{}/{}", dirpath, key);
+  if (std.fs.File.openWrite(keypath)) |*file| {
+    try file.write(value);
+    file.close();
+  } else |err| {
+    warn("open write err {} {}\n", keypath, err);
+  }
 }
