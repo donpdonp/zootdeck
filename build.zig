@@ -23,8 +23,6 @@ pub fn build(b: *Builder) void {
   exe.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
   exe.addIncludeDir("/usr/include/cairo");
   exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include/");
-
-  // gtk3
   exe.linkSystemLibrary("glib-2.0");
   exe.linkSystemLibrary("gdk-3");
   exe.linkSystemLibrary("gtk-3");
@@ -54,6 +52,9 @@ pub fn build(b: *Builder) void {
 
   // net
   exe.linkSystemLibrary("curl");
+
+  // lmdb
+  exe.linkSystemLibrary("lmdb");
 
   exe.setOutputDir(".");
   b.default_step.dependOn(&exe.step);
