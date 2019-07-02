@@ -25,13 +25,13 @@ pub fn init(allocator: *Allocator) !void {
     warn("mdb_env_open failed {}\n", mdb_ret);
     return error.BadValue;
   }
+  stats();
 }
 
-pub fn has(key: []const u8) bool {
-  return false;
-}
-
-pub fn get(key: []u8) []u8 {
+pub fn stats() void {
+  var mdbStat: c.MDB_stat = undefined;
+  var ret = c.mdb_env_stat(env, &mdbStat);
+  warn("lmdb cache {} entries\n", mdbStat.ms_entries);
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
