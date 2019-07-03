@@ -21,6 +21,18 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
+                  <object class="GtkImage" id="toot_author_avatar">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="stock">gtk-missing-image</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkLabel" id="toot_author_name">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -30,19 +42,7 @@
                     </style>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage" id="toot_author_avatar">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-missing-image</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
+                    <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
                   </packing>

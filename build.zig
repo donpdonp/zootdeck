@@ -25,6 +25,7 @@ pub fn build(b: *Builder) void {
   exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include/");
   exe.linkSystemLibrary("glib-2.0");
   exe.linkSystemLibrary("gdk-3");
+  exe.linkSystemLibrary("gdk_pixbuf-2.0");
   exe.linkSystemLibrary("gtk-3");
   exe.linkSystemLibrary("gobject-2.0");
   exe.linkSystemLibrary("gmodule-2.0");

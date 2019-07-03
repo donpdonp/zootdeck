@@ -336,7 +336,9 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
 
   const avatar = builder_get_widget(builder, c"toot_author_avatar");
   const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", acct) catch unreachable;
-  c.gtk_image_set_from_file(@ptrCast([*c]c.GtkImage, avatar), util.sliceToCstr(allocator, avatar_path));
+  var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path),
+                                                   50, -1, 1, null);
+  c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 
   return tootbox;
 }
