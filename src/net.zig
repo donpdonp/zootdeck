@@ -34,9 +34,10 @@ pub extern fn go(data: ?*c_void) ?*c_void {
 
   if (httpget(actor.payload.http)) |body| {
     const maxlen = if(body.len > 400) 400 else body.len;
-    warn("net http byte {} bytes {}\n", body.len, body[0..maxlen]);
+    warn("net http body len {}\n", body.len);
     actor.payload.http.body = body;
-    if(body.len > 0) {
+    if(body.len > 0 and (actor.payload.http.content_type.len == 0 or
+                        std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8"))) {
       var json_parser = std.json.Parser.init(allocator, false);
       if(json_parser.parse(body)) |value_tree| {
         actor.payload.http.tree = value_tree;
@@ -93,10 +94,11 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
 
         var res = c.curl_easy_perform(curl);
         if (res == c.CURLcode.CURLE_OK) {
-          var http_status: c_long = undefined;
-          _ = c.curl_easy_getinfo(curl, c.CURLINFO.CURLINFO_RESPONSE_CODE, &http_status);
-          req.response_code = http_status;
-          warn("net curl OK {}\n", http_status);
+          _ = c.curl_easy_getinfo(curl, c.CURLINFO.CURLINFO_RESPONSE_CODE, &req.response_code);
+          var ccontent_type: [*c]const u8 = undefined;
+          _ = c.curl_easy_getinfo(curl, c.CURLINFO.CURLINFO_CONTENT_TYPE, &ccontent_type);
+          req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
+          warn("net curl OK {} {}\n", req.response_code, req.content_type);
           return body_buffer.toOwnedSlice();
         } else if (res == c.CURLcode.CURLE_OPERATION_TIMEDOUT) {
           req.response_code = 2200;

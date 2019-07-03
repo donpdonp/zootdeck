@@ -50,7 +50,6 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
       if (ret == 0) {
         ret = c.mdb_txn_commit(txnptr.*);
         if (ret == 0) {
-          warn("mdb txn COMMIT!\n");
           _ = c.mdb_dbi_close(env, dbiptr.*);
         } else {
           return error.mdb_txn_commit;

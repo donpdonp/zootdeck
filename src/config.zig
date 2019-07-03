@@ -67,6 +67,7 @@ pub const HttpInfo = struct {
   token: ?[]const u8,
   post_body: []const u8,
   body: []const u8,
+  content_type: []const u8,
   response_code: c_long,
   tree: std.json.ValueTree,
   column: *ColumnInfo
