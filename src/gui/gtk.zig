@@ -307,9 +307,11 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   const tootbox = builder_get_widget(builder, c"tootbox");
 
   const id = toot.get("id").?.value.String;
+  const account = toot.get("account").?.value.Object;
+  const acct = account.get("acct").?.value.String;
 
-  const author_name = toot.get("account").?.value.Object.get("display_name").?.value.String;
-  const author_url = toot.get("account").?.value.Object.get("url").?.value.String;
+  const author_name = account.get("display_name").?.value.String;
+  const author_url = account.get("url").?.value.String;
   const created_at = toot.get("created_at").?.value.String;
 
   const name_label = builder_get_widget(builder, c"toot_author_name");
@@ -323,8 +325,7 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   var jDecode = json_lib.jsonStrDecode(content, allocator)  catch unreachable;
   var hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
   const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
-  var line_limit = 50/columns.len;
-  //warn("makeTootBox {} columns, {} line_limit\n", columns.len, line_limit);
+  var line_limit = 50 / columns.len;
   const html_wrapped = hardWrap(html_trim, line_limit) catch unreachable;
   var cText = util.sliceToCstr(allocator, html_trim);
 
@@ -332,6 +333,10 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
   c.gtk_label_set_line_wrap_mode(@ptrCast([*c]c.GtkLabel, toottext_label), c.PangoWrapMode.PANGO_WRAP_WORD_CHAR);
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
+
+  const avatar = builder_get_widget(builder, c"toot_author_avatar");
+  const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", acct) catch unreachable;
+  c.gtk_image_set_from_file(@ptrCast([*c]c.GtkImage, avatar), util.sliceToCstr(allocator, avatar_path));
 
   return tootbox;
 }
