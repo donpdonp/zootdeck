@@ -5,6 +5,7 @@ const Allocator = std.mem.Allocator;
 
 const util = @import("./util.zig");
 const Json = @import("./json.zig");
+const toot_lib = @import("./toot.zig");
 const toot_list = @import("./toot_list.zig");
 var allocator: *Allocator = undefined;
 
@@ -70,7 +71,8 @@ pub const HttpInfo = struct {
   content_type: []const u8,
   response_code: c_long,
   tree: std.json.ValueTree,
-  column: *ColumnInfo
+  column: *ColumnInfo,
+  toot: toot_lib.TootType
 };
 
 pub const ColumnAuth = struct {

@@ -17,7 +17,7 @@ const dbfile = @import("./db/file.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
 const toot_list = @import("./toot_list.zig");
-const toot = @import("./toot.zig");
+const toot_lib = @import("./toot.zig");
 const json_lib = @import("./json.zig");
 
 var settings: config.Settings = undefined;
@@ -90,15 +90,16 @@ fn columnget(column: *config.ColumnInfo) void {
   var netthread = thread.create(net.go, verb, netback) catch unreachable;
 }
 
-fn photoget(url: []const u8) void {
+fn photoget(toot: toot_lib.TootType, url: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = url;
   httpInfo.verb = .get;
   httpInfo.token = null;
   httpInfo.response_code = 0;
+  httpInfo.toot = toot;
   verb.http = httpInfo;
-  var netthread = thread.create(net.go, verb, photonetback) catch unreachable;
+  var netthread = thread.create(net.go, verb, photoback) catch unreachable;
 }
 
 fn oauthcolumnget(column: *config.ColumnInfo) void {
@@ -212,12 +213,15 @@ fn netback(command: *thread.Command) void {
   }
 }
 
-fn photonetback(command: *thread.Command) void {
-  warn("photonetback!\n");
+fn photoback(command: *thread.Command) void {
+  const reqres = command.verb.http;
+  var account = reqres.toot.get("account").?.value.Object;
+  const acct: []const u8 = account.get("acct").?.value.String;
+  warn("photoback! acct {} type {} size {}\n", acct, reqres.content_type, reqres.body.len);
 }
 
-fn cache_update(item: toot.TootType) void {
-  var account = item.get("account").?.value.Object;
+fn cache_update(toot: toot_lib.TootType) void {
+  var account = toot.get("account").?.value.Object;
   const acct: []const u8 = account.get("acct").?.value.String;
   const avatar_url: []const u8 = account.get("avatar").?.value.String;
   db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
@@ -225,7 +229,7 @@ fn cache_update(item: toot.TootType) void {
   db.write(acct, "name", name, allocator) catch unreachable;
   if(dbfile.has(acct, "photo", allocator)) {
   } else {
-    photoget(avatar_url);
+    photoget(toot, avatar_url);
   }
 }
 
