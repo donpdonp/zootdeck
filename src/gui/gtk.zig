@@ -252,7 +252,8 @@ pub fn update_column_toots(column: *Column) void {
   var current = column.main.toots.first();
   if (current != null) {
     while(current) |node| {
-      var tootbox = makeTootBox(node.data);
+      const toot = node.data;
+      var tootbox = makeTootBox(toot);
       c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, c.gtk_true(), c.gtk_true(), 0);
       current = node.next;
     }

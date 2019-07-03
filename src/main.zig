@@ -216,8 +216,9 @@ fn netback(command: *thread.Command) void {
 fn photoback(command: *thread.Command) void {
   const reqres = command.verb.http;
   var account = reqres.toot.get("account").?.value.Object;
-  const acct: []const u8 = account.get("acct").?.value.String;
+  const acct = account.get("acct").?.value.String;
   warn("photoback! acct {} type {} size {}\n", acct, reqres.content_type, reqres.body.len);
+  dbfile.write(acct, "photo", reqres.body, allocator) catch unreachable;
 }
 
 fn cache_update(toot: toot_lib.TootType) void {
