@@ -10,7 +10,7 @@ const toot_list = @import("./toot_list.zig");
 var allocator: *Allocator = undefined;
 
 const c = @cImport({
-    @cInclude("time.h");
+  @cInclude("time.h");
 });
 
 pub const Time = c.time_t;
@@ -63,7 +63,6 @@ pub const ColumnConfig = struct {
   url: []const u8,
   token: ?[]const u8,
   last_check: Time,
-
 };
 
 pub const LoginInfo = struct {

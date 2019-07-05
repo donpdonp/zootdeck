@@ -246,6 +246,7 @@ fn profileback(command: *thread.Command) void {
   const reqres = command.verb.http;
   warn("*!*! PROFILE profileback! {} \n", reqres.body);
   reqres.column.account = command.verb.http.tree.root.Object;
+  gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
 }
 
 fn cache_update(toot: toot_lib.TootType) void {
