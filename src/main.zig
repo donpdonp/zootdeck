@@ -19,12 +19,9 @@ const util = @import("./util.zig");
 const toot_list = @import("./toot_list.zig");
 const toot_lib = @import("./toot.zig");
 const json_lib = @import("./json.zig");
+const html_lib = @import("./html.zig");
 
 var settings: config.Settings = undefined;
-
-const c = @cImport({
-  @cInclude("time.h");
-});
 
 pub fn main() !void {
   hello();
@@ -214,8 +211,11 @@ fn netback(command: *thread.Command) void {
             const item = jsonValue.Object;
             var id = item.get("id").?.value.String;
             if(column.toots.contains(item)) {
+              // dupe
             } else {
               column.toots.sortedInsert(item, allocator);
+              var html = item.get("content").?.value.String;
+              var html_tree = html_lib.parse(html);
               cache_update(item);
             }
           }

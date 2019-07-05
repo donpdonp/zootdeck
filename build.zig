@@ -30,6 +30,9 @@ pub fn build(b: *Builder) void {
   exe.linkSystemLibrary("gobject-2.0");
   exe.linkSystemLibrary("gmodule-2.0");
 
+  // html
+  exe.linkSystemLibrary("gumbo");
+
   // qt5
   exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");
 
