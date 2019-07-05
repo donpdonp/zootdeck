@@ -215,7 +215,8 @@ fn netback(command: *thread.Command) void {
             } else {
               column.toots.sortedInsert(item, allocator);
               var html = item.get("content").?.value.String;
-              var html_tree = html_lib.parse(html);
+              var root = html_lib.parse(html);
+              html_lib.search(root);
               cache_update(item);
             }
           }
