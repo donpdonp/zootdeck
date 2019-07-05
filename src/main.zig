@@ -214,8 +214,9 @@ fn netback(command: *thread.Command) void {
               // dupe
             } else {
               column.toots.sortedInsert(item, allocator);
-              var html = item.get("content").?.value.String;
-              var root = html_lib.parse(html);
+              var jstr = item.get("content").?.value.String;
+              var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
+              var root = html_lib.parse(html, allocator);
               html_lib.search(root);
               cache_update(item);
             }
