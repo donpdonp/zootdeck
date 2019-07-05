@@ -35,11 +35,26 @@ pub const ColumnInfo = struct {
   toots: toot_list.TootList,
   refreshing: bool,
   inError: bool,
+  account: ?std.hash_map.HashMap([]const u8,std.json.Value,std.mem.hash_slice_u8,std.mem.eql_slice_u8),
   oauthClientId: ?[]const u8,
   oauthClientSecret: ?[]const u8,
 
   pub fn reset(self: ColumnInfo) void {
     var other = self;
+  }
+
+  pub fn makeTitle(column: *ColumnInfo) []const u8 {
+    var out: []const u8 = column.config.url;
+    if(column.config.token) |tkn| {
+      var addon: []const u8 = undefined;
+      if(column.account) |account| {
+        addon = account.get("acct").?.value.String;
+      } else {
+        addon = "_";
+      }
+      out = std.fmt.allocPrint(allocator, "{}@{}", addon, column.config.url) catch unreachable;
+    }
+    return out;
   }
 };
 
@@ -49,12 +64,6 @@ pub const ColumnConfig = struct {
   token: ?[]const u8,
   last_check: Time,
 
-  pub fn makeTitle(column: *ColumnConfig) []const u8 {
-    const addon = if(column.token) |tkn| "user@" else "";
-    const string = allocator.alloc(u8, column.url.len + addon.len) catch unreachable;
-    const out = std.fmt.bufPrint(string, "{}{}", addon, column.url) catch unreachable;
-    return out;
-  }
 };
 
 pub const LoginInfo = struct {

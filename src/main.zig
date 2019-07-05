@@ -60,6 +60,11 @@ fn statewalk() void {
     statemachine.setState(statemachine.States.Setup); // transition
     gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[_]u8{1}));
     for(settings.columns.toSlice()) |column| {
+      if(column.config.token) |token| {
+        profileget(column);
+      }
+    }
+    for(settings.columns.toSlice()) |column| {
       gui.schedule(gui.add_column_schedule, column);
     }
   }
@@ -88,6 +93,22 @@ fn columnget(column: *config.ColumnInfo) void {
   verb.http = httpInfo;
   gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
   var netthread = thread.create(net.go, verb, netback) catch unreachable;
+}
+
+fn profileget(column: *config.ColumnInfo) void {
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+  httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials", column.config.url) catch unreachable;
+  httpInfo.verb = .get;
+  httpInfo.token = null;
+  if(column.config.token) |tokenStr| {
+    httpInfo.token = tokenStr;
+  }
+  httpInfo.column = column;
+  httpInfo.response_code = 0;
+  verb.http = httpInfo;
+  gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
+  var netthread = thread.create(net.go, verb, profileback) catch unreachable;
 }
 
 fn photoget(toot: toot_lib.TootType, url: []const u8) void {
@@ -221,6 +242,12 @@ fn photoback(command: *thread.Command) void {
   dbfile.write(acct, "photo", reqres.body, allocator) catch unreachable;
 }
 
+fn profileback(command: *thread.Command) void {
+  const reqres = command.verb.http;
+  warn("*!*! PROFILE profileback! {} \n", reqres.body);
+  reqres.column.account = command.verb.http.tree.root.Object;
+}
+
 fn cache_update(toot: toot_lib.TootType) void {
   var account = toot.get("account").?.value.Object;
   const acct: []const u8 = account.get("acct").?.value.String;
@@ -315,16 +342,16 @@ fn columns_net_freshen() void {
     if(since > refresh) {
       column_refresh(column);
     } else {
-      warn("col {} is fresh for {} sec\n", column.config.url, refresh-since);
+      warn("col {} is fresh for {} sec\n", column.makeTitle(), refresh-since);
     }
   }
 }
 
 fn column_refresh(column: *config.ColumnInfo) void {
   if(column.refreshing) {
-    warn("column {} in {}\n", column.config.makeTitle(), if (column.inError) "error!" else "progress");
+    warn("column {} in {}\n", column.makeTitle(), if (column.inError) "error!" else "progress");
   } else {
-    warn("column http get {}\n", column.config.makeTitle());
+    warn("column http get {}\n", column.makeTitle());
     column.refreshing = true;
     columnget(column);
   }

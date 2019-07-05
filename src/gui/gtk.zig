@@ -131,7 +131,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, column.config_window), 600, 200);
   columns.append(column) catch unreachable;
   columns_resize();
-  warn("column added {}\n", column.main.config.makeTitle());
+  warn("column added {}\n", column.main.makeTitle());
   const footer = builder_get_widget(column.builder, c"column_footer");
   const config_icon = builder_get_widget(column.builder, c"column_config_icon");
   c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc,config_icon), 1, 0);
@@ -179,7 +179,7 @@ pub fn columns_resize() void {
 pub fn update_column_ui(column: *Column) void {
   const label = builder_get_widget(column.builder, c"column_top_label");
   var topline_null: []u8 = undefined;
-  const title_null = util.sliceAddNull(allocator, column.main.config.makeTitle());
+  const title_null = util.sliceAddNull(allocator, column.main.makeTitle());
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel,label), title_null.ptr);
 }
 
