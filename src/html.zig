@@ -9,37 +9,29 @@ const c = @cImport({
   @cInclude("gumbo.h");
 });
 
-// static void* malloc_wrapper(void* unused, size_t size) { return malloc(size); }
-// static void free_wrapper(void* unused, void* ptr) { free(ptr); }
-// const GumboOptions kGumboDefaultOptions = {&malloc_wrapper, &free_wrapper, NULL,
-//     8, false, -1, GUMBO_TAG_LAST, GUMBO_NAMESPACE_HTML};
-
 pub fn parse(html: []const u8, allocator: *Allocator) *Node {
+  // const GumboOptions kGumboDefaultOptions = {&malloc_wrapper, &free_wrapper, NULL, 8, false, -1, GUMBO_TAG_LAST, GUMBO_NAMESPACE_HTML};
   var options = c.GumboOptions{.allocator = c.kGumboDefaultOptions.allocator,
-    .deallocator = c.kGumboDefaultOptions.deallocator, .userdata = null, .tab_stop = 0,
-    .stop_on_first_error = false, .max_errors = 0,
+    .deallocator = c.kGumboDefaultOptions.deallocator, .userdata = null, .tab_stop = 8,
+    .stop_on_first_error = false, .max_errors = -1,
     .fragment_context = c.GumboTag.GUMBO_TAG_BODY,
     .fragment_namespace = c.GumboNamespaceEnum.GUMBO_NAMESPACE_HTML};
   var doc = c.gumbo_parse_with_options(&options, html.ptr, html.len);
   var root = doc.*.root;
   var tagType = root.*.type;
   var tagName = root.*.v.element.tag;
-  warn("parsed: {}\n", html);
   return root;
 }
 
 pub fn search(node: *Node) void {
   if (node.type == c.GumboNodeType.GUMBO_NODE_ELEMENT) {
-    warn("SearchStart {*} {}\n", node, node.v.element.tag);
     if(node.v.element.tag == c.GumboTag.GUMBO_TAG_A) {
       warn("A TAG found\n");
     }
     var children = node.v.element.children;
-    warn("children len {}\n", children.length);
     var idx = u32(0);
     while(idx < children.length) : (idx += 1) {
       const cnode = children.data[idx];
-      warn("child {*}\n", cnode);
       if(cnode) |chld| {
         search(@ptrCast(*Node, @alignCast(8, chld)));
       }

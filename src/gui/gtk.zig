@@ -340,6 +340,10 @@ pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
                                                    50, -1, 1, null);
   c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 
+  var images = toot.get("media_attachments").?.value.Array;
+  for(images.toSlice()) |image| {
+    warn("toot image {}\n", image.Object.get("url").?.value.String);
+  }
   return tootbox;
 }
 
