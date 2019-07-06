@@ -1,4 +1,5 @@
-TODAY=`date +'%Y.%m.%d'`
+GITEPOCH=$(shell git log -1 --format="%at")
+TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-${TODAY}
 
 build:
