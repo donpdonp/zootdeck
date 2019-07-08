@@ -240,10 +240,11 @@ fn netback(command: *thread.Command) void {
 fn photoback(command: *thread.Command) void {
   const reqres = command.verb.http;
   var account = reqres.toot.get("account").?.value.Object;
-  var acct = account.get("acct").?.value.String;
+  const acct = account.get("acct").?.value.String;
   warn("photoback! acct {} type {} size {}\n", acct, reqres.content_type, reqres.body.len);
   dbfile.write(acct, "photo", reqres.body, allocator) catch unreachable;
-  gui.schedule(gui.update_author_photo_schedule, @ptrCast(*c_void, &acct));
+  const cAcct = util.sliceToCstr(allocator, acct);
+  gui.schedule(gui.update_author_photo_schedule, @ptrCast(*c_void, cAcct));
 }
 
 fn profileback(command: *thread.Command) void {

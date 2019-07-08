@@ -108,8 +108,9 @@ pub extern fn column_config_oauth_url_schedule(in: *c_void) c_int {
 }
 
 pub extern fn update_author_photo_schedule(in: *c_void) c_int {
-  const acctPtr = @ptrCast(*[]const u8, @alignCast(8,in));
-  update_author_photo(acctPtr.*);
+  const cAcct = @ptrCast([*c]const u8, @alignCast(8,in));
+  const acct = util.cstrToSliceCopy(allocator, cAcct);
+  update_author_photo(acct);
   return 0;
 }
 
@@ -173,7 +174,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 }
 
 pub fn update_author_photo(acct: []const u8) void {
-  warn("Update autho photo {}\n", acct);
+  warn("Update_author_photo {}\n", acct);
   // all toots in all columns :O
   for(columns.toSlice()) |col| {
     const toots = col.main.toots.author(acct, allocator);
