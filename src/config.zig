@@ -80,7 +80,7 @@ pub const HttpInfo = struct {
   response_code: c_long,
   tree: std.json.ValueTree,
   column: *ColumnInfo,
-  toot: toot_lib.TootType
+  toot: toot_lib.Toot()
 };
 
 pub const ColumnAuth = struct {

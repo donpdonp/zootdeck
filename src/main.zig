@@ -108,7 +108,7 @@ fn profileget(column: *config.ColumnInfo) void {
   var netthread = thread.create(net.go, verb, profileback) catch unreachable;
 }
 
-fn photoget(toot: toot_lib.TootType, url: []const u8) void {
+fn photoget(toot: toot_lib.Toot(), url: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = url;
@@ -209,16 +209,17 @@ fn netback(command: *thread.Command) void {
           column.inError = false;
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
+            const toot = toot_lib.Toot().init(item);
             var id = item.get("id").?.value.String;
-            if(column.toots.contains(item)) {
+            if(column.toots.contains(toot)) {
               // dupe
             } else {
-              column.toots.sortedInsert(item, allocator);
+              column.toots.sortedInsert(toot, allocator);
               var jstr = item.get("content").?.value.String;
               var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
               var root = html_lib.parse(html, allocator);
               html_lib.search(root);
-              cache_update(item);
+              cache_update(toot);
             }
           }
         } else if(rootJsonType == .Object) {
@@ -239,9 +240,10 @@ fn netback(command: *thread.Command) void {
 fn photoback(command: *thread.Command) void {
   const reqres = command.verb.http;
   var account = reqres.toot.get("account").?.value.Object;
-  const acct = account.get("acct").?.value.String;
+  var acct = account.get("acct").?.value.String;
   warn("photoback! acct {} type {} size {}\n", acct, reqres.content_type, reqres.body.len);
   dbfile.write(acct, "photo", reqres.body, allocator) catch unreachable;
+  gui.schedule(gui.update_author_photo_schedule, @ptrCast(*c_void, &acct));
 }
 
 fn profileback(command: *thread.Command) void {
@@ -251,7 +253,7 @@ fn profileback(command: *thread.Command) void {
   gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
 }
 
-fn cache_update(toot: toot_lib.TootType) void {
+fn cache_update(toot: toot_lib.Toot()) void {
   var account = toot.get("account").?.value.Object;
   const acct: []const u8 = account.get("acct").?.value.String;
   const avatar_url: []const u8 = account.get("avatar").?.value.String;

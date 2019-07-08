@@ -77,5 +77,9 @@ pub extern fn update_column_toots_schedule(in: *c_void) c_int {
   return guilib.update_column_toots_schedule(in);
 }
 
+pub extern fn update_author_photo_schedule(in: *c_void) c_int {
+  return guilib.update_author_photo_schedule(in);
+}
+
 
 

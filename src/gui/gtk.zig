@@ -107,6 +107,12 @@ pub extern fn column_config_oauth_url_schedule(in: *c_void) c_int {
   return 0;
 }
 
+pub extern fn update_author_photo_schedule(in: *c_void) c_int {
+  const acctPtr = @ptrCast(*[]const u8, @alignCast(8,in));
+  update_author_photo(acctPtr.*);
+  return 0;
+}
+
 pub extern fn update_column_ui_schedule(in: *c_void) c_int {
   const columnInfo = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
   const column = findColumnByInfo(columnInfo);
@@ -164,6 +170,15 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   _ = c.gtk_builder_add_callback_symbol(column.builder, c"zoot_drag", zoot_drag);
   _ = c.gtk_builder_connect_signals(column.builder, null);
   c.gtk_widget_show_all(container);
+}
+
+pub fn update_author_photo(acct: []const u8) void {
+  warn("Update autho photo {}\n", acct);
+  // all toots in all columns :O
+  for(columns.toSlice()) |col| {
+    for(col.main.toots.author(acct, allocator)) |toot| {
+    }
+  }
 }
 
 pub fn columns_resize() void {
@@ -302,7 +317,7 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
-pub fn makeTootBox(toot: toot_lib.TootType) [*c]c.GtkWidget {
+pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkWidget {
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 

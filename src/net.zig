@@ -14,7 +14,7 @@ const c = @cImport({
   @cInclude("curl/curl.h");
 });
 
-const NetError = error{
+const NetError = error {
   JSONparse,
   Curl,
   CurlInit,

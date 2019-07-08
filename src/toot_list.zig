@@ -6,10 +6,9 @@ const Allocator = std.mem.Allocator;
 const toot = @import("./toot.zig");
 const util = @import("./util.zig");
 
-//pub const TootList = Lists.LinkedList(toot.TootType);
-pub const TootList = TootListMk(toot.TootType);
+pub const TootList = SomeList(toot.Toot());
 
-pub fn TootListMk(comptime T: type) type {
+pub fn SomeList(comptime T: type) type {
   return struct {
     const Self = @This();
     const ListType = std.TailQueue(T);
@@ -34,6 +33,18 @@ pub fn TootListMk(comptime T: type) type {
         ptr = listItem.next;
       }
       return false;
+    }
+
+    pub fn author(self: *Self, acct: []const u8, allocator: *Allocator) []T {
+      const winners = std.ArrayList(T).init(allocator);
+      var ptr = self.list.first;
+      while(ptr) |listItem| {
+        // if(util.hashIdSame(T, listItem.data, item)) {
+        //   return true;
+        // }
+        ptr = listItem.next;
+      }
+      return winners.toSlice();
     }
 
     pub fn sortedInsert(self: *Self, item: T, allocator: *Allocator) void {
