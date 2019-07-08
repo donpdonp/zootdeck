@@ -23,8 +23,25 @@ pub fn Toot() type {
       return self.hashmap.get(key);
     }
 
+    pub fn id(self: *const Self) ?[]const u8 {
+      if(self.hashmap.get("id")) |kv| {
+        return kv.value.String;
+      } else {
+        return null;
+      }
+    }
+
     pub fn author(self: *const Self, acct: []const u8) bool {
-      return false;
+      if(self.hashmap.get("account")) |kv| {
+        if(kv.value.Object.get("acct")) |akv| {
+          const existing_acct = akv.value.String;
+          return std.mem.compare(u8, acct, existing_acct) == std.mem.Compare.Equal;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
     }
   };
 }

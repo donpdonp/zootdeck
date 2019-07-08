@@ -176,7 +176,9 @@ pub fn update_author_photo(acct: []const u8) void {
   warn("Update autho photo {}\n", acct);
   // all toots in all columns :O
   for(columns.toSlice()) |col| {
-    for(col.main.toots.author(acct, allocator)) |toot| {
+    const toots = col.main.toots.author(acct, allocator);
+    for(toots) |toot| {
+      warn("update_author_photo {} {} {}\n", col.main.config.url, acct, toot.id());
     }
   }
 }

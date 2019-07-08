@@ -10,14 +10,19 @@ pub const TootList = SomeList(toot_lib.Toot());
 
 pub fn SomeList(comptime T: type) type {
   return struct {
+    list: ListType,
+
     const Self = @This();
     const ListType = std.TailQueue(T);
-    list: ListType,
 
     pub fn init() Self {
       return Self{
         .list = ListType.init(),
       };
+    }
+
+    pub fn len(self: *Self) usize {
+      return self.list.len;
     }
 
     pub fn first(self: *Self) ?*ListType.Node {
