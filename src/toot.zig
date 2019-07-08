@@ -22,5 +22,9 @@ pub fn Toot() type {
     pub fn get(self: *const Self, key: K) ?*Toothashmap.KV {
       return self.hashmap.get(key);
     }
+
+    pub fn author(self: *const Self, acct: []const u8) bool {
+      return false;
+    }
   };
 }

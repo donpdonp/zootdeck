@@ -3,10 +3,10 @@ const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
-const toot = @import("./toot.zig");
+const toot_lib = @import("./toot.zig");
 const util = @import("./util.zig");
 
-pub const TootList = SomeList(toot.Toot());
+pub const TootList = SomeList(toot_lib.Toot());
 
 pub fn SomeList(comptime T: type) type {
   return struct {
@@ -36,12 +36,13 @@ pub fn SomeList(comptime T: type) type {
     }
 
     pub fn author(self: *Self, acct: []const u8, allocator: *Allocator) []T {
-      const winners = std.ArrayList(T).init(allocator);
+      var winners = std.ArrayList(T).init(allocator);
       var ptr = self.list.first;
       while(ptr) |listItem| {
-        // if(util.hashIdSame(T, listItem.data, item)) {
-        //   return true;
-        // }
+        const toot = listItem.data;
+        if(toot.author(acct)) {
+          winners.append(toot) catch unreachable;
+        }
         ptr = listItem.next;
       }
       return winners.toSlice();
