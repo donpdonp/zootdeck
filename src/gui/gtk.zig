@@ -388,13 +388,18 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
       const tootbuilder = kv.value;
       const imageBox = builder_get_widget(tootbuilder, c"image_box");
       var loader = c.gdk_pixbuf_loader_new();
+      //gdk_pixbuf_loader_set_size(...
       const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
       if(loadYN == c.gtk_true()) {
-          warn("tootbuild LOADED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        warn("toot_media pic data LOADED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
-        var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
-        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
-                            c.gtk_true(), c.gtk_true(), 0);
+        if(pixbuf != null) {
+          var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
+          c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
+                              c.gtk_true(), c.gtk_true(), 0);
+        } else {
+          warn("toot_media img from pixbuf FAILED\n");
+        }
       } else {
         warn("pixbuf load FAILED\n");
       }
