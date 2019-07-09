@@ -363,10 +363,6 @@ pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkBuilder {
 
   photo_refresh(author_acct, builder);
 
-  var images = toot.get("media_attachments").?.value.Array;
-  for(images.toSlice()) |image| {
-    warn("toot image {}\n", image.Object.get("url").?.value.String);
-  }
   return builder;
 }
 

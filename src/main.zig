@@ -120,6 +120,18 @@ fn photoget(toot: toot_lib.Toot(), url: []const u8) void {
   var netthread = thread.create(net.go, verb, photoback) catch unreachable;
 }
 
+fn mediaget(toot: toot_lib.Toot(), url: []const u8) void {
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+  httpInfo.url = url;
+  httpInfo.verb = .get;
+  httpInfo.token = null;
+  httpInfo.response_code = 0;
+  httpInfo.toot = toot;
+  verb.http = httpInfo;
+  var netthread = thread.create(net.go, verb, mediaback) catch unreachable;
+}
+
 fn oauthcolumnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
@@ -210,16 +222,22 @@ fn netback(command: *thread.Command) void {
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
             const toot = toot_lib.Toot().init(item);
-            var id = item.get("id").?.value.String;
+            var id = toot.id();
             if(column.toots.contains(toot)) {
               // dupe
             } else {
               column.toots.sortedInsert(toot, allocator);
-              var jstr = item.get("content").?.value.String;
+              var jstr = toot.get("content").?.value.String;
               var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
               var root = html_lib.parse(html, allocator);
               html_lib.search(root);
               cache_update(toot);
+
+              var images = toot.get("media_attachments").?.value.Array;
+              for(images.toSlice()) |image| {
+                const imgUrl = image.Object.get("url").?.value.String;
+                mediaget(toot, imgUrl);
+              }
             }
           }
         } else if(rootJsonType == .Object) {
@@ -237,6 +255,12 @@ fn netback(command: *thread.Command) void {
   }
 }
 
+fn mediaback(command: *thread.Command) void {
+  const reqres = command.verb.http;
+  const toot_id = reqres.toot.id();
+  warn("mediaback!!!!!!!!!!!!!! {} \n", toot_id);
+}
+
 fn photoback(command: *thread.Command) void {
   const reqres = command.verb.http;
   var account = reqres.toot.get("account").?.value.Object;
@@ -249,7 +273,6 @@ fn photoback(command: *thread.Command) void {
 
 fn profileback(command: *thread.Command) void {
   const reqres = command.verb.http;
-  warn("*!*! PROFILE profileback! {} \n", reqres.body);
   reqres.column.account = command.verb.http.tree.root.Object;
   gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
 }
