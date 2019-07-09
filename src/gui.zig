@@ -81,5 +81,7 @@ pub extern fn update_author_photo_schedule(in: *c_void) c_int {
   return guilib.update_author_photo_schedule(in);
 }
 
-
-
+pub const TootPic = guilib.TootPic;
+pub extern fn toot_media_schedule(in: *c_void) c_int {
+  return guilib.toot_media_schedule(in);
+}

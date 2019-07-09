@@ -122,6 +122,13 @@ pub extern fn update_column_ui_schedule(in: *c_void) c_int {
   return 0;
 }
 
+pub const TootPic = struct { toot: toot_lib.Toot(), pic: []const u8 };
+pub extern fn toot_media_schedule(in: *c_void) c_int {
+  const tootpic = @ptrCast(*TootPic, @alignCast(8,in));
+  toot_media(tootpic.toot, tootpic.pic);
+  return 0;
+}
+
 pub extern fn add_column_schedule(in: *c_void) c_int {
   const column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
   add_column(column);
@@ -373,6 +380,28 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
                                                    50, -1, 1, null);
   c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 }
+
+fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
+  for(columns.toSlice()) |column| {
+    var kvMaybe = column.guitoots.get(toot.id());
+    if(kvMaybe) |kv| {
+      const tootbuilder = kv.value;
+      const imageBox = builder_get_widget(tootbuilder, c"image_box");
+      var loader = c.gdk_pixbuf_loader_new();
+      const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
+      if(loadYN == c.gtk_true()) {
+          warn("tootbuild LOADED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
+        var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
+        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
+                            c.gtk_true(), c.gtk_true(), 0);
+      } else {
+        warn("pixbuf load FAILED\n");
+      }
+    }
+  }
+}
+
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
   var wrapped = try simple_buffer.SimpleU8.initSize(allocator, 0);

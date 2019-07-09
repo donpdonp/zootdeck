@@ -257,8 +257,10 @@ fn netback(command: *thread.Command) void {
 
 fn mediaback(command: *thread.Command) void {
   const reqres = command.verb.http;
-  const toot_id = reqres.toot.id();
-  warn("mediaback!!!!!!!!!!!!!! {} \n", toot_id);
+  const tootpic = allocator.create(gui.TootPic) catch unreachable;
+  tootpic.toot = reqres.toot;
+  tootpic.pic = reqres.body;
+  gui.schedule(gui.toot_media_schedule, @ptrCast(*c_void, tootpic));
 }
 
 fn photoback(command: *thread.Command) void {
