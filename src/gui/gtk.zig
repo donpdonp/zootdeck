@@ -182,7 +182,10 @@ pub fn update_author_photo(acct: []const u8) void {
     const toots = column.main.toots.author(acct, allocator);
     for(toots) |toot| {
       warn("update_author_photo {} {} {}\n", column.main.config.url, acct, toot.id());
-      var tootbox = column.guitoots.get(toot.id());
+      var tootbuilderMaybe = column.guitoots.get(toot.id());
+      if(tootbuilderMaybe) |kv| {
+        photo_refresh(acct, kv.value);
+      }
     }
   }
 }
@@ -358,17 +361,21 @@ pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkBuilder {
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
-  const avatar = builder_get_widget(builder, c"toot_author_avatar");
-  const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", author_acct) catch unreachable;
-  var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path),
-                                                   50, -1, 1, null);
-  c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
+  photo_refresh(author_acct, builder);
 
   var images = toot.get("media_attachments").?.value.Array;
   for(images.toSlice()) |image| {
     warn("toot image {}\n", image.Object.get("url").?.value.String);
   }
   return builder;
+}
+
+fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
+  const avatar = builder_get_widget(builder, c"toot_author_avatar");
+  const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", acct) catch unreachable;
+  var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path),
+                                                   50, -1, 1, null);
+  c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 }
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
