@@ -55,9 +55,10 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEventBox">
+          <object class="GtkEventBox" id="column_top_imgonly">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <signal name="button-press-event" handler="column.imgonly" object="column" swapped="yes"/>
             <child>
               <object class="GtkImage">
                 <property name="visible">True</property>

@@ -166,6 +166,9 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
                                         c"column.reload",
                                         @ptrCast(?extern fn() void, column_reload));
   _ = c.gtk_builder_add_callback_symbol(column.builder,
+                                        c"column.imgonly",
+                                        @ptrCast(?extern fn() void, column_imgonly));
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column_config.done",
                                         @ptrCast(?extern fn() void, column_config_done));
   _ = c.gtk_builder_add_callback_symbol(column.builder,
@@ -284,7 +287,7 @@ pub fn update_column_toots(column: *Column) void {
   if (current != null) {
     while(current) |node| {
       const toot = node.data;
-      const tootbuilder =  makeTootBox(toot);
+      const tootbuilder =  makeTootBox(toot, column.main.config);
       var tootbox = builder_get_widget(tootbuilder, c"tootbox");
       c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
                           c.gtk_true(), c.gtk_true(), 0);
@@ -336,7 +339,7 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
-pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkBuilder {
+pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c.GtkBuilder {
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 
@@ -368,6 +371,11 @@ pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkBuilder {
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
+  if(colconfig.img_only) {
+    c.gtk_widget_hide(toottext_label);
+    const id_row = builder_get_widget(builder, c"toot_id_row");
+    c.gtk_widget_hide(id_row);
+  }
   photo_refresh(author_acct, builder);
 
   return builder;
@@ -511,6 +519,19 @@ extern fn column_reload(columnptr: *c_void) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   verb.column = column.main;
   command.id = 2;
+  command.verb = verb;
+  thread.signal(myActor, command);
+}
+
+extern fn column_imgonly(columnptr: *c_void) void {
+  var column_widget = @ptrCast([*c]c.GtkWidget, @alignCast(8,columnptr));
+  var column: *Column = findColumnByBox(column_widget);
+
+  // signal crazy
+  var command = allocator.create(thread.Command) catch unreachable;
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  verb.column = column.main;
+  command.id = 9; //imgonly button
   command.verb = verb;
   thread.signal(myActor, command);
 }

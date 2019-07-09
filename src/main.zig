@@ -226,18 +226,21 @@ fn netback(command: *thread.Command) void {
             if(column.toots.contains(toot)) {
               // dupe
             } else {
-              column.toots.sortedInsert(toot, allocator);
-              var jstr = toot.get("content").?.value.String;
-              var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
-              var root = html_lib.parse(html, allocator);
-              html_lib.search(root);
-              cache_update(toot);
-
               var images = toot.get("media_attachments").?.value.Array;
-              for(images.toSlice()) |image| {
-                const imgUrl = image.Object.get("url").?.value.String;
-                warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
-                mediaget(toot, imgUrl);
+
+              if((column.config.img_only and images.len > 0) or !column.config.img_only) {
+                column.toots.sortedInsert(toot, allocator);
+                var jstr = toot.get("content").?.value.String;
+                var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
+                var root = html_lib.parse(html, allocator);
+                html_lib.search(root);
+                cache_update(toot);
+
+                for(images.toSlice()) |image| {
+                  const imgUrl = image.Object.get("url").?.value.String;
+                  warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
+                  mediaget(toot, imgUrl);
+                }
               }
             }
           }
@@ -358,6 +361,11 @@ fn guiback(command: *thread.Command) void {
     gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, column));
     // throw out toots in the toot list not from the new host
 
+  }
+  if (command.id == 9) { // imgonly button
+    const column = command.verb.column;
+    column.config.img_only = !column.config.img_only;
+    config.writefile(settings, "config.json");
   }
 }
 

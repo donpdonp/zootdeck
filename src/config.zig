@@ -63,6 +63,7 @@ pub const ColumnConfig = struct {
   url: []const u8,
   token: ?[]const u8,
   last_check: Time,
+  img_only: bool
 };
 
 pub const LoginInfo = struct {
@@ -147,6 +148,8 @@ pub fn read(json: []const u8) !Settings {
       }
       var last_check = value.Object.get("last_check").?.value.Integer;
       colInfo.config.last_check = last_check;
+      var img_only = value.Object.get("img_only").?.value.Bool;
+      colInfo.config.img_only = img_only;
       settings.columns.append(colInfo) catch unreachable;
     }
   } else {
