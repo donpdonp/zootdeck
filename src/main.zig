@@ -236,6 +236,7 @@ fn netback(command: *thread.Command) void {
               var images = toot.get("media_attachments").?.value.Array;
               for(images.toSlice()) |image| {
                 const imgUrl = image.Object.get("url").?.value.String;
+                warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
                 mediaget(toot, imgUrl);
               }
             }

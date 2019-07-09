@@ -388,15 +388,19 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
       const tootbuilder = kv.value;
       const imageBox = builder_get_widget(tootbuilder, c"image_box");
       var loader = c.gdk_pixbuf_loader_new();
-      //gdk_pixbuf_loader_set_size(...
+      c.gdk_pixbuf_loader_set_size(loader, 300, 200);
       const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
       if(loadYN == c.gtk_true()) {
-        warn("toot_media pic data LOADED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        const account = toot.get("account").?.value.Object;
+        const acct = account.get("acct").?.value.String;
+        warn("toot_media pic data LOADED {} {}\n", acct, toot.id());
         var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
+        _ = c.gdk_pixbuf_loader_close(loader, null);
         if(pixbuf != null) {
           var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
           c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
                               c.gtk_true(), c.gtk_true(), 0);
+          c.gtk_widget_show(new_img);
         } else {
           warn("toot_media img from pixbuf FAILED\n");
         }
