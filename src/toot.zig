@@ -23,11 +23,11 @@ pub fn Toot() type {
       return self.hashmap.get(key);
     }
 
-    pub fn id(self: *const Self) ?[]const u8 {
+    pub fn id(self: *const Self) []const u8 {
       if(self.hashmap.get("id")) |kv| {
         return kv.value.String;
       } else {
-        return null;
+        unreachable;
       }
     }
 

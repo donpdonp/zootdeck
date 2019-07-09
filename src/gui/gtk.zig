@@ -24,7 +24,8 @@ pub const Column = struct {
   builder: [*c]c.GtkBuilder,
   columnbox: [*c]c.GtkWidget,
   config_window: [*c]c.GtkWidget,
-  main: *config.ColumnInfo
+  main: *config.ColumnInfo,
+  guitoots: std.hash_map.AutoHashMap([]const u8, *c.GtkBuilder)
 };
 
 var columns:std.ArrayList(*Column) = undefined;
@@ -136,6 +137,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
   column.config_window = builder_get_widget(column.builder, c"column_config");
   c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, column.config_window), 600, 200);
+  column.guitoots = std.hash_map.AutoHashMap([]const u8, *c.GtkBuilder).init(allocator);
   columns.append(column) catch unreachable;
   columns_resize();
   warn("column added {}\n", column.main.makeTitle());
@@ -176,10 +178,11 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 pub fn update_author_photo(acct: []const u8) void {
   warn("Update_author_photo {}\n", acct);
   // all toots in all columns :O
-  for(columns.toSlice()) |col| {
-    const toots = col.main.toots.author(acct, allocator);
+  for(columns.toSlice()) |column| {
+    const toots = column.main.toots.author(acct, allocator);
     for(toots) |toot| {
-      warn("update_author_photo {} {} {}\n", col.main.config.url, acct, toot.id());
+      warn("update_author_photo {} {} {}\n", column.main.config.url, acct, toot.id());
+      var tootbox = column.guitoots.get(toot.id());
     }
   }
 }
@@ -271,8 +274,11 @@ pub fn update_column_toots(column: *Column) void {
   if (current != null) {
     while(current) |node| {
       const toot = node.data;
-      var tootbox = makeTootBox(toot);
-      c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, c.gtk_true(), c.gtk_true(), 0);
+      const tootbuilder =  makeTootBox(toot);
+      var tootbox = builder_get_widget(tootbuilder, c"tootbox");
+      c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
+                          c.gtk_true(), c.gtk_true(), 0);
+      _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
       current = node.next;
     }
   } else {
@@ -320,13 +326,13 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
-pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkWidget {
+pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkBuilder {
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 
   const id = toot.get("id").?.value.String;
   const account = toot.get("account").?.value.Object;
-  const acct = account.get("acct").?.value.String;
+  const author_acct = account.get("acct").?.value.String;
 
   const author_name = account.get("display_name").?.value.String;
   const author_url = account.get("url").?.value.String;
@@ -353,7 +359,7 @@ pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkWidget {
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
   const avatar = builder_get_widget(builder, c"toot_author_avatar");
-  const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", acct) catch unreachable;
+  const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", author_acct) catch unreachable;
   var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path),
                                                    50, -1, 1, null);
   c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
@@ -362,7 +368,7 @@ pub fn makeTootBox(toot: toot_lib.Toot()) [*c]c.GtkWidget {
   for(images.toSlice()) |image| {
     warn("toot image {}\n", image.Object.get("url").?.value.String);
   }
-  return tootbox;
+  return builder;
 }
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
