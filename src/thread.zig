@@ -3,7 +3,7 @@ const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 var allocator: *Allocator = undefined;
-const ipc = @import("./ipc-epoll.zig");
+const ipc = @import("./ipc/epoll.zig");
 const config = @import("./config.zig");
 
 const c = @cImport({
@@ -40,8 +40,7 @@ pub fn init(myAllocator: *Allocator) !void {
   try ipc.init();
 }
 
-pub fn create(
-              startFn: extern fn (?*c_void) ?*c_void,
+pub fn create(startFn: extern fn (?*c_void) ?*c_void,
               startParams: *CommandVerb,
               recvback: fn(*Command) void,
               ) !*Actor {

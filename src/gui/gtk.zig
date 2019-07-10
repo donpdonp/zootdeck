@@ -413,7 +413,7 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
           warn("toot_media img from pixbuf FAILED\n");
         }
       } else {
-        warn("pixbuf load FAILED\n");
+        warn("pixbuf load FAILED of {} bytes\n", pic.len);
       }
     }
   }

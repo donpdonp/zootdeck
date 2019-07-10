@@ -34,7 +34,7 @@ pub fn main() !void {
 
     while(true) {
       statewalk();
-      warn("== main wait ==\n");
+      warn("== epoll wait\n");
       thread.wait(); // main ipc listener
     }
   } else |err| {
