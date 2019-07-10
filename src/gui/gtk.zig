@@ -299,8 +299,7 @@ pub fn update_column_toots(column: *Column) void {
   }
   c.gtk_widget_show(column_toot_zone);
 
-  const countBuf = allocator.alloc(u8, 256) catch unreachable;
-  const countStr = std.fmt.bufPrint(countBuf, "{} toots", column.main.toots.count()) catch unreachable;
+  const countStr = std.fmt.allocPrint(allocator, "{} toots", column.main.toots.count()) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
 }
