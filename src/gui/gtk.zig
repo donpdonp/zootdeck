@@ -354,6 +354,8 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
   labelBufPrint(name_label, "{}", author_name);
   const url_label = builder_get_widget(builder, c"toot_author_url");
   labelBufPrint(url_label, "{}", author_url);
+  const author_url_minimode_label = builder_get_widget(builder, c"toot_author_url_minimode");
+  labelBufPrint(author_url_minimode_label, "{}", author_url);
   const date_label = builder_get_widget(builder, c"toot_date");
   labelBufPrint(date_label, "{}", created_at);
 
@@ -370,10 +372,12 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
+
   if(colconfig.img_only) {
     c.gtk_widget_hide(toottext_label);
     const id_row = builder_get_widget(builder, c"toot_id_row");
     c.gtk_widget_hide(id_row);
+    c.gtk_widget_show(author_url_minimode_label);
   }
   photo_refresh(author_acct, builder);
 

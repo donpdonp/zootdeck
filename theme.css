@@ -4,7 +4,12 @@
 }
 
 .toot_author_url {
-  color:white; 
+  color: white;
+  background-color: #111;
+}
+
+.toot_author_url_minimode {
+  color: white;
   background-color: #111;
 }
 

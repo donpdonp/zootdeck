@@ -33,13 +33,43 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="toot_author_name">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">author_name</property>
-                    <style>
-                      <class name="toot_author_name"/>
-                    </style>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="toot_author_name">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">author_name</property>
+                        <style>
+                          <class name="toot_author_name"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="toot_author_url">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">author url</property>
+                        <style>
+                          <class name="toot_author_url"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -57,36 +87,6 @@
                 <property name="position">0</property>
               </packing>
             </child>
-            <child>
-              <object class="GtkLabel" id="toot_date">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">date</property>
-                <style>
-                  <class name="toot_date"/>
-                </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="toot_author_url">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">url</property>
-                <style>
-                  <class name="toot_author_url"/>
-                </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
             <style>
               <class name="toot_header_box"/>
             </style>
@@ -98,18 +98,32 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="toot_text">
-            <property name="visible">True</property>
+          <object class="GtkLabel" id="toot_author_url_minimode">
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">body text</property>
+            <property name="label" translatable="yes">author url mini</property>
             <style>
-              <class name="toot_text"/>
+              <class name="toot_author_url_minimode"/>
             </style>
           </object>
           <packing>
-            <property name="expand">True</property>
+            <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="toot_date">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">date</property>
+            <style>
+              <class name="toot_date"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>
@@ -117,6 +131,21 @@
         <property name="expand">True</property>
         <property name="fill">True</property>
         <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="toot_text">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">toot text</property>
+        <style>
+          <class name="toot_text"/>
+        </style>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -131,7 +160,7 @@
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
     <child>
@@ -143,7 +172,7 @@
         <property name="expand">False</property>
         <property name="fill">True</property>
         <property name="padding">5</property>
-        <property name="position">2</property>
+        <property name="position">3</property>
       </packing>
     </child>
   </object>
