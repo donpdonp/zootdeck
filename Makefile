@@ -1,6 +1,6 @@
 GITEPOCH=$(shell git log -1 --format="%at")
 TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
-DIST=zootdeck-${TODAY}
+DIST=zootdeck-linux-${TODAY}
 
 build:
 	zig build

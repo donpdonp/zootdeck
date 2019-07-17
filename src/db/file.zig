@@ -16,7 +16,7 @@ pub fn has(namespace: []const u8, key: []const u8, allocator: *Allocator) bool {
   var found = false;
   // zig stat() not ready
   if (std.fs.File.openRead(keypath)) |file| {
-    std.fs.File.close(file);
+    file.close();
     found = true;
   } else |err| {
     warn("dbfile did not find {}\n", keypath);

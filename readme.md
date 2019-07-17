@@ -4,6 +4,7 @@ https://donpdonp.github.io/zootdeck/
 ### Features
 * Any number of columns
 * Column Sources: User account, Site public feed
+* Column filters: Images only
 * linux/GTK+
 
 ### Roadmap
@@ -13,6 +14,8 @@ https://donpdonp.github.io/zootdeck/
 * osx/windows
 
 ### History
+20190710 image only filter
+20190706 profile image loading
 20190613 oauth steps in config panel
 20190604 network status indicator for each column
          better json escape handling
