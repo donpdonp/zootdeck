@@ -2,7 +2,9 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const warn = std.debug.warn;
-const allocator = std.heap.c_allocator;
+const callocator = std.heap.c_allocator;
+const logAlloc = @import("warning_allocator.zig").WarningAllocator;
+const allocator = &logAlloc.init(callocator).allocator;
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
