@@ -12,6 +12,9 @@
   color: white;
   background-color: #111;
 }
+.toot_author_avatar {
+  padding: 0.1em;
+}
 
 .toot_text {
   color: #111;
