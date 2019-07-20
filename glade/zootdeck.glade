@@ -70,14 +70,11 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="ZootColumns">
+              <object class="GtkGrid" id="ZootColumns">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="spacing">5</property>
-                <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
-                <child>
-                  <placeholder/>
-                </child>
+                <property name="row_homogeneous">True</property>
+                <property name="column_homogeneous">True</property>
                 <child>
                   <placeholder/>
                 </child>
@@ -91,7 +88,7 @@
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>

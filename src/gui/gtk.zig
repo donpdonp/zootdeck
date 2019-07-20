@@ -154,7 +154,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 
   update_column_ui(column);
 
-  c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, container), column.columnbox, 1, 1, 0);
+  c.gtk_grid_attach_next_to(@ptrCast([*c]c.GtkGrid, container), column.columnbox, null, c.GtkPositionType.GTK_POS_LEFT, 1, 1);
 
   _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column.title",
