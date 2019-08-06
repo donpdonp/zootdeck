@@ -19,6 +19,7 @@ var allocator: *Allocator = undefined;
 var settings: *config.Settings = undefined;
 pub const queue = std.ArrayList(u8).init(allocator);
 var myActor: *thread.Actor = undefined;
+var myAllocation = c.GtkAllocation{.x=-1, .y=-1, .width=0, .height=0};
 
 pub const Column = struct {
   builder: [*c]c.GtkBuilder,
@@ -37,6 +38,7 @@ pub fn libname() []const u8 {
 }
 
 pub fn init(alloca: *Allocator, set: *config.Settings) !void {
+  warn("{} started\n", libname());
   settings = set;
   allocator = alloca;
   columns = std.ArrayList(*Column).init(allocator);
@@ -74,6 +76,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
   var h = @intCast(c.gint, settings.win_y);
 //  c.gtk_widget_set_size_request(main_window, w, h);
   c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
+  warn("{} gui_setup done\n", libname());
 }
 
 fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8)[*]c.GtkWidget {
@@ -201,12 +204,19 @@ pub fn update_author_photo(acct: []const u8) void {
 }
 
 pub fn columns_resize() void {
-  const container = builder_get_widget(myBuilder, c"ZootColumns");
-  var app_width = c.gtk_widget_get_allocated_width(container);
-  var col_width = @divTrunc(app_width, @intCast(c_int, columns.len));
-  warn("columns_resize app_width {} col_len {} col_width {}\n", app_width, columns.len, col_width);
-  for(columns.toSlice()) |col| {
-    //c.gtk_widget_set_size_request(col.columnbox, col_width, -1);
+  if(columns.len > 0) {
+    const container = builder_get_widget(myBuilder, c"ZootColumns");
+    var app_width = c.gtk_widget_get_allocated_width(container);
+    var avg_col_width = @divTrunc(app_width, @intCast(c_int, columns.len));
+    warn("columns_resize app_width {} col_len {} avg_col_width {}\n", app_width, columns.len, avg_col_width);
+    for(columns.toSlice()) |col| {
+      //c.gtk_widget_set_size_request(col.columnbox, col_width, -1);
+      //var gnomeFunny = c.GtkAllocation{x=0, y=0,width=0,height=0};
+      c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
+      warn("columns_resize {}\n", myAllocation);
+      //var col_width = c.gtk_widget_get_allocated_width(col.columnbox);
+      //warn("columns_resize get_allocated_width {}\n", col_width);
+    }
   }
 }
 
@@ -398,8 +408,12 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
     if(kvMaybe) |kv| {
       const tootbuilder = kv.value;
       const imageBox = builder_get_widget(tootbuilder, c"image_box");
+      c.gtk_widget_get_allocation(imageBox, &myAllocation);
+      warn("toot_media image_box {}\n", myAllocation);
       var loader = c.gdk_pixbuf_loader_new();
-      c.gdk_pixbuf_loader_set_size(loader, 300, 200);
+      // todo: size-prepared signal
+      var frameWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) * 0.9);
+      c.gdk_pixbuf_loader_set_size(loader, frameWidth, frameWidth);
       const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
       if(loadYN == c.gtk_true()) {
         const account = toot.get("account").?.value.Object;
@@ -492,12 +506,14 @@ extern fn main_check_resize(selfptr: *c_void) void {
   var h: c.gint = undefined;
   var w: c.gint = undefined;
   c.gtk_window_get_size(@ptrCast([*c]c.GtkWindow, self), &w, &h);
+  warn("main_check_resize, gtk_window_get_size {} x {}\n", w, h);
   if(w != settings.win_x) {
-    warn("resize, win_x {} != w {}\n", settings.win_x, w);
+    warn("main_check_resize, win_x {} != w {}\n", settings.win_x, w);
     settings.win_x = w;
 //    columns_resize();
   }
   if(h != settings.win_y) {
+    warn("main_check_resize, win_x {} != w {}\n", settings.win_x, w);
     settings.win_y = h;
 //    columns_resize();
   }

@@ -38,7 +38,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
   var ctxnMaybe = @ptrCast([*c]?*c.struct_MDB_txn, txnptr);
   var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
   if (ret == 0) {
-    warn("lmdb write {} {}={}\n", namespace, key, value);
+//    warn("lmdb write {} {}={}\n", namespace, key, value);
     var dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
     ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
     if (ret == 0) {
@@ -52,6 +52,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
         if (ret == 0) {
           _ = c.mdb_dbi_close(env, dbiptr.*);
         } else {
+          warn("mdb_txn_commit ERR {}\n", ret);
           return error.mdb_txn_commit;
         }
       } else {
