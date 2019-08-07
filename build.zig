@@ -6,6 +6,7 @@ pub fn build(b: *Builder) void {
 
   // Ubuntu-x86_64
   exe.addIncludeDir("/usr/include");
+  //exe.addIncludeDir("/usr/include/linux");
   exe.addIncludeDir("/usr/include/x86_64-linux-gnu");
   exe.addLibPath("/usr/lib");
   exe.addLibPath("/usr/lib/x86_64-linux-gnu");

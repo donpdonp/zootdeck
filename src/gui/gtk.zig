@@ -287,22 +287,28 @@ pub fn update_column_toots(column: *Column) void {
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
   var gtk_context = c.gtk_widget_get_style_context(column_footer_count_label);
-  c.gtk_container_foreach(@ptrCast([*c]c.GtkContainer, column_toot_zone), widget_destroy, null); // todo: avoid this
   if(column.main.inError) {
     c.gtk_style_context_add_class(gtk_context, c"net_error");
   } else {
     c.gtk_style_context_remove_class(gtk_context, c"net_error");
   }
   var current = column.main.toots.first();
+  var idx = c_int(0);
   if (current != null) {
     while(current) |node| {
       const toot = node.data;
-      const tootbuilder =  makeTootBox(toot, column.main.config);
-      var tootbox = builder_get_widget(tootbuilder, c"tootbox");
-      c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
-                          c.gtk_true(), c.gtk_true(), 0);
-      _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
+      var tootbuilderMaybe = column.guitoots.get(toot.id());
+      if(tootbuilderMaybe) |kv| {
+      } else {
+        const tootbuilder = makeTootBox(toot, column.main.config);
+        var tootbox = builder_get_widget(tootbuilder, c"tootbox");
+        _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
+        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
+                            c.gtk_true(), c.gtk_true(), 0);
+        c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
+      }
       current = node.next;
+      idx += 1;
     }
   } else {
     // help? logo?
