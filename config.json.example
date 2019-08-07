@@ -6,10 +6,12 @@
     "title" : "",
     "url" : "radical.town",
     "token" : null,
-    "last_check" : 1459678343},
+    "last_check" : 1459678343,
+    "img_only" : false},
    {
     "title" : "",
     "url" : "mastodon.art",
     "token" : null,
-    "last_check" : 1459678357}]
+    "last_check" : 1459678357,
+    "img_only" : false}]
 }
