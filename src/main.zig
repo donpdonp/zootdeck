@@ -330,7 +330,7 @@ fn guiback(command: *thread.Command) void {
     column.config.last_check = 0;
     config.writefile(settings, "config.json");
   }
-  if (command.id == 5) {
+  if (command.id == 5) { // column remove
     const column = command.verb.column;
     warn("gui col remove {}\n", column.config.title);
     var colpos: usize = undefined;
@@ -363,11 +363,13 @@ fn guiback(command: *thread.Command) void {
     column.oauthClientSecret = null;
     gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, column));
     // throw out toots in the toot list not from the new host
-
   }
   if (command.id == 9) { // imgonly button
     const column = command.verb.column;
     column.config.img_only = !column.config.img_only;
+    config.writefile(settings, "config.json");
+  }
+  if (command.id == 10) { // window size changed
     config.writefile(settings, "config.json");
   }
 }

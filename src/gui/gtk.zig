@@ -409,7 +409,6 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
       const tootbuilder = kv.value;
       const imageBox = builder_get_widget(tootbuilder, c"image_box");
       c.gtk_widget_get_allocation(imageBox, &myAllocation);
-      warn("toot_media image_box {}\n", myAllocation);
       var loader = c.gdk_pixbuf_loader_new();
       // todo: size-prepared signal
       var frameWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) * 0.9);
@@ -418,7 +417,7 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
       if(loadYN == c.gtk_true()) {
         const account = toot.get("account").?.value.Object;
         const acct = account.get("acct").?.value.String;
-        warn("toot_media pic data LOADED {} {}\n", acct, toot.id());
+        warn("toot_media {} #{} img loaded\n", acct, toot.id());
         var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
         _ = c.gdk_pixbuf_loader_close(loader, null);
         if(pixbuf != null) {
@@ -506,16 +505,22 @@ extern fn main_check_resize(selfptr: *c_void) void {
   var h: c.gint = undefined;
   var w: c.gint = undefined;
   c.gtk_window_get_size(@ptrCast([*c]c.GtkWindow, self), &w, &h);
-  warn("main_check_resize, gtk_window_get_size {} x {}\n", w, h);
+  //warn("main_check_resize, gtk_window_get_size {} x {}\n", w, h);
   if(w != settings.win_x) {
     warn("main_check_resize, win_x {} != w {}\n", settings.win_x, w);
     settings.win_x = w;
-//    columns_resize();
+    // signal crazy
+    var command = allocator.create(thread.Command) catch unreachable;
+    command.id = 10;
+    thread.signal(myActor, command);
   }
   if(h != settings.win_y) {
     warn("main_check_resize, win_x {} != w {}\n", settings.win_x, w);
     settings.win_y = h;
-//    columns_resize();
+    // signal crazy
+    var command = allocator.create(thread.Command) catch unreachable;
+    command.id = 10;
+    thread.signal(myActor, command);
   }
 }
 
@@ -550,7 +555,7 @@ extern fn column_imgonly(columnptr: *c_void) void {
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   verb.column = column.main;
-  command.id = 9; //imgonly button
+  command.id = 9; //imgonly button press
   command.verb = verb;
   thread.signal(myActor, command);
 }
@@ -558,13 +563,12 @@ extern fn column_imgonly(columnptr: *c_void) void {
 extern fn column_remove_btn(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByConfigWindow(self);
-  warn("column remove {*}\n", column);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   verb.column = column.main;
-  command.id = 5;
+  command.id = 5; // col remove button press
   command.verb = verb;
   thread.signal(myActor, command);
 }
