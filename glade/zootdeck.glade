@@ -78,6 +78,30 @@
                 <child>
                   <placeholder/>
                 </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
                 <style>
                   <class name="zootcolumns"/>
                 </style>
@@ -95,6 +119,9 @@
             <property name="position">1</property>
           </packing>
         </child>
+        <style>
+          <class name="zootdeck_box"/>
+        </style>
       </object>
     </child>
   </object>
