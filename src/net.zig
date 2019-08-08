@@ -38,6 +38,7 @@ pub extern fn go(data: ?*c_void) ?*c_void {
     actor.payload.http.body = body;
     if(body.len > 0 and (actor.payload.http.content_type.len == 0 or
                         std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8"))) {
+      //warn("{}\n", body); // json dump
       var json_parser = std.json.Parser.init(allocator, false);
       if(json_parser.parse(body)) |value_tree| {
         actor.payload.http.tree = value_tree;

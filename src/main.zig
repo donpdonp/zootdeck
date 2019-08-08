@@ -240,7 +240,7 @@ fn netback(command: *thread.Command) void {
                 cache_update(toot);
 
                 for(images.toSlice()) |image| {
-                  const imgUrl = image.Object.get("url").?.value.String;
+                  const imgUrl = image.Object.get("preview_url").?.value.String;
                   warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
                   mediaget(toot, imgUrl);
                 }
