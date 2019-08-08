@@ -82,7 +82,8 @@ fn hello() void {
 fn columnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = util.mastodonExpandUrl(column.config.url, if(column.config.token) |tk| true else false, allocator);
+  httpInfo.url = util.mastodonExpandUrl(column.config.filterHost(),
+                  if(column.config.token) |tk| true else false, allocator);
   httpInfo.verb = .get;
   httpInfo.token = null;
   if(column.config.token) |tokenStr| {
@@ -98,7 +99,8 @@ fn columnget(column: *config.ColumnInfo) void {
 fn profileget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials", column.config.url) catch unreachable;
+  httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials",
+                                 column.config.filterHost()) catch unreachable;
   httpInfo.verb = .get;
   httpInfo.token = null;
   if(column.config.token) |tokenStr| {
@@ -138,7 +140,7 @@ fn mediaget(toot: toot_lib.Toot(), url: []const u8) void {
 fn oauthcolumnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  auth.oauthClientRegister(allocator, httpInfo, column.config.url);
+  auth.oauthClientRegister(allocator, httpInfo, column.config.filterHost());
   httpInfo.token = null;
   httpInfo.column = column;
   httpInfo.response_code = 0;
@@ -152,7 +154,7 @@ fn oauthcolumnget(column: *config.ColumnInfo) void {
 fn oauthtokenget(column: *config.ColumnInfo, code: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  auth.oauthTokenUpgrade(allocator, httpInfo, column.config.url, code,
+  auth.oauthTokenUpgrade(allocator, httpInfo, column.config.filterHost(), code,
                          column.oauthClientId.?, column.oauthClientSecret.?);
   httpInfo.token = null;
   httpInfo.column = column;
@@ -317,10 +319,9 @@ fn guiback(command: *thread.Command) void {
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;
     colInfo.config.title = ""[0..];
-    colInfo.config.url = "mastodon.example.com"[0..];
+    colInfo.config.filter = "mastodon.example.com"[0..];
     colInfo.config.last_check = 0;
     gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
-    warn("Settings PreWrite Columns count {}\n", settings.columns.len);
     config.writefile(settings, "config.json");
   }
   if (command.id == 4) { // config done

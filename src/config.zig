@@ -44,7 +44,7 @@ pub const ColumnInfo = struct {
   }
 
   pub fn makeTitle(column: *ColumnInfo) []const u8 {
-    var out: []const u8 = column.config.url;
+    var out: []const u8 = column.config.filterHost();
     if(column.config.token) |tkn| {
       var addon: []const u8 = undefined;
       if(column.account) |account| {
@@ -52,7 +52,7 @@ pub const ColumnInfo = struct {
       } else {
         addon = "_";
       }
-      out = std.fmt.allocPrint(allocator, "{}@{}", addon, column.config.url) catch unreachable;
+      out = std.fmt.allocPrint(allocator, "{}@{}", addon, column.config.filterHost()) catch unreachable;
     }
     return out;
   }
@@ -60,10 +60,15 @@ pub const ColumnInfo = struct {
 
 pub const ColumnConfig = struct {
   title: []const u8,
-  url: []const u8,
+  filter: []const u8,
   token: ?[]const u8,
   last_check: Time,
-  img_only: bool
+  img_only: bool,
+
+  const Self = @This();
+  pub fn filterHost(self: *const Self) []const u8 {
+    return self.filter;
+  }
 };
 
 pub const LoginInfo = struct {
@@ -134,8 +139,8 @@ pub fn read(json: []const u8) !Settings {
       colInfo.config = colconfig;
       var title = value.Object.get("title").?.value.String;
       colInfo.config.title = title;
-      var url = value.Object.get("url").?.value.String;
-      colInfo.config.url = url;
+      var filter = value.Object.get("filter").?.value.String;
+      colInfo.config.filter = filter;
       var tokenTag = value.Object.get("token");
       if(tokenTag) |tokenKV| {
         if(@TagType(std.json.Value)(tokenKV.value) == .String) {

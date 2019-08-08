@@ -70,10 +70,10 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry">
+          <object class="GtkEntry" id="column_filter">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="activate" handler="column_config.done" swapped="no"/>
+            <signal name="activate" handler="column.filter_done" object="column" swapped="yes"/>
           </object>
           <packing>
             <property name="expand">False</property>

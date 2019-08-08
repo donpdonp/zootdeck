@@ -172,6 +172,9 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
                                         c"column.imgonly",
                                         @ptrCast(?extern fn() void, column_imgonly));
   _ = c.gtk_builder_add_callback_symbol(column.builder,
+                                        c"column.filter_done",
+                                        @ptrCast(?extern fn() void, column_filter_done));
+  _ = c.gtk_builder_add_callback_symbol(column.builder,
                                         c"column_config.done",
                                         @ptrCast(?extern fn() void, column_config_done));
   _ = c.gtk_builder_add_callback_symbol(column.builder,
@@ -194,7 +197,7 @@ pub fn update_author_photo(acct: []const u8) void {
   for(columns.toSlice()) |column| {
     const toots = column.main.toots.author(acct, allocator);
     for(toots) |toot| {
-      warn("update_author_photo {} {} {}\n", column.main.config.url, acct, toot.id());
+      warn("update_author_photo {} {} {}\n", column.main.config.filterHost(), acct, toot.id());
       var tootbuilderMaybe = column.guitoots.get(toot.id());
       if(tootbuilderMaybe) |kv| {
         photo_refresh(acct, kv.value);
@@ -612,7 +615,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
   var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
   oauth_url_buf.append("https://") catch unreachable;
-  oauth_url_buf.append(column.main.config.url) catch unreachable;
+  oauth_url_buf.append(column.main.config.filterHost()) catch unreachable;
   oauth_url_buf.append("/oauth/authorize") catch unreachable;
   oauth_url_buf.append("?client_id=") catch unreachable;
   oauth_url_buf.append(column.main.oauthClientId.?) catch unreachable;
@@ -621,7 +624,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
   var markupBuf = allocator.alloc(u8, 512) catch unreachable;
   var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>",
-    oauth_url_buf.toSliceConst(), column.main.config.url) catch unreachable;
+    oauth_url_buf.toSliceConst(), column.main.config.filterHost()) catch unreachable;
   var cLabel = util.sliceToCstr(allocator, markup);
   c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
 }
@@ -656,7 +659,7 @@ pub fn column_config_oauth_finalize(column: *Column) void {
 
 pub fn columnConfigWriteGui(column: *Column) void {
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
-  var cUrl = util.sliceToCstr(allocator, column.main.config.url);
+  var cUrl = util.sliceToCstr(allocator, column.main.config.filterHost());
   c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
 
   var token_image = builder_get_widget(column.builder, c"column_config_token_image");
@@ -670,22 +673,45 @@ pub fn columnConfigWriteGui(column: *Column) void {
                                   icon_name, c.GtkIconSize.GTK_ICON_SIZE_BUTTON);
 }
 
+pub fn columnReadFilter(column: *Column) void {
+  var filter_entry = builder_get_widget(column.builder, c"column_filter");
+  var cFilter = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, filter_entry));
+  const filter =  util.cstrToSliceCopy(allocator, cFilter); // edit in guithread--
+  warn("columnReadFilter: {}\n", filter);
+  column.main.config.filter = filter;
+}
+
 pub fn columnConfigReadGui(column: *Column) void {
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
-  const newUrl =  util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
-  if(std.mem.compare(u8, column.main.config.url, newUrl) != std.mem.Compare.Equal) {
+  const newFilter =  util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
+  if(std.mem.compare(u8, column.main.config.filter, newFilter) != std.mem.Compare.Equal) {
     // host change
-    column.main.config.url = newUrl;
+    column.main.config.filter = newFilter;
 
     // signal crazy
     var command = allocator.create(thread.Command) catch unreachable;
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.column = column.main;
-    command.id = 8;
+    command.id = 8; // host change
     command.verb = verb;
     thread.signal(myActor, command);
   }
+}
+
+extern fn column_filter_done(selfptr: *c_void) void {
+  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
+  var column: *Column = findColumnByBox(self);
+
+  columnReadFilter(column);
+
+  // signal crazy
+  var command = allocator.create(thread.Command) catch unreachable;
+  var verb = allocator.create(thread.CommandVerb) catch unreachable;
+  verb.column = column.main;
+  command.id = 4;
+  command.verb = verb;
+  thread.signal(myActor, command);
 }
 
 extern fn column_config_done(selfptr: *c_void) void {
