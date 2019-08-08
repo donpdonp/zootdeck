@@ -704,6 +704,7 @@ extern fn column_filter_done(selfptr: *c_void) void {
   var column: *Column = findColumnByBox(self);
 
   columnReadFilter(column);
+  update_column_ui(column);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
@@ -719,7 +720,6 @@ extern fn column_config_done(selfptr: *c_void) void {
   var column: *Column = findColumnByConfigWindow(self);
 
   columnConfigReadGui(column);
-
   update_column_ui(column);
   hide_column_config(column);
 
