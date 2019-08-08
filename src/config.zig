@@ -34,6 +34,7 @@ pub const ColumnInfo = struct {
   config: *ColumnConfig,
   toots: toot_list.TootList,
   refreshing: bool,
+  last_check: Time,
   inError: bool,
   account: ?std.hash_map.HashMap([]const u8,std.json.Value,std.mem.hash_slice_u8,std.mem.eql_slice_u8),
   oauthClientId: ?[]const u8,
@@ -62,7 +63,6 @@ pub const ColumnConfig = struct {
   title: []const u8,
   filter: []const u8,
   token: ?[]const u8,
-  last_check: Time,
   img_only: bool,
 
   const Self = @This();
@@ -151,8 +151,6 @@ pub fn read(json: []const u8) !Settings {
       } else {
         colInfo.config.token = null;
       }
-      var last_check = value.Object.get("last_check").?.value.Integer;
-      colInfo.config.last_check = last_check;
       var img_only = value.Object.get("img_only").?.value.Bool;
       colInfo.config.img_only = img_only;
       settings.columns.append(colInfo) catch unreachable;

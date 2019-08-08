@@ -176,7 +176,7 @@ fn oauthtokenback(command: *thread.Command) void {
       if(tree.root.Object.get("access_token")) |cid| {
         column.config.token = cid.value.String;
         config.writefile(settings, "config.json");
-        column.config.last_check = 0;
+        column.last_check = 0;
         gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*c_void, column));
       }
     } else {
@@ -217,7 +217,7 @@ fn netback(command: *thread.Command) void {
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
     var column = command.verb.http.column;
     column.refreshing = false;
-    column.config.last_check = config.now();
+    column.last_check = config.now();
     if(command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
       if(command.verb.http.body.len > 0) {
         const tree = command.verb.http.tree;
@@ -309,18 +309,18 @@ fn guiback(command: *thread.Command) void {
   if (command.id == 2) { // refresh button
     const column = command.verb.column;
     column.refreshing = false;
-    column.config.last_check = 0;
+    column.last_check = 0;
   }
   if (command.id == 3) { // add column
     var colInfo = allocator.create(config.ColumnInfo) catch unreachable;
     colInfo.reset();
     colInfo.toots = toot_list.TootList.init();
+    colInfo.last_check = 0;
     settings.columns.append(colInfo) catch unreachable;
     var colConfig = allocator.create(config.ColumnConfig) catch unreachable;
     colInfo.config = colConfig;
     colInfo.config.title = ""[0..];
     colInfo.config.filter = "mastodon.example.com"[0..];
-    colInfo.config.last_check = 0;
     gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
     config.writefile(settings, "config.json");
   }
@@ -328,7 +328,6 @@ fn guiback(command: *thread.Command) void {
     warn("gui col config {}\n", command.verb.column.config.title);
     const column = command.verb.column;
     column.inError = false;
-    column.config.last_check = 0;
     config.writefile(settings, "config.json");
   }
   if (command.id == 5) { // column remove
@@ -384,7 +383,7 @@ fn columns_net_freshen() void {
   for(settings.columns.toSlice()) |column, idx| {
     var now = config.now();
     const refresh = 60;
-    const since = now - column.config.last_check;
+    const since = now - column.last_check;
     if(since > refresh) {
       column_refresh(column);
     } else {
