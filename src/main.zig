@@ -308,8 +308,9 @@ fn guiback(command: *thread.Command) void {
   }
   if (command.id == 2) { // refresh button
     const column = command.verb.column;
+    column.inError = false;
     column.refreshing = false;
-    column.last_check = 0;
+    column_refresh(column);
   }
   if (command.id == 3) { // add column
     var colInfo = allocator.create(config.ColumnInfo) catch unreachable;
@@ -328,6 +329,8 @@ fn guiback(command: *thread.Command) void {
     warn("gui col config {}\n", command.verb.column.config.title);
     const column = command.verb.column;
     column.inError = false;
+    column.refreshing = false;
+    column_refresh(column);
     config.writefile(settings, "config.json");
   }
   if (command.id == 5) { // column remove
@@ -394,7 +397,7 @@ fn columns_net_freshen() void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
   if(column.refreshing) {
-    warn("column {} in {}\n", column.makeTitle(), if (column.inError) "error!" else "progress");
+    warn("column {} in {} Ignoring request.\n", column.makeTitle(), if (column.inError) "error!" else "progress.");
   } else {
     warn("column http get {}\n", column.makeTitle());
     column.refreshing = true;

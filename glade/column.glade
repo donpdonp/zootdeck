@@ -74,6 +74,9 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="activate" handler="column.filter_done" object="column" swapped="yes"/>
+            <style>
+              <class name="column_filter"/>
+            </style>
           </object>
           <packing>
             <property name="expand">False</property>

@@ -2,14 +2,13 @@
   background-color: #111;
 }
 
-.column_box {
-  color: #aaa;
-}
-.column_top_label { 
-  font-weight: bold; 
-  padding: 0.2em 0; 
+.column_box { color: #aaa; }
+.column_top_label {
+  font-weight: bold;
+  padding: 0.2em 0;
   color: #fff;
 }
+.column_filter {  }
 .column_footer_count { margin: 0 1em; }
 .column_config_box { padding: 0 1em }
 .column_config_url_label { padding-top: 1em }
@@ -36,9 +35,9 @@
   color: white;
   font-family: sans-serif;
 }
-.toot_date { 
-  background: #111; 
-  color: #777; 
+.toot_date {
+  background: #111;
+  color: #777;
 }
 
 .net_error {
