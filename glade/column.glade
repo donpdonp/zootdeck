@@ -276,6 +276,7 @@
                       <object class="GtkImage">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">request authorization</property>
                         <property name="stock">gtk-dialog-authentication</property>
                       </object>
                     </child>
@@ -359,6 +360,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="has_tooltip">True</property>
+            <property name="halign">center</property>
             <signal name="clicked" handler="column_config.remove" swapped="no"/>
             <style>
               <class name="column_config_remove"/>
