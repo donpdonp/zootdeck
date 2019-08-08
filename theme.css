@@ -18,6 +18,7 @@
 
 .toot_text {
   color: white;
+  font-family: sans-serif;
 }
 
 .toot_date { background: #aaa; color: #666; }
