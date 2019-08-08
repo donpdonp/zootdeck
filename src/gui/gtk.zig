@@ -151,6 +151,9 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
   columns.append(column) catch unreachable;
   columns_resize();
   warn("column added {}\n", column.main.makeTitle());
+  const filter = builder_get_widget(column.builder, c"column_filter");
+  const cFilter = util.sliceToCstr(allocator, column.main.config.filter);
+  c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, filter), cFilter);
   const footer = builder_get_widget(column.builder, c"column_footer");
   const config_icon = builder_get_widget(column.builder, c"column_config_icon");
   c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc,config_icon), 1, 0);
