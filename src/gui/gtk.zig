@@ -285,13 +285,6 @@ pub fn update_column_toots(column: *Column) void {
                 column.main.toots.count(),
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
-  const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
-  var gtk_context = c.gtk_widget_get_style_context(column_footer_count_label);
-  if(column.main.inError) {
-    c.gtk_style_context_add_class(gtk_context, c"net_error");
-  } else {
-    c.gtk_style_context_remove_class(gtk_context, c"net_error");
-  }
   var current = column.main.toots.first();
   var idx = c_int(0);
   if (current != null) {
@@ -313,9 +306,9 @@ pub fn update_column_toots(column: *Column) void {
   } else {
     // help? logo?
   }
-  c.gtk_widget_show(column_toot_zone);
-
-  const countStr = std.fmt.allocPrint(allocator, "{} toots", column.main.toots.count()) catch unreachable;
+  const column_footer_count_label = builder_get_widget(column.builder, c"column_footer_count");
+  const tootword = if(column.main.config.img_only) "images" else "toots";
+  const countStr = std.fmt.allocPrint(allocator, "{} {}", column.main.toots.count(), tootword) catch unreachable;
   const cCountStr = util.sliceToCstr(allocator, countStr);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
 }
@@ -323,11 +316,14 @@ pub fn update_column_toots(column: *Column) void {
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
   warn("update_netstatus_column {} {}\n", http.url, http.response_code);
   const column_footer_netstatus = builder_get_widget(column.builder, c"column_footer_netstatus");
+  var gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
   var netmsg: [*c]const u8 = undefined;
   if(http.response_code == 0) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"GET");
+    c.gtk_style_context_add_class(gtk_context_netstatus, c"net_active");
   } else if (http.response_code >= 200 and http.response_code < 300) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"OK");
+    c.gtk_style_context_remove_class(gtk_context_netstatus, c"net_active");
   } else if (http.response_code >= 300 and http.response_code < 400) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"redirect");
   } else if (http.response_code >= 400 and http.response_code < 500) {
@@ -346,6 +342,11 @@ pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"DNS err");
   } else if (http.response_code == 2200) {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), c"timeout err");
+  }
+  if(column.main.inError) {
+    c.gtk_style_context_add_class(gtk_context_netstatus, c"net_error");
+  } else {
+    c.gtk_style_context_remove_class(gtk_context_netstatus, c"net_error");
   }
 }
 

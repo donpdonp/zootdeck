@@ -43,6 +43,9 @@
 .toot_date { background: #aaa; color: #666; }
 
 .net_error {
-  background-color: red;
+  background-color: #a00;
+}
+.net_active {
+  background-color: #070;
 }
 

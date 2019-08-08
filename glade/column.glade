@@ -73,6 +73,7 @@
           <object class="GtkEntry">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <signal name="activate" handler="column_config.done" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -140,7 +141,7 @@
           <object class="GtkLabel" id="column_footer_count">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">count</property>
+            <property name="label" translatable="yes">- empty -</property>
             <style>
               <class name="column_footer_count"/>
             </style>
