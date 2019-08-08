@@ -21,12 +21,10 @@
   color: white;
   background-color: #555;
 }
-
 .toot_author_url {
   color: #aaa;
   background-color: #111;
 }
-
 .toot_author_url_minimode {
   color: #aaa;
   background-color: #111;
@@ -34,13 +32,14 @@
 .toot_author_avatar {
   padding: 0.1em;
 }
-
 .toot_text {
   color: white;
   font-family: sans-serif;
 }
-
-.toot_date { background: #aaa; color: #666; }
+.toot_date { 
+  background: #111; 
+  color: #777; 
+}
 
 .net_error {
   background-color: #a00;
