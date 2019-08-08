@@ -60,23 +60,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEventBox" id="column_top_imgonly">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <signal name="button-press-event" handler="column.imgonly" object="column" swapped="yes"/>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-select-color</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>
@@ -168,16 +152,53 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEventBox" id="column_bottom_config">
+          <object class="GtkBox" id="column_control_box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <signal name="button-press-event" handler="column.config" object="column" swapped="yes"/>
+            <property name="margin_right">10</property>
+            <property name="spacing">3</property>
             <child>
-              <object class="GtkImage" id="column_config_icon">
+              <object class="GtkEventBox" id="column_bottom_config">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="pixbuf">../img/gears.svg</property>
+                <property name="tooltip_text" translatable="yes">column settings</property>
+                <signal name="button-press-event" handler="column.config" object="column" swapped="yes"/>
+                <child>
+                  <object class="GtkImage" id="column_config_icon">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixbuf">../img/gears.svg</property>
+                  </object>
+                </child>
               </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEventBox" id="column_top_imgonly">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">images only mode</property>
+                <signal name="button-press-event" handler="column.imgonly" object="column" swapped="yes"/>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="stock">gtk-select-color</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
             </child>
           </object>
           <packing>

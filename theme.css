@@ -1,3 +1,22 @@
+.zootdeck_box {
+  background-color: #111;
+}
+
+.column_box {
+  color: #aaa;
+}
+.column_top_label { 
+  font-weight: bold; 
+  padding: 0.2em 0; 
+  color: #fff;
+}
+.column_footer_count { margin: 0 1em; }
+.column_config_box { padding: 0 1em }
+.column_config_url_label { padding-top: 1em }
+.column_config_url_entry {  }
+.column_config_remove { margin-top: 1em }
+
+
 .toot_author_name {
   color: white;
   background-color: #555;
@@ -26,22 +45,4 @@
 .net_error {
   background-color: red;
 }
-
-
-.zootdeck_box {
-  background-color: #111;
-}
-.column_box {
-}
-.column_top_label { 
-  font-weight: bold; 
-  padding: 0.2em 0; 
-  color: #fff;
-}
-.column_footer_count { margin: 0 1em; }
-.column_config_box { padding: 0 1em }
-.column_config_url_label { padding-top: 1em }
-.column_config_url_entry {  }
-.column_config_remove { margin-top: 1em }
-
 
