@@ -548,31 +548,18 @@ extern fn zoot_drag() void {
   warn("zoot_drag\n");
 }
 
-// hack for gdk struct with bitfield (unsupported) and duplicate ENUM entries
-const Event = packed union {
-  _1: EventKey,
-  _2: EventKey,
-  _3: EventKey,
-  _4: EventKey,
-  _5: EventKey,
-  _6: EventKey,
-  _7: EventKey,
-  _8: EventKey,
-  key: EventKey
-};
-
 const EventKey = packed struct {
-  _type: i8,
+  _type: i32,
   window: [*c]c.GtkWindow,
-  send_event: u8,
+  send_event: i8,
   time: u32,
-  state: u8,
-  keyval: u8
+  state: u32,
+  keyval: u32
 };
 
-extern fn zoot_keypress(selfptr: *c_void, optptr: *Event) void {
+extern fn zoot_keypress(selfptr: *c_void, optptr: *EventKey) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
-  //warn("zoot_keypress {}\n", optptr.key);
+  warn("zoot_keypress {}\n", optptr);
 }
 
 extern fn column_reload(columnptr: *c_void) void {
