@@ -548,6 +548,7 @@ extern fn zoot_drag() void {
   warn("zoot_drag\n");
 }
 
+// rebulid half of GdkEventKey, avoiding bitfield
 const EventKey = packed struct {
   _type: i32,
   window: [*c]c.GtkWindow,
@@ -557,9 +558,8 @@ const EventKey = packed struct {
   keyval: u32
 };
 
-extern fn zoot_keypress(selfptr: *c_void, optptr: *EventKey) void {
-  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
-  warn("zoot_keypress {}\n", optptr);
+extern fn zoot_keypress(widgetptr: *c_void, evtptr: *EventKey) void {
+  warn("zoot_keypress {}\n", evtptr);
 }
 
 extern fn column_reload(columnptr: *c_void) void {
