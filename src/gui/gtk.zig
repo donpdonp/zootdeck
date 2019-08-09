@@ -65,6 +65,8 @@ pub fn gui_setup(actor: *thread.Actor) !void {
   }
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"actionbar.add", actionbar_add);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot_drag", zoot_drag);
+  _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot.keypress",
+                                        @ptrCast(?extern fn() void, zoot_keypress));
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"main_check_resize",
                                         @ptrCast(?extern fn() void, main_check_resize));
   _ = c.gtk_builder_connect_signals(myBuilder, null);
@@ -546,6 +548,33 @@ extern fn zoot_drag() void {
   warn("zoot_drag\n");
 }
 
+// hack for gdk struct with bitfield (unsupported) and duplicate ENUM entries
+const Event = packed union {
+  _1: EventKey,
+  _2: EventKey,
+  _3: EventKey,
+  _4: EventKey,
+  _5: EventKey,
+  _6: EventKey,
+  _7: EventKey,
+  _8: EventKey,
+  key: EventKey
+};
+
+const EventKey = packed struct {
+  _type: i8,
+  window: [*c]c.GtkWindow,
+  send_event: u8,
+  time: u32,
+  state: u8,
+  keyval: u8
+};
+
+extern fn zoot_keypress(selfptr: *c_void, optptr: *Event) void {
+  var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
+  //warn("zoot_keypress {}\n", optptr.key);
+}
+
 extern fn column_reload(columnptr: *c_void) void {
   var column_widget = @ptrCast([*c]c.GtkWidget, @alignCast(8,columnptr));
   var column: *Column = findColumnByBox(column_widget);
@@ -755,13 +784,11 @@ fn g_signal_connect(instance: ?*c.GtkWidget, signal_name: []const u8, callback: 
 }
 
 pub fn mainloop() void {
-  //  if(c.gtk_events_pending() != 0) {
+  //if(c.gtk_events_pending() != 0) {
   //  warn("gtk pending {}\n", c.gtk_events_pending());
   var exitcode = c.gtk_main_iteration();
-  //    warn("gtk iteration exit {}\n", exitcode);
-  //stop = false;
-  //  }
-  //  return false;
+  //  warn("gtk iteration exit {}\n", exitcode);
+  // }
 }
 
 pub fn gtk_quit() void {

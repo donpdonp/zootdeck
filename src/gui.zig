@@ -32,11 +32,11 @@ pub extern fn go(data: ?*c_void) ?*c_void {
   if (guilib.gui_setup(myActor)) {
     // mainloop
     while (!stop) {
-        guilib.mainloop();
+      guilib.mainloop();
     }
     guilib.gui_end();
   } else |err| {
-      warn("gui error {}\n", err);
+    warn("gui error {}\n", err);
   }
   return null;
 }
