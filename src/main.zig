@@ -178,6 +178,7 @@ fn oauthtokenback(command: *thread.Command) void {
         column.config.token = cid.value.String;
         config.writefile(settings, "config.json");
         column.last_check = 0;
+        profileget(column);
         gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*c_void, column));
       }
     } else {
