@@ -9,6 +9,7 @@ const simple_buffer = @import("../simple_buffer.zig");
 const toot_lib = @import("../toot.zig");
 const thread = @import("../thread.zig");
 const json_lib = @import("../json.zig");
+const filter_lib = @import("../filter.zig");
 
 const c = @cImport({
   @cInclude("gtk/gtk.h");
@@ -65,8 +66,9 @@ pub fn gui_setup(actor: *thread.Actor) !void {
   }
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"actionbar.add", actionbar_add);
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot_drag", zoot_drag);
-  _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot.keypress",
-                                        @ptrCast(?extern fn() void, zoot_keypress));
+  // captures all keys oh no
+  // _ = c.gtk_builder_add_callback_symbol(myBuilder, c"zoot.keypress",
+  //                                       @ptrCast(?extern fn() void, zoot_keypress));
   _ = c.gtk_builder_add_callback_symbol(myBuilder, c"main_check_resize",
                                         @ptrCast(?extern fn() void, main_check_resize));
   _ = c.gtk_builder_connect_signals(myBuilder, null);
@@ -202,7 +204,7 @@ pub fn update_author_photo(acct: []const u8) void {
   for(columns.toSlice()) |column| {
     const toots = column.main.toots.author(acct, allocator);
     for(toots) |toot| {
-      warn("update_author_photo {} {} {}\n", column.main.config.filterHost(), acct, toot.id());
+      warn("update_author_photo {} {} {}\n", column.main.filter.host(), acct, toot.id());
       var tootbuilderMaybe = column.guitoots.get(toot.id());
       if(tootbuilderMaybe) |kv| {
         photo_refresh(acct, kv.value);
@@ -613,6 +615,7 @@ extern fn column_config_oauth_btn(selfptr: *c_void) void {
   c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), c"contacting server...");
 
   columnConfigReadGui(column);
+  column.main.filter = filter_lib.parse(allocator, column.main.config.filter);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
@@ -634,7 +637,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   var oauth_label = builder_get_widget(column.builder, c"column_config_oauth_label");
   var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
   oauth_url_buf.append("https://") catch unreachable;
-  oauth_url_buf.append(column.main.config.filterHost()) catch unreachable;
+  oauth_url_buf.append(column.main.filter.host()) catch unreachable;
   oauth_url_buf.append("/oauth/authorize") catch unreachable;
   oauth_url_buf.append("?client_id=") catch unreachable;
   oauth_url_buf.append(column.main.oauthClientId.?) catch unreachable;
@@ -643,7 +646,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
   oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
   var markupBuf = allocator.alloc(u8, 512) catch unreachable;
   var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>",
-    oauth_url_buf.toSliceConst(), column.main.config.filterHost()) catch unreachable;
+    oauth_url_buf.toSliceConst(), column.main.filter.host()) catch unreachable;
   var cLabel = util.sliceToCstr(allocator, markup);
   c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
 }
@@ -678,7 +681,7 @@ pub fn column_config_oauth_finalize(column: *Column) void {
 
 pub fn columnConfigWriteGui(column: *Column) void {
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
-  var cUrl = util.sliceToCstr(allocator, column.main.config.filterHost());
+  var cUrl = util.sliceToCstr(allocator, column.main.filter.host());
   c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
 
   var token_image = builder_get_widget(column.builder, c"column_config_token_image");
@@ -692,44 +695,42 @@ pub fn columnConfigWriteGui(column: *Column) void {
                                   icon_name, c.GtkIconSize.GTK_ICON_SIZE_BUTTON);
 }
 
-pub fn columnReadFilter(column: *Column) void {
+pub fn columnReadFilter(column: *Column) []const u8 {
   var filter_entry = builder_get_widget(column.builder, c"column_filter");
   var cFilter = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, filter_entry));
   const filter =  util.cstrToSliceCopy(allocator, cFilter); // edit in guithread--
   warn("columnReadFilter: {}\n", filter);
-  column.main.config.filter = filter;
+  return filter;
 }
 
 pub fn columnConfigReadGui(column: *Column) void {
   var url_entry = builder_get_widget(column.builder, c"column_config_url_entry");
   var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
   const newFilter =  util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
-  if(std.mem.compare(u8, column.main.config.filter, newFilter) != std.mem.Compare.Equal) {
-    // host change
-    column.main.config.filter = newFilter;
-
-    // signal crazy
-    var command = allocator.create(thread.Command) catch unreachable;
-    var verb = allocator.create(thread.CommandVerb) catch unreachable;
-    verb.column = column.main;
-    command.id = 8; // host change
-    command.verb = verb;
-    thread.signal(myActor, command);
-  }
+  column.main.filter = filter_lib.parse(allocator, newFilter);
 }
 
 extern fn column_filter_done(selfptr: *c_void) void {
   var self = @ptrCast([*c]c.GtkWidget, @alignCast(8,selfptr));
   var column: *Column = findColumnByBox(self);
 
-  columnReadFilter(column);
+  column.main.config.filter = columnReadFilter(column);
+  column.main.filter = filter_lib.parse(allocator, column.main.config.filter);
   update_column_ui(column);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   verb.column = column.main;
-  command.id = 4;
+  command.id = 4; // save config
+  command.verb = verb;
+  thread.signal(myActor, command);
+
+  // signal crazy
+  command = allocator.create(thread.Command) catch unreachable;
+  verb = allocator.create(thread.CommandVerb) catch unreachable;
+  verb.column = column.main;
+  command.id = 8; // update column UI
   command.verb = verb;
   thread.signal(myActor, command);
 }
@@ -739,14 +740,21 @@ extern fn column_config_done(selfptr: *c_void) void {
   var column: *Column = findColumnByConfigWindow(self);
 
   columnConfigReadGui(column);
-  update_column_ui(column);
+  column.main.filter = filter_lib.parse(allocator, column.main.config.filter);
   hide_column_config(column);
 
   // signal crazy
   var command = allocator.create(thread.Command) catch unreachable;
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   verb.column = column.main;
-  command.id = 4;
+  command.id = 4; // save config
+  command.verb = verb;
+  thread.signal(myActor, command);
+  // signal crazy
+  command = allocator.create(thread.Command) catch unreachable;
+  verb = allocator.create(thread.CommandVerb) catch unreachable;
+  verb.column = column.main;
+  command.id = 8; // update column UI
   command.verb = verb;
   thread.signal(myActor, command);
 }

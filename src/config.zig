@@ -5,6 +5,7 @@ const Allocator = std.mem.Allocator;
 
 const util = @import("./util.zig");
 const Json = @import("./json.zig");
+const filter_lib = @import("./filter.zig");
 const toot_lib = @import("./toot.zig");
 const toot_list = @import("./toot_list.zig");
 var allocator: *Allocator = undefined;
@@ -32,6 +33,7 @@ pub const ConfigFile = struct {
 
 pub const ColumnInfo = struct {
   config: *ColumnConfig,
+  filter: *filter_lib.ptree,
   toots: toot_list.TootList,
   refreshing: bool,
   last_check: Time,
@@ -40,12 +42,17 @@ pub const ColumnInfo = struct {
   oauthClientId: ?[]const u8,
   oauthClientSecret: ?[]const u8,
 
-  pub fn reset(self: ColumnInfo) void {
-    var other = self;
+  const Self = @This();
+
+  pub fn reset(self: *const Self) void {
+  }
+
+  pub fn parseFilter(self: *const Self, filter: []const u8) void {
+    self.filter = filter_lib.parse(filter);
   }
 
   pub fn makeTitle(column: *ColumnInfo) []const u8 {
-    var out: []const u8 = column.config.filterHost();
+    var out: []const u8 = column.filter.host();
     if(column.config.token) |tkn| {
       var addon: []const u8 = undefined;
       if(column.account) |account| {
@@ -53,7 +60,7 @@ pub const ColumnInfo = struct {
       } else {
         addon = "_";
       }
-      out = std.fmt.allocPrint(allocator, "{}@{}", addon, column.config.filterHost()) catch unreachable;
+      out = std.fmt.allocPrint(allocator, "{}@{}", addon, column.filter.host()) catch unreachable;
     }
     return out;
   }
@@ -66,9 +73,6 @@ pub const ColumnConfig = struct {
   img_only: bool,
 
   const Self = @This();
-  pub fn filterHost(self: *const Self) []const u8 {
-    return self.filter;
-  }
 };
 
 pub const LoginInfo = struct {
@@ -141,6 +145,7 @@ pub fn read(json: []const u8) !Settings {
       colInfo.config.title = title;
       var filter = value.Object.get("filter").?.value.String;
       colInfo.config.filter = filter;
+      colInfo.filter = filter_lib.parse(allocator, filter);
       var tokenTag = value.Object.get("token");
       if(tokenTag) |tokenKV| {
         if(@TagType(std.json.Value)(tokenKV.value) == .String) {

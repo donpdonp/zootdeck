@@ -23,6 +23,7 @@ const toot_list = @import("./toot_list.zig");
 const toot_lib = @import("./toot.zig");
 const json_lib = @import("./json.zig");
 const html_lib = @import("./html.zig");
+const filter_lib = @import("./filter.zig");
 
 var settings: config.Settings = undefined;
 
@@ -82,7 +83,7 @@ fn hello() void {
 fn columnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = util.mastodonExpandUrl(column.config.filterHost(),
+  httpInfo.url = util.mastodonExpandUrl(column.filter.host(),
                   if(column.config.token) |tk| true else false, allocator);
   httpInfo.verb = .get;
   httpInfo.token = null;
@@ -100,7 +101,7 @@ fn profileget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials",
-                                 column.config.filterHost()) catch unreachable;
+                                 column.filter.host()) catch unreachable;
   httpInfo.verb = .get;
   httpInfo.token = null;
   if(column.config.token) |tokenStr| {
@@ -140,7 +141,7 @@ fn mediaget(toot: toot_lib.Toot(), url: []const u8) void {
 fn oauthcolumnget(column: *config.ColumnInfo) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  auth.oauthClientRegister(allocator, httpInfo, column.config.filterHost());
+  auth.oauthClientRegister(allocator, httpInfo, column.filter.host());
   httpInfo.token = null;
   httpInfo.column = column;
   httpInfo.response_code = 0;
@@ -154,7 +155,7 @@ fn oauthcolumnget(column: *config.ColumnInfo) void {
 fn oauthtokenget(column: *config.ColumnInfo, code: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  auth.oauthTokenUpgrade(allocator, httpInfo, column.config.filterHost(), code,
+  auth.oauthTokenUpgrade(allocator, httpInfo, column.filter.host(), code,
                          column.oauthClientId.?, column.oauthClientSecret.?);
   httpInfo.token = null;
   httpInfo.column = column;
@@ -322,12 +323,13 @@ fn guiback(command: *thread.Command) void {
     colInfo.config = colConfig;
     colInfo.config.title = ""[0..];
     colInfo.config.filter = "mastodon.example.com"[0..];
+    colInfo.filter = filter_lib.parse(allocator, colInfo.config.filter);
     gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
     config.writefile(settings, "config.json");
   }
-  if (command.id == 4) { // config done
-    warn("gui col config {}\n", command.verb.column.config.title);
+  if (command.id == 4) { // config changed
     const column = command.verb.column;
+    warn("gui col config {}\n", column.config.title);
     column.inError = false;
     column.refreshing = false;
     column_refresh(column);

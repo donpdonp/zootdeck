@@ -9,7 +9,6 @@
     <property name="icon">../img/zootlogo.png</property>
     <signal name="check-resize" handler="main_check_resize" swapped="no"/>
     <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
-    <signal name="key-press-event" handler="zoot.keypress" swapped="no"/>
     <child>
       <placeholder/>
     </child>
