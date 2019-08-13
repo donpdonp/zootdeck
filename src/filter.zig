@@ -7,7 +7,7 @@ const string = []const u8;
 
 pub const ptree = struct {
   hostname: string,
-  tags: []string,
+  tags: *std.ArrayList(string),
 
   const Self = @This();
 
@@ -18,7 +18,9 @@ pub const ptree = struct {
 
 pub fn parse(allocator: *Allocator, lang: []const u8) *ptree {
   var newTree = allocator.create(ptree) catch unreachable;
-  var spaceParts = std.mem.separate(lang, " ");
+  var tagList = std.ArrayList(string).init(allocator);
+  newTree.tags = &tagList;
+  var spaceParts = std.mem.tokenize(lang, " ");
   var idx = usize(0);
   while (spaceParts.next()) |part| {
     idx += 1;
@@ -27,8 +29,8 @@ pub fn parse(allocator: *Allocator, lang: []const u8) *ptree {
       warn("filter set host {}\n", part);
     }
     if(idx > 1) {
-      newTree.tags = [_]string{};
-      warn("filter set tag {}\n", part);
+      newTree.tags.append(part) catch unreachable;
+      warn("filter set tag #{} {}\n", newTree.tags.len, part);
     }
   }
   return newTree;
