@@ -396,20 +396,15 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
 
 
   const tagBox = builder_get_widget(builder, c"tag_box");
+  var tagidx = usize(0);
   for(toot.tagList.toSlice()) |tag| {
     const cTag = util.sliceToCstr(allocator, tag);
     const tagLabel = c.gtk_label_new(cTag);
     const labelContext = c.gtk_widget_get_style_context(tagLabel);
     c.gtk_style_context_add_class(labelContext, c"toot_tag");
-    c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
-                       c.gtk_false(), c.gtk_true(), 10);
-    c.gtk_widget_show(tagLabel);
-
-    var tagboxAllocation = c.GtkAllocation{.x=-1, .y=-1, .width=0, .height=0};
-    c.gtk_widget_get_allocation(tagBox, &tagboxAllocation);
-    var taglabelAllocation = c.GtkAllocation{.x=-1, .y=-1, .width=0, .height=0};
-    c.gtk_widget_get_allocation(tagLabel, &taglabelAllocation);
-    warn("tagbox width {} label width {}\n", tagboxAllocation.width, taglabelAllocation.width);
+    // c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
+    //                    c.gtk_false(), c.gtk_true(), 10);
+    // c.gtk_widget_show(tagLabel);
   }
 
   if(colconfig.img_only) {

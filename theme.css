@@ -40,8 +40,10 @@
   color: #777;
 }
 .toot_tag {
-  color: #2FF;
-  background: #333;
+  color: #333;
+  background: #F75;
+  padding: 0px 5px;
+  border-radius: 15px;
 }
 
 .net_error {
