@@ -39,6 +39,10 @@
   background: #111;
   color: #777;
 }
+.toot_tag {
+  color: #44F;
+  background: #444;
+}
 
 .net_error {
   background-color: #a00;

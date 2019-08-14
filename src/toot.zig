@@ -4,6 +4,9 @@ const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
 
+const util = @import("util.zig");
+const json_lib = @import("json.zig");
+
 const Type = Toot();
 
 pub fn Toot() type {
@@ -24,7 +27,7 @@ pub fn Toot() type {
         .hashmap = hash,
         .tagList = TagList.init(allocator)
       };
-      newToot.parseTags();
+      newToot.parseTags(allocator);
       return newToot;
     }
 
@@ -53,9 +56,17 @@ pub fn Toot() type {
       }
     }
 
-    pub fn parseTags(self: *Self) void {
-      const content = self.get("content").?.value.String;
-      var wordParts = std.mem.tokenize(content, " ");
+    pub fn content(self: *const Self) []const u8 {
+      return self.hashmap.get("content").?.value.String;
+    }
+
+    pub fn parseTags(self: *Self, allocator: *Allocator) void {
+      const content_zig_namespace_yuk = self.content();
+      const jDecode = json_lib.jsonStrDecode(content_zig_namespace_yuk, allocator)  catch unreachable;
+      const hDecode = util.htmlEntityDecode(jDecode, allocator)  catch unreachable;
+      const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
+
+      var wordParts = std.mem.tokenize(html_trim, " ");
       while (wordParts.next()) |word| {
         if(std.mem.startsWith(u8, word, "#")) {
           self.tagList.append(word) catch unreachable;
