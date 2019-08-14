@@ -406,8 +406,8 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
     const tagLabel = c.gtk_label_new(cTag);
     const labelContext = c.gtk_widget_get_style_context(tagLabel);
     c.gtk_style_context_add_class(labelContext, c"toot_tag");
-    //c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
-    //                    c.gtk_true(), c.gtk_true(), 10);
+    c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
+                       c.gtk_false(), c.gtk_true(), 10);
     c.gtk_widget_show(tagLabel);
   }
 
