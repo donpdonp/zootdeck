@@ -218,14 +218,9 @@ pub fn columns_resize() void {
     const container = builder_get_widget(myBuilder, c"ZootColumns");
     var app_width = c.gtk_widget_get_allocated_width(container);
     var avg_col_width = @divTrunc(app_width, @intCast(c_int, columns.len));
-    warn("columns_resize app_width {} col_len {} avg_col_width {}\n", app_width, columns.len, avg_col_width);
+    warn("columns_resize app_width {} col_width {} columns {}\n", app_width, avg_col_width, columns.len);
     for(columns.toSlice()) |col| {
-      //c.gtk_widget_set_size_request(col.columnbox, col_width, -1);
-      //var gnomeFunny = c.GtkAllocation{x=0, y=0,width=0,height=0};
       c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
-      warn("columns_resize {}\n", myAllocation);
-      //var col_width = c.gtk_widget_get_allocated_width(col.columnbox);
-      //warn("columns_resize get_allocated_width {}\n", col_width);
     }
   }
 }
@@ -409,6 +404,12 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
     c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
                        c.gtk_false(), c.gtk_true(), 10);
     c.gtk_widget_show(tagLabel);
+
+    var tagboxAllocation = c.GtkAllocation{.x=-1, .y=-1, .width=0, .height=0};
+    c.gtk_widget_get_allocation(tagBox, &tagboxAllocation);
+    var taglabelAllocation = c.GtkAllocation{.x=-1, .y=-1, .width=0, .height=0};
+    c.gtk_widget_get_allocation(tagLabel, &taglabelAllocation);
+    warn("tagbox width {} label width {}\n", tagboxAllocation.width, taglabelAllocation.width);
   }
 
   if(colconfig.img_only) {
