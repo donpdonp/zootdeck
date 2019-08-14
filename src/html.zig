@@ -26,7 +26,7 @@ pub fn parse(html: []const u8, allocator: *Allocator) *Node {
 pub fn search(node: *Node) void {
   if (node.type == c.GumboNodeType.GUMBO_NODE_ELEMENT) {
     if(node.v.element.tag == c.GumboTag.GUMBO_TAG_A) {
-      warn("A TAG found\n");
+      //warn("A TAG found\n");
     }
     var children = node.v.element.children;
     var idx = u32(0);

@@ -228,7 +228,7 @@ fn netback(command: *thread.Command) void {
           column.inError = false;
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
-            const toot = toot_lib.Toot().init(item);
+            const toot = toot_lib.Toot().init(item, allocator);
             var id = toot.id();
             if(column.toots.contains(toot)) {
               // dupe

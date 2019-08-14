@@ -2,21 +2,30 @@
 const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
+const testing = std.testing;
+
+const Type = Toot();
 
 pub fn Toot() type {
   return struct {
-    hashmap: Toothashmap = undefined,
+    hashmap: Toothashmap,
+    tagList: TagList,
 
+    const TagType = []const u8;
+    const TagList = std.ArrayList(TagType);
     const Self = @This();
     const K = []const u8;
     const V = std.json.Value;
     const Toothashmap = std.hash_map.HashMap(K, V,
                                              std.mem.hash_slice_u8,
                                              std.mem.eql_slice_u8);
-    pub fn init(hash: Toothashmap) Self {
-      return Self{
-        .hashmap = hash
+    pub fn init(hash: Toothashmap, allocator: *Allocator) Self {
+      var newToot =  Self{
+        .hashmap = hash,
+        .tagList = TagList.init(allocator)
       };
+      newToot.parseTags();
+      return newToot;
     }
 
     pub fn get(self: *const Self, key: K) ?*Toothashmap.KV {
@@ -43,5 +52,36 @@ pub fn Toot() type {
         return false;
       }
     }
+
+    pub fn parseTags(self: *Self) void {
+      const content = self.get("content").?.value.String;
+      var wordParts = std.mem.tokenize(content, " ");
+      while (wordParts.next()) |word| {
+        if(std.mem.startsWith(u8, word, "#")) {
+          self.tagList.append(word) catch unreachable;
+        }
+      }
+    }
+
   };
+}
+
+test "Toot" {
+    var bytes: [8096]u8 = undefined;
+    const allocator = &std.heap.FixedBufferAllocator.init(bytes[0..]).allocator;
+    var tootHash = Type.Toothashmap.init(allocator);
+
+    var jString = std.json.Value{ .String = "" };
+    _ = tootHash.put("content", jString) catch unreachable;
+
+    jString.String = "ABC";
+    _ = tootHash.put("content", jString) catch unreachable;
+    var toot = Type.init(tootHash, allocator);
+    testing.expect(toot.tagList.count() == 0);
+
+    jString.String = "ABC   #xyz";
+    _ = tootHash.put("content", jString) catch unreachable;
+    var toot2 = Type.init(tootHash, allocator);
+    testing.expect(toot2.tagList.count() == 1);
+    testing.expect(std.mem.compare(u8, toot2.tagList.at(0), "#xyz") == std.mem.Compare.Equal);
 }
