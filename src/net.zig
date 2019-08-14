@@ -24,7 +24,7 @@ const NetError = error {
 pub extern fn go(data: ?*c_void) ?*c_void {
   var data8 = @alignCast(@alignOf(thread.Actor), data);
   var actor = @ptrCast(*thread.Actor, data8);
-  warn("net thread start {*} {}\n", actor, actor);
+  //warn("net thread start {*} {}\n", actor, actor);
 
   // setup for the callback
   var command = allocator.create(thread.Command) catch unreachable;

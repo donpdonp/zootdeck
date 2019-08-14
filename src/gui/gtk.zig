@@ -406,9 +406,8 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
     const tagLabel = c.gtk_label_new(cTag);
     const labelContext = c.gtk_widget_get_style_context(tagLabel);
     c.gtk_style_context_add_class(labelContext, c"toot_tag");
-    c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
-                        c.gtk_false(), c.gtk_true(), 10);
-    warn("TAGBOX **** {}\n", tag);
+    //c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
+    //                    c.gtk_true(), c.gtk_true(), 10);
     c.gtk_widget_show(tagLabel);
   }
 
@@ -440,19 +439,20 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
       c.gtk_widget_get_allocation(imageBox, &myAllocation);
       var loader = c.gdk_pixbuf_loader_new();
       // todo: size-prepared signal
-      var frameWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) * 0.9);
-      c.gdk_pixbuf_loader_set_size(loader, frameWidth, frameWidth);
+      var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
+      c.gdk_pixbuf_loader_set_size(loader, colWidth, colWidth);
       const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
       if(loadYN == c.gtk_true()) {
         const account = toot.get("account").?.value.Object;
         const acct = account.get("acct").?.value.String;
-        warn("toot_media {} #{} img loaded\n", acct, toot.id());
         var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
+        var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
+        warn("toot_media {} #{} frameWidth {}px colWidth {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, pixbufWidth);
         _ = c.gdk_pixbuf_loader_close(loader, null);
         if(pixbuf != null) {
           var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
           c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
-                              c.gtk_true(), c.gtk_true(), 0);
+                              c.gtk_false(), c.gtk_false(), 0);
           c.gtk_widget_show(new_img);
         } else {
           warn("toot_media img from pixbuf FAILED\n");

@@ -393,7 +393,7 @@ fn columns_net_freshen() void {
     if(since > refresh) {
       column_refresh(column);
     } else {
-      warn("col {} is fresh for {} sec\n", column.makeTitle(), refresh-since);
+      //warn("col {} is fresh for {} sec\n", column.makeTitle(), refresh-since);
     }
   }
 }
