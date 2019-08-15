@@ -433,17 +433,16 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
     c.gtk_widget_get_allocation(imageBox, &myAllocation);
     var loader = c.gdk_pixbuf_loader_new();
     // todo: size-prepared signal
-    _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
     var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
     var colHeight = if(column.main.config.img_only) -1 else colWidth;
-    c.gdk_pixbuf_loader_set_size(loader, colWidth, colHeight);
+    _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
     const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
     if(loadYN == c.gtk_true()) {
       const account = toot.get("account").?.value.Object;
       const acct = account.get("acct").?.value.String;
       var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
       var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-      warn("toot_media {} #{} frameWidth {}px colWidth {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, pixbufWidth);
+      warn("toot_media {} #{} frameWidth {}px colWidth {}px colHeight {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, colHeight, pixbufWidth);
       _ = c.gdk_pixbuf_loader_close(loader, null);
       if(pixbuf != null) {
         var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
@@ -459,8 +458,9 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
   }
 }
 
-fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, width: c.gint, height: c.gint) void {
-  warn("pixloaderSizePrepared w {} h {}\n", width, height);
+fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, width: c.gint, height: c.gint, colWidth: *c_void) void {
+  warn("pixloaderSizePrepared w {} h {} colWidth {*}\n", width, height, colWidth);
+  c.gdk_pixbuf_loader_set_size(loader, width, height);
 }
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
