@@ -254,7 +254,16 @@ pub extern fn update_column_toots_schedule(in: *c_void) c_int {
   const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
   var columnMaybe = find_gui_column(c_column);
   if(columnMaybe) |column| {
-    update_column_toots(column);
+    update_column_toots(column, false);
+  }
+  return 0;
+}
+
+pub extern fn update_column_toots_rebuild_schedule(in: *c_void) c_int {
+  const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
+  var columnMaybe = find_gui_column(c_column);
+  if(columnMaybe) |column| {
+    update_column_toots(column, true);
   }
   return 0;
 }
@@ -285,9 +294,10 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
   return null;
 }
 
-pub fn update_column_toots(column: *Column) void {
-  warn("update_column {} {} toots {}\n", column.main.config.title,
+pub fn update_column_toots(column: *Column, rebuild: bool) void {
+  warn("update_column {} {} toots {} {}\n", column.main.config.title,
                 column.main.toots.count(),
+                if(rebuild) "REBUILD" else "",
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   var current = column.main.toots.first();
@@ -295,9 +305,20 @@ pub fn update_column_toots(column: *Column) void {
   if (current != null) {
     while(current) |node| {
       const toot = node.data;
+      var buildToot = false;
       var tootbuilderMaybe = column.guitoots.get(toot.id());
       if(tootbuilderMaybe) |kv| {
+        if(rebuild) {
+          const builder = kv.value;
+          const tootbox = builder_get_widget(builder, c"tootbox");
+          c.gtk_widget_destroy(tootbox);
+          buildToot = true;
+        }
       } else {
+        buildToot = true;
+      }
+
+      if(buildToot) {
         const tootbuilder = makeTootBox(toot, column.main.config);
         var tootbox = builder_get_widget(tootbuilder, c"tootbox");
         _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
@@ -361,6 +382,7 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
 }
 
 pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c.GtkBuilder {
+  warn("toot building #{} img {}\n", toot.id(), toot.imgList.count());
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 
@@ -380,6 +402,7 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
   labelBufPrint(author_url_minimode_label, "{}", author_url);
   const date_label = builder_get_widget(builder, c"toot_date");
   labelBufPrint(date_label, "{}", created_at);
+  photo_refresh(author_acct, builder);
 
   const content = toot.content();
   var jDecode = json_lib.jsonStrDecode(content, allocator)  catch unreachable;
@@ -413,7 +436,11 @@ pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c
     c.gtk_widget_hide(id_row);
     c.gtk_widget_show(author_url_minimode_label);
   }
-  photo_refresh(author_acct, builder);
+
+  for(toot.imgList.toSlice()) |imgdata| {
+    warn("toot rebuilding with img\n");
+    toot_media(toot, imgdata);
+  }
 
   return builder;
 }
@@ -438,11 +465,11 @@ fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
     _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
     const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
     if(loadYN == c.gtk_true()) {
-      const account = toot.get("account").?.value.Object;
-      const acct = account.get("acct").?.value.String;
       var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
-      var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-      warn("toot_media {} #{} frameWidth {}px colWidth {}px colHeight {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, colHeight, pixbufWidth);
+      // const account = toot.get("account").?.value.Object;
+      // const acct = account.get("acct").?.value.String;
+      // var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
+      // warn("toot_media {} #{} frameWidth {}px colWidth {}px colHeight {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, colHeight, pixbufWidth);
       _ = c.gdk_pixbuf_loader_close(loader, null);
       if(pixbuf != null) {
         var new_img = c.gtk_image_new_from_pixbuf(pixbuf);

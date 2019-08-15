@@ -234,20 +234,17 @@ fn netback(command: *thread.Command) void {
               // dupe
             } else {
               var images = toot.get("media_attachments").?.value.Array;
+              column.toots.sortedInsert(toot, allocator);
+              var jstr = toot.get("content").?.value.String;
+              var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
+              var root = html_lib.parse(html, allocator);
+              html_lib.search(root);
+              cache_update(toot);
 
-              if((column.config.img_only and images.len > 0) or !column.config.img_only) {
-                column.toots.sortedInsert(toot, allocator);
-                var jstr = toot.get("content").?.value.String;
-                var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
-                var root = html_lib.parse(html, allocator);
-                html_lib.search(root);
-                cache_update(toot);
-
-                for(images.toSlice()) |image| {
-                  const imgUrl = image.Object.get("preview_url").?.value.String;
-                  warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
-                  mediaget(toot, imgUrl);
-                }
+              for(images.toSlice()) |image| {
+                const imgUrl = image.Object.get("preview_url").?.value.String;
+                warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
+                mediaget(toot, imgUrl);
               }
             }
           }
@@ -271,6 +268,7 @@ fn mediaback(command: *thread.Command) void {
   const tootpic = allocator.create(gui.TootPic) catch unreachable;
   tootpic.toot = reqres.toot;
   tootpic.pic = reqres.body;
+  tootpic.toot.addImg(tootpic.pic);
   gui.schedule(gui.toot_media_schedule, @ptrCast(*c_void, tootpic));
 }
 
@@ -374,6 +372,7 @@ fn guiback(command: *thread.Command) void {
     const column = command.verb.column;
     column.config.img_only = !column.config.img_only;
     config.writefile(settings, "config.json");
+    gui.schedule(gui.update_column_toots_rebuild_schedule, @ptrCast(*c_void, column));
   }
   if (command.id == 10) { // window size changed
     config.writefile(settings, "config.json");

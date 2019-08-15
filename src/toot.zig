@@ -13,9 +13,12 @@ pub fn Toot() type {
   return struct {
     hashmap: Toothashmap,
     tagList: TagList,
+    imgList: ImgList,
 
     const TagType = []const u8;
     const TagList = std.ArrayList(TagType);
+    const ImgType = []const u8;
+    const ImgList = std.ArrayList(ImgType);
     const Self = @This();
     const K = []const u8;
     const V = std.json.Value;
@@ -25,7 +28,8 @@ pub fn Toot() type {
     pub fn init(hash: Toothashmap, allocator: *Allocator) Self {
       var newToot =  Self{
         .hashmap = hash,
-        .tagList = TagList.init(allocator)
+        .tagList = TagList.init(allocator),
+        .imgList = TagList.init(allocator)
       };
       newToot.parseTags(allocator);
       return newToot;
@@ -74,6 +78,9 @@ pub fn Toot() type {
       }
     }
 
+    pub fn addImg(self: *Self, imgdata: ImgType) void {
+      self.imgList.append(imgdata) catch unreachable;
+    }
   };
 }
 
