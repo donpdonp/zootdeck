@@ -427,39 +427,41 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
 }
 
 fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
-  for(columns.toSlice()) |column| {
-    var kvMaybe = column.guitoots.get(toot.id());
-    if(kvMaybe) |kv| {
-      const tootbuilder = kv.value;
-      const imageBox = builder_get_widget(tootbuilder, c"image_box");
-      c.gtk_widget_get_allocation(imageBox, &myAllocation);
-      var loader = c.gdk_pixbuf_loader_new();
-      // todo: size-prepared signal
-      var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
-      c.gdk_pixbuf_loader_set_size(loader, colWidth, colWidth);
-      const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
-      if(loadYN == c.gtk_true()) {
-        const account = toot.get("account").?.value.Object;
-        const acct = account.get("acct").?.value.String;
-        var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
-        var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-        warn("toot_media {} #{} frameWidth {}px colWidth {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, pixbufWidth);
-        _ = c.gdk_pixbuf_loader_close(loader, null);
-        if(pixbuf != null) {
-          var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
-          c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
-                              c.gtk_false(), c.gtk_false(), 0);
-          c.gtk_widget_show(new_img);
-        } else {
-          warn("toot_media img from pixbuf FAILED\n");
-        }
+  if(findColumnByTootId(toot.id())) |column| {
+    const tootbuilder = column.guitoots.get(toot.id()).?.value;
+    const imageBox = builder_get_widget(tootbuilder, c"image_box");
+    c.gtk_widget_get_allocation(imageBox, &myAllocation);
+    var loader = c.gdk_pixbuf_loader_new();
+    // todo: size-prepared signal
+    _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
+    var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
+    var colHeight = if(column.main.config.img_only) -1 else colWidth;
+    c.gdk_pixbuf_loader_set_size(loader, colWidth, colHeight);
+    const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
+    if(loadYN == c.gtk_true()) {
+      const account = toot.get("account").?.value.Object;
+      const acct = account.get("acct").?.value.String;
+      var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
+      var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
+      warn("toot_media {} #{} frameWidth {}px colWidth {}px pixbuf width {}\n", acct, toot.id(), myAllocation.width, colWidth, pixbufWidth);
+      _ = c.gdk_pixbuf_loader_close(loader, null);
+      if(pixbuf != null) {
+        var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
+        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
+                            c.gtk_false(), c.gtk_false(), 0);
+        c.gtk_widget_show(new_img);
       } else {
-        warn("pixbuf load FAILED of {} bytes\n", pic.len);
+        warn("toot_media img from pixbuf FAILED\n");
       }
+    } else {
+      warn("pixbuf load FAILED of {} bytes\n", pic.len);
     }
   }
 }
 
+fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, width: c.gint, height: c.gint) void {
+  warn("pixloaderSizePrepared w {} h {}\n", width, height);
+}
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
   var wrapped = try simple_buffer.SimpleU8.initSize(allocator, 0);
@@ -494,6 +496,16 @@ extern fn column_config_btn(columnptr: ?*c_void) void {
   columnConfigWriteGui(column);
 
   c.gtk_widget_show(column.config_window);
+}
+
+fn findColumnByTootId(toot_id: []const u8) ?*Column {
+  for(columns.toSlice()) |column| {
+    var kvMaybe = column.guitoots.get(toot_id);
+    if(kvMaybe) |kv| {
+      return column;
+    }
+  }
+  return null;
 }
 
 fn findColumnByInfo(info: *config.ColumnInfo) *Column {
@@ -776,14 +788,16 @@ fn signal_connect(window: [*c]c.GtkWidget, action: []const u8, fun: fn() void) !
   }
 }
 
-fn g_signal_connect(instance: ?*c.GtkWidget, signal_name: []const u8, callback: fn () void, data: ?*c_void) c.gulong {
+fn g_signal_connect(instance: var, signal_name: []const u8, callback: var, data: ?*c_void) c.gulong {
   //pub extern fn g_signal_connect_object(instance: gpointer,
   // detailed_signal: ?&const gchar, c_handler: GCallback, gobject: gpointer,
   // connect_flags: GConnectFlags) gulong;
   // typedef void* gpointer;
   var signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
-  return c.g_signal_connect_object(@ptrCast(c.gpointer, instance), signal_name_null.ptr,
-    @ptrCast(c.GCallback, callback), data, c.GConnectFlags.G_CONNECT_AFTER);
+  return c.g_signal_connect_object(@ptrCast(c.gpointer, instance),
+                                  signal_name_null.ptr,
+                                  @ptrCast(c.GCallback, callback),
+                                  data, c.GConnectFlags.G_CONNECT_AFTER);
 }
 
 pub fn mainloop() void {
