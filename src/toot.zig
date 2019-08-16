@@ -7,7 +7,7 @@ const testing = std.testing;
 const util = @import("util.zig");
 const json_lib = @import("json.zig");
 
-const Type = Toot();
+pub const Type = Toot();
 
 pub fn Toot() type {
   return struct {
@@ -15,21 +15,21 @@ pub fn Toot() type {
     tagList: TagList,
     imgList: ImgList,
 
+    const Self = @This();
     const TagType = []const u8;
     const TagList = std.ArrayList(TagType);
     const ImgType = []const u8;
     const ImgList = std.ArrayList(ImgType);
-    const Self = @This();
     const K = []const u8;
     const V = std.json.Value;
     const Toothashmap = std.hash_map.HashMap(K, V,
                                              std.mem.hash_slice_u8,
                                              std.mem.eql_slice_u8);
     pub fn init(hash: Toothashmap, allocator: *Allocator) Self {
-      var newToot =  Self{
+      var newToot = Self{
         .hashmap = hash,
         .tagList = TagList.init(allocator),
-        .imgList = TagList.init(allocator)
+        .imgList = ImgList.init(allocator)
       };
       newToot.parseTags(allocator);
       return newToot;
@@ -79,27 +79,31 @@ pub fn Toot() type {
     }
 
     pub fn addImg(self: *Self, imgdata: ImgType) void {
+      warn("addImg toot {*}\n", self);
       self.imgList.append(imgdata) catch unreachable;
     }
   };
 }
 
 test "Toot" {
-    var bytes: [8096]u8 = undefined;
-    const allocator = &std.heap.FixedBufferAllocator.init(bytes[0..]).allocator;
-    var tootHash = Type.Toothashmap.init(allocator);
+  var bytes: [8096]u8 = undefined;
+  const allocator = &std.heap.FixedBufferAllocator.init(bytes[0..]).allocator;
+  var tootHash = Type.Toothashmap.init(allocator);
 
-    var jString = std.json.Value{ .String = "" };
-    _ = tootHash.put("content", jString) catch unreachable;
+  var jString = std.json.Value{ .String = "" };
+  _ = tootHash.put("content", jString) catch unreachable;
 
-    jString.String = "ABC";
-    _ = tootHash.put("content", jString) catch unreachable;
-    var toot = Type.init(tootHash, allocator);
-    testing.expect(toot.tagList.count() == 0);
+  jString.String = "ABC";
+  _ = tootHash.put("content", jString) catch unreachable;
+  var toot = Type.init(tootHash, allocator);
+  testing.expect(toot.tagList.count() == 0);
+  warn("toot1 {*}\n", &toot);
 
-    jString.String = "ABC   #xyz";
-    _ = tootHash.put("content", jString) catch unreachable;
-    var toot2 = Type.init(tootHash, allocator);
-    testing.expect(toot2.tagList.count() == 1);
-    testing.expect(std.mem.compare(u8, toot2.tagList.at(0), "#xyz") == std.mem.Compare.Equal);
+  jString.String = "ABC   #xyz";
+  _ = tootHash.put("content", jString) catch unreachable;
+  const toot2 = Type.init(tootHash, allocator);
+  warn("toot2 {*}\n", &toot2);
+  testing.expect(toot2.tagList.count() == 1);
+  testing.expect(std.mem.compare(u8, toot2.tagList.at(0), "#xyz") == std.mem.Compare.Equal);
 }
+

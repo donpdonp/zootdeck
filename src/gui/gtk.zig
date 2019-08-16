@@ -129,7 +129,7 @@ pub extern fn update_column_ui_schedule(in: *c_void) c_int {
   return 0;
 }
 
-pub const TootPic = struct { toot: toot_lib.Toot(), pic: []const u8 };
+pub const TootPic = struct { toot: toot_lib.Type, pic: []const u8 };
 pub extern fn toot_media_schedule(in: *c_void) c_int {
   const tootpic = @ptrCast(*TootPic, @alignCast(8,in));
   toot_media(tootpic.toot, tootpic.pic);
@@ -382,7 +382,7 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
 }
 
 pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c.GtkBuilder {
-  warn("toot building #{} img {}\n", toot.id(), toot.imgList.count());
+  //warn("toot #{} gui building img {} {}\n", toot.id(), toot.imgList.count(), toot.imgList);
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 

@@ -228,8 +228,9 @@ fn netback(command: *thread.Command) void {
           column.inError = false;
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
-            const toot = toot_lib.Toot().init(item, allocator);
+            const toot = toot_lib.Type.init(item, allocator);
             var id = toot.id();
+            warn("netback json toot #{} {*}\n", toot.id(), toot.ptr);
             if(column.toots.contains(toot)) {
               // dupe
             } else {
@@ -243,7 +244,7 @@ fn netback(command: *thread.Command) void {
 
               for(images.toSlice()) |image| {
                 const imgUrl = image.Object.get("preview_url").?.value.String;
-                warn("TOOT ID {} URL  {}\n", toot.id(), imgUrl);
+                warn("toot #{} has img {}\n", toot.id(), imgUrl);
                 mediaget(toot, imgUrl);
               }
             }
@@ -268,6 +269,7 @@ fn mediaback(command: *thread.Command) void {
   const tootpic = allocator.create(gui.TootPic) catch unreachable;
   tootpic.toot = reqres.toot;
   tootpic.pic = reqres.body;
+  warn("mediaback toot #{} {*} \n", tootpic.toot.id(), &tootpic.toot);
   tootpic.toot.addImg(tootpic.pic);
   gui.schedule(gui.toot_media_schedule, @ptrCast(*c_void, tootpic));
 }
