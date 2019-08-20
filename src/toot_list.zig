@@ -6,7 +6,7 @@ const Allocator = std.mem.Allocator;
 const toot_lib = @import("./toot.zig");
 const util = @import("./util.zig");
 
-pub const TootList = SomeList(toot_lib.Toot());
+pub const TootList = SomeList(*toot_lib.Type);
 
 pub fn SomeList(comptime T: type) type {
   return struct {

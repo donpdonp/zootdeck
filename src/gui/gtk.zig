@@ -129,7 +129,7 @@ pub extern fn update_column_ui_schedule(in: *c_void) c_int {
   return 0;
 }
 
-pub const TootPic = struct { toot: toot_lib.Type, pic: []const u8 };
+pub const TootPic = struct { toot: *toot_lib.Type, pic: []const u8 };
 pub extern fn toot_media_schedule(in: *c_void) c_int {
   const tootpic = @ptrCast(*TootPic, @alignCast(8,in));
   toot_media(tootpic.toot, tootpic.pic);
@@ -381,8 +381,8 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
-pub fn makeTootBox(toot: toot_lib.Toot(), colconfig: *config.ColumnConfig) [*c]c.GtkBuilder {
-  //warn("toot #{} gui building img {} {}\n", toot.id(), toot.imgList.count(), toot.imgList);
+pub fn makeTootBox(toot: *toot_lib.Type, colconfig: *config.ColumnConfig) [*c]c.GtkBuilder {
+  warn("maketootbox toot #{} {*} gui building img {} {}\n", toot.id(), toot, toot.imgList.count(), toot.imgList);
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
 
@@ -453,7 +453,7 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
   c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 }
 
-fn toot_media(toot: toot_lib.Toot(), pic: []const u8) void {
+fn toot_media(toot: *toot_lib.Type, pic: []const u8) void {
   if(findColumnByTootId(toot.id())) |column| {
     const tootbuilder = column.guitoots.get(toot.id()).?.value;
     const imageBox = builder_get_widget(tootbuilder, c"image_box");

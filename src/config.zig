@@ -90,7 +90,7 @@ pub const HttpInfo = struct {
   response_code: c_long,
   tree: std.json.ValueTree,
   column: *ColumnInfo,
-  toot: toot_lib.Toot()
+  toot: *toot_lib.Type
 };
 
 pub const ColumnAuth = struct {

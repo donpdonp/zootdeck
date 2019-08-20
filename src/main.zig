@@ -114,7 +114,7 @@ fn profileget(column: *config.ColumnInfo) void {
   var netthread = thread.create(net.go, verb, profileback) catch unreachable;
 }
 
-fn photoget(toot: toot_lib.Toot(), url: []const u8) void {
+fn photoget(toot: *toot_lib.Type, url: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = url;
@@ -126,7 +126,7 @@ fn photoget(toot: toot_lib.Toot(), url: []const u8) void {
   var netthread = thread.create(net.go, verb, photoback) catch unreachable;
 }
 
-fn mediaget(toot: toot_lib.Toot(), url: []const u8) void {
+fn mediaget(toot: *toot_lib.Type, url: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
   var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
   httpInfo.url = url;
@@ -135,6 +135,7 @@ fn mediaget(toot: toot_lib.Toot(), url: []const u8) void {
   httpInfo.response_code = 0;
   httpInfo.toot = toot;
   verb.http = httpInfo;
+  warn("mediaget toot {} {*}\n", toot.id(), &toot);
   var netthread = thread.create(net.go, verb, mediaback) catch unreachable;
 }
 
@@ -228,9 +229,10 @@ fn netback(command: *thread.Command) void {
           column.inError = false;
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
-            const toot = toot_lib.Type.init(item, allocator);
+            var toot = allocator.create(toot_lib.Type) catch unreachable;
+            toot.init(item, allocator);
             var id = toot.id();
-            warn("netback json toot #{} {*}\n", toot.id(), toot.ptr);
+            warn("netback json create toot #{} {*}\n", toot.id(), toot);
             if(column.toots.contains(toot)) {
               // dupe
             } else {
@@ -290,7 +292,7 @@ fn profileback(command: *thread.Command) void {
   gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
 }
 
-fn cache_update(toot: toot_lib.Toot()) void {
+fn cache_update(toot: *toot_lib.Type) void {
   var account = toot.get("account").?.value.Object;
   const acct: []const u8 = account.get("acct").?.value.String;
   const avatar_url: []const u8 = account.get("avatar").?.value.String;
