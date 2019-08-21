@@ -132,7 +132,11 @@ pub extern fn update_column_ui_schedule(in: *c_void) c_int {
 pub const TootPic = struct { toot: *toot_lib.Type, pic: []const u8 };
 pub extern fn toot_media_schedule(in: *c_void) c_int {
   const tootpic = @ptrCast(*TootPic, @alignCast(8,in));
-  toot_media(tootpic.toot, tootpic.pic);
+  const toot = tootpic.toot;
+  if(findColumnByTootId(toot.id())) |column| {
+    const builder = column.guitoots.get(toot.id()).?.value;
+    toot_media(column, builder, toot, tootpic.pic);
+  }
   return 0;
 }
 
@@ -319,7 +323,7 @@ pub fn update_column_toots(column: *Column, rebuild: bool) void {
       }
 
       if(buildToot) {
-        const tootbuilder = makeTootBox(toot, column.main.config);
+        const tootbuilder = makeTootBox(toot, column);
         var tootbox = builder_get_widget(tootbuilder, c"tootbox");
         _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
         c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
@@ -381,7 +385,7 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
-pub fn makeTootBox(toot: *toot_lib.Type, colconfig: *config.ColumnConfig) [*c]c.GtkBuilder {
+pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
   warn("maketootbox toot #{} {*} gui building {} images\n", toot.id(), toot, toot.imgList.count());
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
   const tootbox = builder_get_widget(builder, c"tootbox");
@@ -430,16 +434,20 @@ pub fn makeTootBox(toot: *toot_lib.Type, colconfig: *config.ColumnConfig) [*c]c.
     // c.gtk_widget_show(tagLabel);
   }
 
-  if(colconfig.img_only) {
-    c.gtk_widget_hide(toottext_label);
-    const id_row = builder_get_widget(builder, c"toot_id_row");
-    c.gtk_widget_hide(id_row);
-    c.gtk_widget_show(author_url_minimode_label);
+  if(column.main.config.img_only) {
+    if(toot.imgCount() == 0) {
+      c.gtk_widget_hide(tootbox);
+    } else {
+      c.gtk_widget_hide(toottext_label);
+      const id_row = builder_get_widget(builder, c"toot_id_row");
+      c.gtk_widget_hide(id_row);
+      c.gtk_widget_show(author_url_minimode_label);
+    }
   }
 
   for(toot.imgList.toSlice()) |imgdata| {
     warn("toot #{} rebuilding with img\n", toot.id());
-    toot_media(toot, imgdata);
+    toot_media(column, builder, toot, imgdata);
   }
 
   return builder;
@@ -453,37 +461,34 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
   c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 }
 
-fn toot_media(toot: *toot_lib.Type, pic: []const u8) void {
-  if(findColumnByTootId(toot.id())) |column| {
-    const tootbuilder = column.guitoots.get(toot.id()).?.value;
-    const imageBox = builder_get_widget(tootbuilder, c"image_box");
-    c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
-    var loader = c.gdk_pixbuf_loader_new();
-    // todo: size-prepared signal
-    var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
-    var colHeight = c_int(-1); // seems to work
-    _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
-    c.gdk_pixbuf_loader_set_size(loader, colWidth, colHeight);
-    const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
-    if(loadYN == c.gtk_true()) {
-      var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
-      const account = toot.get("account").?.value.Object;
-      const acct = account.get("acct").?.value.String;
-      var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-      warn("toot_media #{} {*} {} images. myAllocation.width {}px colWidth {}px colHeight {}px pixbuf width {}\n",
-        toot.id(), toot, toot.imgCount(), myAllocation.width, colWidth, colHeight, pixbufWidth);
-      _ = c.gdk_pixbuf_loader_close(loader, null);
-      if(pixbuf != null) {
-        var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
-        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
-                            c.gtk_false(), c.gtk_false(), 0);
-        c.gtk_widget_show(new_img);
-      } else {
-        warn("toot_media img from pixbuf FAILED\n");
-      }
+fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
+  const imageBox = builder_get_widget(builder, c"image_box");
+  c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
+  var loader = c.gdk_pixbuf_loader_new();
+  // todo: size-prepared signal
+  var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
+  var colHeight = c_int(-1); // seems to work
+  _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
+  c.gdk_pixbuf_loader_set_size(loader, colWidth, colHeight);
+  const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
+  if(loadYN == c.gtk_true()) {
+    var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
+    const account = toot.get("account").?.value.Object;
+    const acct = account.get("acct").?.value.String;
+    var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
+    warn("toot_media #{} {*} {} images. myAllocation.width {}px colWidth {}px colHeight {}px pixbuf width {}\n",
+      toot.id(), toot, toot.imgCount(), myAllocation.width, colWidth, colHeight, pixbufWidth);
+    _ = c.gdk_pixbuf_loader_close(loader, null);
+    if(pixbuf != null) {
+      var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
+      c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img,
+                          c.gtk_false(), c.gtk_false(), 0);
+      c.gtk_widget_show(new_img);
     } else {
-      warn("pixbuf load FAILED of {} bytes\n", pic.len);
+      warn("toot_media img from pixbuf FAILED\n");
     }
+  } else {
+    warn("pixbuf load FAILED of {} bytes\n", pic.len);
   }
 }
 
