@@ -287,8 +287,12 @@ fn photoback(command: *thread.Command) void {
 
 fn profileback(command: *thread.Command) void {
   const reqres = command.verb.http;
-  reqres.column.account = command.verb.http.tree.root.Object;
-  gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
+  if (reqres.response_code >= 200 and reqres.response_code < 300) {
+    reqres.column.account = reqres.tree.root.Object;
+    gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
+  } else {
+    warn("profile fail http status {}\n", reqres.response_code);
+  }
 }
 
 fn cache_update(toot: *toot_lib.Type) void {
