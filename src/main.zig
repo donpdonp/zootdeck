@@ -229,8 +229,8 @@ fn netback(command: *thread.Command) void {
           column.inError = false;
           for(tree.root.Array.toSlice()) |jsonValue| {
             const item = jsonValue.Object;
-            var toot = allocator.create(toot_lib.Type) catch unreachable;
-            toot.init(item, allocator);
+            const toot = allocator.create(toot_lib.Type) catch unreachable;
+            toot.* = toot_lib.Type.init(item, allocator);
             var id = toot.id();
             warn("netback json create toot #{} {*}\n", toot.id(), toot);
             if(column.toots.contains(toot)) {

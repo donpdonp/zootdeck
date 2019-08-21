@@ -25,11 +25,14 @@ pub fn Toot() type {
     const Toothashmap = std.hash_map.HashMap(K, V,
                                              std.mem.hash_slice_u8,
                                              std.mem.eql_slice_u8);
-    pub fn init(self: *Self, hash: Toothashmap, allocator: *Allocator) void {
-      self.hashmap = hash;
-      self.tagList = TagList.init(allocator);
-      self.imgList = ImgList.init(allocator);
-      self.parseTags(allocator);
+    pub fn init(hash: Toothashmap, allocator: *Allocator) Self {
+     var newToot = Self{
+        .hashmap = hash,
+        .tagList = TagList.init(allocator),
+        .imgList = ImgList.init(allocator)
+      };
+      newToot.parseTags(allocator);
+      return newToot;
     }
 
     pub fn get(self: *const Self, key: K) ?*Toothashmap.KV {
