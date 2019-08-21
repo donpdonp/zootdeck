@@ -128,15 +128,14 @@ fn photoget(toot: *toot_lib.Type, url: []const u8) void {
 
 fn mediaget(toot: *toot_lib.Type, url: []const u8) void {
   var verb = allocator.create(thread.CommandVerb) catch unreachable;
-  var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-  httpInfo.url = url;
-  httpInfo.verb = .get;
-  httpInfo.token = null;
-  httpInfo.response_code = 0;
-  httpInfo.toot = toot;
-  verb.http = httpInfo;
-  warn("mediaget toot {} {*}\n", toot.id(), &toot);
-  var netthread = thread.create(net.go, verb, mediaback) catch unreachable;
+  verb.http = allocator.create(config.HttpInfo) catch unreachable;
+  verb.http.url = url;
+  verb.http.verb = .get;
+  verb.http.token = null;
+  verb.http.response_code = 0;
+  verb.http.toot = toot;
+  warn("mediaget toot #{} toot {*} verb.http.toot {*}\n", toot.id(), toot, verb.http.toot);
+  _ = thread.create(net.go, verb, mediaback) catch unreachable;
 }
 
 fn oauthcolumnget(column: *config.ColumnInfo) void {
@@ -271,7 +270,7 @@ fn mediaback(command: *thread.Command) void {
   const tootpic = allocator.create(gui.TootPic) catch unreachable;
   tootpic.toot = reqres.toot;
   tootpic.pic = reqres.body;
-  warn("mediaback toot #{} {*} \n", tootpic.toot.id(), &tootpic.toot);
+  warn("mediaback toot #{} tootpic.toot {*} adding 1 img\n", tootpic.toot.id(), tootpic.toot);
   tootpic.toot.addImg(tootpic.pic);
   gui.schedule(gui.toot_media_schedule, @ptrCast(*c_void, tootpic));
 }

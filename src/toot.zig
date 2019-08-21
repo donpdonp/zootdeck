@@ -82,6 +82,10 @@ pub fn Toot() type {
       warn("addImg toot {*}\n", self);
       self.imgList.append(imgdata) catch unreachable;
     }
+
+    pub fn imgCount(self: *Self) usize {
+      return self.imgList.count();
+    }
   };
 }
 
