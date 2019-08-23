@@ -479,8 +479,9 @@ fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, 
   // todo: size-prepared signal
   var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
   var colHeight = c_int(-1); // seems to work
-  _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, null);
-  c.gdk_pixbuf_loader_set_size(loader, colWidth, colHeight);
+  const colWidth_ptr = allocator.create(c_int) catch unreachable;
+  colWidth_ptr.* = colWidth;
+  _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, colWidth_ptr);
   const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
   if(loadYN == c.gtk_true()) {
     var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
@@ -504,8 +505,19 @@ fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, 
   }
 }
 
-fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, width: c.gint, height: c.gint, colWidth: *c_void) void {
-  warn("toot_media pixloaderSizePrepared w {} h {} colWidth unknown\n", width, height);
+fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_height: c.gint, data_ptr: *c_void) void {
+  const colWidth = @ptrCast(*c_int, @alignCast(4, data_ptr)).*;
+  var scaleWidth = img_width;
+  var scaleHeight = img_height;
+  if(img_width > colWidth) {
+    scaleWidth = colWidth;
+    //const scale_factor = @divFloor(img_width, colWidth);
+    const scale_factor = @intToFloat(f32, colWidth) / @intToFloat(f32, img_width);
+    scaleHeight = @floatToInt(c_int, @intToFloat(f32, img_height) * scale_factor);
+  }
+  warn("toot_media pixloaderSizePrepared col {}px img {}x{} scale {}x{}\n",
+    colWidth, img_width, img_height, scaleWidth, scaleHeight);
+  c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
 }
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
@@ -833,16 +845,19 @@ fn signal_connect(window: [*c]c.GtkWidget, action: []const u8, fun: fn() void) !
   }
 }
 
-fn g_signal_connect(instance: var, signal_name: []const u8, callback: var, data: ?*c_void) c.gulong {
+fn g_signal_connect(instance: var, signal_name: []const u8, callback: var, data: var) c.gulong {
   //pub extern fn g_signal_connect_object(instance: gpointer,
   // detailed_signal: ?&const gchar, c_handler: GCallback, gobject: gpointer,
   // connect_flags: GConnectFlags) gulong;
   // typedef void* gpointer;
-  var signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
-  return c.g_signal_connect_object(@ptrCast(c.gpointer, instance),
+  const signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
+  const data_ptr = @ptrCast(?*c_void, data);
+  return c.g_signal_connect_data(@ptrCast(c.gpointer, instance),
                                   signal_name_null.ptr,
                                   @ptrCast(c.GCallback, callback),
-                                  data, c.GConnectFlags.G_CONNECT_AFTER);
+                                  data_ptr,
+                                  null,
+                                  c.GConnectFlags.G_CONNECT_AFTER);
 }
 
 pub fn mainloop() void {
