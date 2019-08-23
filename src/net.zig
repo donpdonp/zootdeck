@@ -1,7 +1,7 @@
 // net.zig
 const std = @import("std");
 const thread = @import("./thread.zig");
-const allocator = std.heap.c_allocator; // passing through pthread nope
+const allocator = std.heap.c_allocator;
 
 const config = @import("./config.zig");
 const util = @import("./util.zig");

@@ -325,12 +325,16 @@ pub fn update_column_toots(column: *Column, rebuild: bool) void {
       }
 
       if(buildToot) {
-        const tootbuilder = makeTootBox(toot, column);
-        var tootbox = builder_get_widget(tootbuilder, c"tootbox");
-        _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
-        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
-                            c.gtk_true(), c.gtk_true(), 0);
-        c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
+        if(column.main.filter.match(toot)) {
+          const tootbuilder = makeTootBox(toot, column);
+          var tootbox = builder_get_widget(tootbuilder, c"tootbox");
+          _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
+          c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
+                              c.gtk_true(), c.gtk_true(), 0);
+          c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
+        } else {
+          warn("toot #{} denied by filter\n", toot.id());
+        }
       }
       current = node.next;
       idx += 1;
@@ -430,11 +434,12 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     const tagLabel = c.gtk_label_new(cTag);
     const labelContext = c.gtk_widget_get_style_context(tagLabel);
     c.gtk_style_context_add_class(labelContext, c"toot_tag");
-    // c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
-    //                    c.gtk_false(), c.gtk_true(), 10);
-    // c.gtk_widget_show(tagLabel);
+    c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
+                       c.gtk_false(), c.gtk_true(), 10);
+    c.gtk_widget_show(tagLabel);
   }
 
+  // show/hide parts to put widget into full or imgonly display
   const id_row = builder_get_widget(builder, c"toot_id_row");
   const toot_separator = builder_get_widget(builder, c"toot_separator");
   if(column.main.config.img_only) {

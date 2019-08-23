@@ -17,7 +17,7 @@ pub fn Toot() type {
 
     const Self = @This();
     const TagType = []const u8;
-    const TagList = std.ArrayList(TagType);
+    pub const TagList = std.ArrayList(TagType);
     const ImgType = []const u8;
     const ImgList = std.ArrayList(ImgType);
     const K = []const u8;
