@@ -57,6 +57,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">author_name</property>
+                        <property name="selectable">True</property>
                         <style>
                           <class name="toot_author_name"/>
                         </style>
@@ -72,6 +73,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">author url</property>
+                        <property name="selectable">True</property>
                         <style>
                           <class name="toot_author_url"/>
                         </style>
@@ -87,6 +89,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">toot text</property>
+                        <property name="selectable">True</property>
                         <style>
                           <class name="toot_text"/>
                         </style>
@@ -142,6 +145,7 @@
           <object class="GtkLabel" id="toot_author_url_minimode">
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">author url mini</property>
+            <property name="selectable">True</property>
             <style>
               <class name="toot_author_url_minimode"/>
             </style>
@@ -172,6 +176,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">date</property>
+            <property name="selectable">True</property>
             <style>
               <class name="toot_date"/>
             </style>
