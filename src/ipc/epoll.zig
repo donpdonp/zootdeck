@@ -68,21 +68,28 @@ pub fn wait() *Client {
 }
 
 pub fn read(client: *Client, buf: []u8) []u8 {
-  var readCountOrErr = c.read(client.readSocket, buf.ptr, 1);
-  if (readCountOrErr >= 0) {
-    var readcount: usize = @intCast(usize, readCountOrErr); //@ptrCast(*usize, &readCountOrErr).*;
-    if (readcount+1 < buf[0]) {
-      var r2ce = c.read(client.readSocket, buf.ptr+readcount, buf.len-readcount);
+  const pkt_fixed_portion = 1;
+  var readCountOrErr = c.read(client.readSocket, buf.ptr, pkt_fixed_portion);
+  if (readCountOrErr >= pkt_fixed_portion) {
+    const msglen = usize(buf[0]);
+    var msgrecv = @intCast(usize, readCountOrErr - pkt_fixed_portion);
+    if (msgrecv < msglen) {
+      var msgleft = msglen - msgrecv;
+      var r2ce = c.read(client.readSocket, buf.ptr, msgleft);
       if (r2ce >= 0) {
-        var r2c: usize = @intCast(usize, r2ce);
+        msgrecv += @intCast(usize, r2ce);
       } else {
         warn("read2 ERR\n");
       }
     }
-    return buf[1..buf[0]+1];
+    if(msgrecv == msglen) {
+      return buf[0..msgrecv];
+    } else {
+      return buf[0..0];
+    }
   } else {
-    warn("read ERR\n");
-    return buf;
+    warn("epoll client read starved. tried {} got {} bytes\n", usize(pkt_fixed_portion), readCountOrErr);
+    return buf[0..0];
   }
 }
 
