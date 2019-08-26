@@ -427,15 +427,14 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
   c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
   c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
-  const tagBox = builder_get_widget(builder, c"tag_box");
+  const tagBox = builder_get_widget(builder, c"tag_flowbox");
   var tagidx = usize(0);
   for(toot.tagList.toSlice()) |tag| {
     const cTag = util.sliceToCstr(allocator, tag);
     const tagLabel = c.gtk_label_new(cTag);
     const labelContext = c.gtk_widget_get_style_context(tagLabel);
     c.gtk_style_context_add_class(labelContext, c"toot_tag");
-    c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, tagBox), tagLabel,
-                       c.gtk_false(), c.gtk_true(), 10);
+    c.gtk_container_add(@ptrCast([*c]c.GtkContainer, tagBox), tagLabel);
     c.gtk_widget_show(tagLabel);
   }
 
