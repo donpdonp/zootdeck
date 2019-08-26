@@ -259,16 +259,7 @@ pub extern fn update_column_toots_schedule(in: *c_void) c_int {
   const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
   var columnMaybe = find_gui_column(c_column);
   if(columnMaybe) |column| {
-    update_column_toots(column, false);
-  }
-  return 0;
-}
-
-pub extern fn update_column_toots_rebuild_schedule(in: *c_void) c_int {
-  const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8,in));
-  var columnMaybe = find_gui_column(c_column);
-  if(columnMaybe) |column| {
-    update_column_toots(column, true);
+    update_column_toots(column);
   }
   return 0;
 }
@@ -299,10 +290,9 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
   return null;
 }
 
-pub fn update_column_toots(column: *Column, rebuild: bool) void {
-  warn("update_column {} {} toots {} {}\n", column.main.config.title,
+pub fn update_column_toots(column: *Column) void {
+  warn("update_column {} {} toots {}\n", column.main.config.title,
                 column.main.toots.count(),
-                if(rebuild) "REBUILD" else "",
                 if(column.main.inError) "ERROR" else "");
   const column_toot_zone = builder_get_widget(column.builder, c"toot_zone");
   var current = column.main.toots.first();
@@ -310,32 +300,26 @@ pub fn update_column_toots(column: *Column, rebuild: bool) void {
   if (current != null) {
     while(current) |node| {
       const toot = node.data;
-      var buildToot = false;
       var tootbuilderMaybe = column.guitoots.get(toot.id());
-      if(tootbuilderMaybe) |kv| {
-        if(rebuild) {
-          const builder = kv.value;
-          const tootbox = builder_get_widget(builder, c"tootbox");
-          warn("col_update destroy_tootbox toot #{} {*} {*}\n", toot.id(), toot, tootbox);
-          c.gtk_widget_destroy(tootbox);
-          buildToot = true;
-        }
-      } else {
-        buildToot = true;
-      }
-
-      if(buildToot) {
-        if(column.main.filter.match(toot)) {
+      if(column.main.filter.match(toot)) {
+        if(tootbuilderMaybe) |kv| {
+        } else {
           const tootbuilder = makeTootBox(toot, column);
           var tootbox = builder_get_widget(tootbuilder, c"tootbox");
           _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
           c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
                               c.gtk_true(), c.gtk_true(), 0);
           c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
-        } else {
-          warn("toot #{} denied by filter\n", toot.id());
+        }
+      } else {
+        if(tootbuilderMaybe) |kv| {
+          const builder = kv.value;
+          const tootbox = builder_get_widget(builder, c"tootbox");
+          warn("col_update destroy_tootbox toot #{} {*} {*}\n", toot.id(), toot, tootbox);
+          c.gtk_widget_destroy(tootbox);
         }
       }
+
       current = node.next;
       idx += 1;
     }

@@ -333,12 +333,11 @@ fn guiback(command: *thread.Command) void {
     gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
     config.writefile(settings, "config.json");
   }
-  if (command.id == 4) { // config changed
+  if (command.id == 4) { // save config params
     const column = command.verb.column;
     warn("gui col config {}\n", column.config.title);
     column.inError = false;
     column.refreshing = false;
-    column_refresh(column);
     config.writefile(settings, "config.json");
   }
   if (command.id == 5) { // column remove
@@ -367,19 +366,21 @@ fn guiback(command: *thread.Command) void {
     warn("oauth authorization {}\n", myAuth.code);
     oauthtokenget(myAuth.column, myAuth.code);
   }
-  if (command.id == 8) { //column host change
+  if (command.id == 8) { //column config changed
     const column = command.verb.column;
     // partial reset
     column.oauthClientId = null;
     column.oauthClientSecret = null;
     gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, column));
+    gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
     // throw out toots in the toot list not from the new host
+    column_refresh(column);
   }
   if (command.id == 9) { // imgonly button
     const column = command.verb.column;
     column.config.img_only = !column.config.img_only;
     config.writefile(settings, "config.json");
-    gui.schedule(gui.update_column_toots_rebuild_schedule, @ptrCast(*c_void, column));
+    gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
   }
   if (command.id == 10) { // window size changed
     config.writefile(settings, "config.json");
