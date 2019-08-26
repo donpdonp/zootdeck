@@ -317,6 +317,7 @@ pub fn update_column_toots(column: *Column) void {
           const tootbox = builder_get_widget(builder, c"tootbox");
           warn("col_update destroy_tootbox toot #{} {*} {*}\n", toot.id(), toot, tootbox);
           c.gtk_widget_destroy(tootbox);
+          _ = column.guitoots.remove(toot.id());
         }
       }
 
