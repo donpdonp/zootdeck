@@ -303,22 +303,22 @@ pub fn update_column_toots(column: *Column) void {
       var tootbuilderMaybe = column.guitoots.get(toot.id());
       if(column.main.filter.match(toot)) {
         if(tootbuilderMaybe) |kv| {
-        } else {
-          const tootbuilder = makeTootBox(toot, column);
-          var tootbox = builder_get_widget(tootbuilder, c"tootbox");
-          _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
-          c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
-                              c.gtk_true(), c.gtk_true(), 0);
-          c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
+          const builder = kv.value;
+          destroyTootBox(builder);
+          warn("update_column_toots destroyTootBox toot #{} {*} {*}\n", toot.id(), toot, builder);
         }
+        const tootbuilder = makeTootBox(toot, column);
+        var tootbox = builder_get_widget(tootbuilder, c"tootbox");
+        _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
+        c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox,
+                            c.gtk_true(), c.gtk_true(), 0);
+        c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
       } else {
         if(tootbuilderMaybe) |kv| {
           const builder = kv.value;
-          const tootbox = builder_get_widget(builder, c"tootbox");
-          warn("col_update destroy_tootbox toot #{} {*} {*}\n", toot.id(), toot, tootbox);
-          c.gtk_widget_destroy(tootbox);
-          c.g_object_unref(builder);
-          _ = column.guitoots.remove(toot.id());
+          var tootbox = builder_get_widget(builder, c"tootbox");
+          c.gtk_widget_hide(tootbox);
+          warn("update_column_toots hide toot #{} {*} {*}\n", toot.id(), toot, builder);
         }
       }
 
@@ -377,6 +377,12 @@ extern fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*c_void) void {
   c.gtk_widget_destroy(widget);
 }
 
+pub fn destroyTootBox(builder: *c.GtkBuilder) void {
+  const tootbox = builder_get_widget(builder, c"tootbox");
+  c.gtk_widget_destroy(tootbox);
+  c.g_object_unref(builder);
+}
+
 pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
   warn("maketootbox toot #{} {*} gui building {} images\n", toot.id(), toot, toot.imgList.count());
   const builder = c.gtk_builder_new_from_file (c"glade/toot.glade");
@@ -431,7 +437,6 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     c.gtk_widget_hide(toottext_label);
     c.gtk_widget_hide(id_row);
     if(toot.imgCount() == 0) {
-      c.gtk_widget_hide(toottext_label);
       c.gtk_widget_hide(date_label);
       c.gtk_widget_hide(toot_separator);
     } else {
