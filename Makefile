@@ -2,11 +2,14 @@ GITEPOCH=$(shell git log -1 --format="%at")
 TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-linux-${TODAY}
 
-build:
+build: ragel/lang.c
 	zig build
 
+ragel/lang.c: ragel/lang.c.rl
+	ragel -o ragel/lang.c ragel/lang.c.rl
+
 run: build
-	./zootdeck
+	./zig-cache/bin/zootdeck
 
 push:
 	pijul push donpdonp@nest.pijul.com:donpdonp/tootdeck

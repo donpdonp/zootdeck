@@ -4,6 +4,8 @@ const Builder = @import("std").build.Builder;
 pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(null);
     const exe = b.addExecutable("zootdeck", "src/main.zig");
+    exe.addIncludeDir(".");
+    exe.addCSourceFile("ragel/lang.c", [_][]const u8{"-std=c99"});
 
     // Ubuntu-x86_64
     exe.addIncludeDir("/usr/include");

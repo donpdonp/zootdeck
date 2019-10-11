@@ -3,8 +3,13 @@ const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 
+const util = @import("util.zig");
 const string = []const u8;
 const toot_lib = @import("toot.zig");
+
+const c = @cImport({
+    @cInclude("ragel/lang.h");
+});
 
 pub const ptree = struct {
   hostname: string,
@@ -35,6 +40,11 @@ pub const ptree = struct {
 };
 
 pub fn parse(allocator: *Allocator, lang: []const u8) *ptree {
+  var ragel_points = c.urlPoints{.scheme_pos = 0, .loc_pos = 0};
+  var clang = util.sliceToCstr(allocator, lang);
+  _ = c.url(clang, &ragel_points);
+  warn("{} {}\n", lang, ragel_points);
+
   var newTree = allocator.create(ptree) catch unreachable;
   newTree.tags = allocator.create(toot_lib.Type.TagList) catch unreachable;
   newTree.tags.* = toot_lib.Type.TagList.init(allocator);

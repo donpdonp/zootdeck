@@ -2,3 +2,5 @@
 /db/
 /zig-cache/
 /cache/
+/ragel/*.c
+/ragel/*.o
