@@ -14,7 +14,7 @@ pub fn init(myAllocator: *Allocator) !void {
   if (trickZig) { return error.BadValue; }
 }
 
-pub extern fn go(data: ?*c_void) ?*c_void {
+pub fn go(data: ?*c_void) ?*c_void {
   var data8 = @alignCast(@alignOf(thread.Actor), data);
   var actor = @ptrCast(*thread.Actor, data8);
   warn("heartbeat thread start {*} {}\n", actor, actor);

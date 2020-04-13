@@ -2,10 +2,10 @@ const builtin = @import("builtin");
 const Builder = @import("std").build.Builder;
 
 pub fn build(b: *Builder) void {
-    const target = b.standardTargetOptions(null);
+    const target = b.standardTargetOptions(.{});
     const exe = b.addExecutable("zootdeck", "src/main.zig");
     exe.addIncludeDir(".");
-    exe.addCSourceFile("ragel/lang.c", [_][]const u8{"-std=c99"});
+    exe.addCSourceFile("ragel/lang.c", &[_][]const u8{"-std=c99"});
 
     // Ubuntu-x86_64
     exe.addIncludeDir("/usr/include");
@@ -13,7 +13,6 @@ pub fn build(b: *Builder) void {
     exe.addIncludeDir("/usr/include/x86_64-linux-gnu");
     exe.addLibPath("/usr/lib");
     exe.addLibPath("/usr/lib/x86_64-linux-gnu");
-    exe.setTheTarget(target);
 
     exe.linkSystemLibrary("c");
 
