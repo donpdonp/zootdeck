@@ -12,72 +12,72 @@ var env: *c.MDB_env = undefined;
 const dbpath = "./db";
 
 pub fn init(allocator: *Allocator) !void {
-  var mdb_ret: c_int = 0;
-  mdb_ret = c.mdb_env_create(@ptrCast([*c]?*c.MDB_env, &env));
-  if(mdb_ret != 0) {
-    warn("mdb_env_create failed {}\n", mdb_ret);
-    return error.BadValue;
-  }
-  mdb_ret = c.mdb_env_set_mapsize(env, 250 * 1024 * 1024);
-  if(mdb_ret != 0) {
-    warn("mdb_env_set_mapsize failed {}\n", mdb_ret);
-    return error.BadValue;
-  }
-  std.os.makedir(dbpath) catch { };
-  mdb_ret = c.mdb_env_open(env, util.sliceToCstr(allocator, dbpath), 0, 0o644);
-  if(mdb_ret != 0) {
-    warn("mdb_env_open failed {}\n", mdb_ret);
-    return error.BadValue;
-  }
-  stats();
+    var mdb_ret: c_int = 0;
+    mdb_ret = c.mdb_env_create(@ptrCast([*c]?*c.MDB_env, &env));
+    if (mdb_ret != 0) {
+        warn("mdb_env_create failed {}\n", mdb_ret);
+        return error.BadValue;
+    }
+    mdb_ret = c.mdb_env_set_mapsize(env, 250 * 1024 * 1024);
+    if (mdb_ret != 0) {
+        warn("mdb_env_set_mapsize failed {}\n", mdb_ret);
+        return error.BadValue;
+    }
+    std.os.mkdir(dbpath, 0644) catch {};
+    mdb_ret = c.mdb_env_open(env, util.sliceToCstr(allocator, dbpath), 0, 0o644);
+    if (mdb_ret != 0) {
+        warn("mdb_env_open failed {}\n", mdb_ret);
+        return error.BadValue;
+    }
+    stats();
 }
 
 pub fn stats() void {
-  var mdbStat: c.MDB_stat = undefined;
-  var ret = c.mdb_env_stat(env, &mdbStat);
-  warn("lmdb cache {} entries\n", mdbStat.ms_entries);
+    var mdbStat: c.MDB_stat = undefined;
+    var ret = c.mdb_env_stat(env, &mdbStat);
+    warn("lmdb cache {} entries\n", mdbStat.ms_entries);
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
-  var txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
-  var ctxnMaybe = @ptrCast([*c]?*c.struct_MDB_txn, txnptr);
-  var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
-  if (ret == 0) {
-//    warn("lmdb write {} {}={}\n", namespace, key, value);
-    var dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
-    ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
+    var txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
+    var ctxnMaybe = @ptrCast([*c]?*c.struct_MDB_txn, txnptr);
+    var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
     if (ret == 0) {
-      // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
-      var fullkey = std.fmt.allocPrint(allocator, "{}:{}", namespace, key) catch unreachable;
-      var mdb_key = mdbVal(fullkey, allocator);
-      var mdb_value = mdbVal(value, allocator);
-      ret = c.mdb_put(txnptr.*, dbiptr.*, mdb_key, mdb_value, 0);
-      if (ret == 0) {
-        ret = c.mdb_txn_commit(txnptr.*);
+        //    warn("lmdb write {} {}={}\n", namespace, key, value);
+        var dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
+        ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
         if (ret == 0) {
-          _ = c.mdb_dbi_close(env, dbiptr.*);
+            // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
+            var fullkey = std.fmt.allocPrint(allocator, "{}:{}", namespace, key) catch unreachable;
+            var mdb_key = mdbVal(fullkey, allocator);
+            var mdb_value = mdbVal(value, allocator);
+            ret = c.mdb_put(txnptr.*, dbiptr.*, mdb_key, mdb_value, 0);
+            if (ret == 0) {
+                ret = c.mdb_txn_commit(txnptr.*);
+                if (ret == 0) {
+                    _ = c.mdb_dbi_close(env, dbiptr.*);
+                } else {
+                    warn("mdb_txn_commit ERR {}\n", ret);
+                    return error.mdb_txn_commit;
+                }
+            } else {
+                warn("mdb_put ERR {}\n", ret);
+                return error.mdb_put;
+            }
         } else {
-          warn("mdb_txn_commit ERR {}\n", ret);
-          return error.mdb_txn_commit;
+            warn("mdb_dbi_open ERR {}\n", ret);
+            return error.mdb_dbi_open;
         }
-      } else {
-        warn("mdb_put ERR {}\n", ret);
-        return error.mdb_put;
-      }
     } else {
-      warn("mdb_dbi_open ERR {}\n", ret);
-      return error.mdb_dbi_open;
+        warn("mdb_txn_begin ERR {}\n", ret);
+        return error.mdb_txn_begin;
     }
-  } else {
-    warn("mdb_txn_begin ERR {}\n", ret);
-    return error.mdb_txn_begin;
-  }
 }
 
 fn mdbVal(data: []const u8, allocator: *Allocator) *c.MDB_val {
-  var dataptr = @intToPtr(?*c_void, @ptrToInt(data.ptr));
-  var mdb_val = allocator.create(c.MDB_val) catch unreachable;
-  mdb_val.mv_size = data.len;
-  mdb_val.mv_data = dataptr;
-  return mdb_val;
+    var dataptr = @intToPtr(?*c_void, @ptrToInt(data.ptr));
+    var mdb_val = allocator.create(c.MDB_val) catch unreachable;
+    mdb_val.mv_size = data.len;
+    mdb_val.mv_data = dataptr;
+    return mdb_val;
 }

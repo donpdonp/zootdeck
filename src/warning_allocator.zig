@@ -24,7 +24,7 @@ pub const WarningAllocator = struct {
                 .shrinkFn = shrink,
             },
             .parent_allocator = parent_allocator,
-            .total = 0
+            .total = 0,
         };
     }
 
