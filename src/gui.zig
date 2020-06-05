@@ -28,7 +28,7 @@ var stop = false;
 pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     myActor = @ptrCast(*thread.Actor, data8);
-    warn("gui {} thread start {*} {}\n", guilib.libname(), myActor, myActor);
+    warn("gui {} thread start {*} {}\n", .{ guilib.libname(), myActor, myActor });
     if (guilib.gui_setup(myActor)) {
         // mainloop
         while (!stop) {

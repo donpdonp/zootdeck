@@ -132,7 +132,7 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8) void {
     verb.http.token = null;
     verb.http.response_code = 0;
     verb.http.toot = toot;
-    warn("mediaget toot #{} toot {*} verb.http.toot {*}\n", toot.id(), toot, verb.http.toot);
+    warn("mediaget toot #{} toot {*} verb.http.toot {*}\n", .{ toot.id(), toot, verb.http.toot });
     _ = thread.create(net.go, verb, mediaback) catch unreachable;
 }
 
@@ -164,7 +164,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8) void {
 }
 
 fn oauthtokenback(command: *thread.Command) void {
-    warn("*oauthtokenback tid {x} {}\n", thread.self(), command);
+    warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -305,7 +305,7 @@ fn cache_update(toot: *toot_lib.Type) void {
 }
 
 fn guiback(command: *thread.Command) void {
-    warn("*guiback tid {x} {*}\n", thread.self(), command);
+    warn("*guiback tid {x} {*}\n", .{ thread.self(), command });
     if (command.id == 1) {
         gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[_]u8{1}));
     }
@@ -384,12 +384,12 @@ fn guiback(command: *thread.Command) void {
 }
 
 fn heartback(nuthin: *thread.Command) void {
-    warn("*heartback tid {x} {}\n", thread.self(), nuthin);
+    warn("*heartback tid {x} {}\n", .{ thread.self(), nuthin });
     columns_net_freshen();
 }
 
 fn columns_net_freshen() void {
-    for (settings.columns.toSlice()) |column, idx| {
+    for (settings.columns.items) |column, idx| {
         var now = config.now();
         const refresh = 60;
         const since = now - column.last_check;
@@ -403,9 +403,9 @@ fn columns_net_freshen() void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
     if (column.refreshing) {
-        warn("column {} in {} Ignoring request.\n", column.makeTitle(), if (column.inError) "error!" else "progress.");
+        warn("column {} in {} Ignoring request.\n", .{ column.makeTitle(), if (column.inError) "error!" else "progress." });
     } else {
-        warn("column http get {}\n", column.makeTitle());
+        warn("column http get {}\n", .{column.makeTitle()});
         column.refreshing = true;
         columnget(column);
     }

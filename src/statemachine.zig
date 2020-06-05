@@ -26,5 +26,5 @@ pub fn needNetRefresh() bool {
 
 pub fn setState(new_state: States) void {
     state = new_state;
-    warn("STATE: {}\n", @tagName(state));
+    warn("STATE: {}\n", .{@tagName(state)});
 }

@@ -36,7 +36,7 @@ pub fn newClient(allocator: *Allocator) *Client {
 }
 
 pub fn listen(socket: *sockSingle, url: []u8) void {
-    warn("epoll_listen\n");
+    warn("epoll_listen\n", .{});
 }
 
 pub fn register(client: *Client, callback: extern fn (?*c_void) void) void {}
@@ -52,13 +52,13 @@ pub fn dial(client: *Client, url: []u8) void {
 pub fn wait() *Client {
     const max_fds = 1;
     var events_waiting: [max_fds]c.epoll_event = undefined; //[]c.epoll_event{.data = 1};
-    var nfds = c_int(-1);
+    var nfds: c_int = -1;
     while (nfds < 0) {
         nfds = c.epoll_wait(epoll_instance, @ptrCast([*c]c.epoll_event, &events_waiting), max_fds, -1);
         if (nfds < 0) {
             const errnoPtr: [*c]c_int = c.__errno_location();
             const errno = errnoPtr.*;
-            warn("epoll_wait ignoring errno {}\n", errno);
+            warn("epoll_wait ignoring errno {}\n", .{errno});
         }
     }
     var clientdata = @alignCast(@alignOf(Client), events_waiting[0].data.ptr);
@@ -70,7 +70,7 @@ pub fn read(client: *Client, buf: []u8) []u8 {
     const pkt_fixed_portion = 1;
     var readCountOrErr = c.read(client.readSocket, buf.ptr, pkt_fixed_portion);
     if (readCountOrErr >= pkt_fixed_portion) {
-        const msglen = usize(buf[0]);
+        const msglen: usize = buf[0];
         var msgrecv = @intCast(usize, readCountOrErr - pkt_fixed_portion);
         if (msgrecv < msglen) {
             var msgleft = msglen - msgrecv;
@@ -78,7 +78,7 @@ pub fn read(client: *Client, buf: []u8) []u8 {
             if (r2ce >= 0) {
                 msgrecv += @intCast(usize, r2ce);
             } else {
-                warn("read2 ERR\n");
+                warn("read2 ERR\n", .{});
             }
         }
         if (msgrecv == msglen) {
@@ -87,7 +87,7 @@ pub fn read(client: *Client, buf: []u8) []u8 {
             return buf[0..0];
         }
     } else {
-        warn("epoll client read starved. tried {} got {} bytes\n", usize(pkt_fixed_portion), readCountOrErr);
+        warn("epoll client read starved. tried {} got {} bytes\n", .{ usize(pkt_fixed_portion), readCountOrErr });
         return buf[0..0];
     }
 }

@@ -19,13 +19,13 @@ pub fn init(myAllocator: *Allocator) !void {
 pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     var actor = @ptrCast(*thread.Actor, data8);
-    warn("heartbeat thread start {*} {}\n", actor, actor);
+    warn("heartbeat thread start {*} {}\n", .{ actor, actor });
     while (true) {
         _ = c.usleep(3 * 1000000);
         // signal crazy
         var command = allocator.create(thread.Command) catch unreachable;
         var verb = allocator.create(thread.CommandVerb) catch unreachable;
-        verb.idle = u16(0);
+        verb.idle = 0;
         command.id = 3;
         command.verb = verb;
         thread.signal(actor, command);

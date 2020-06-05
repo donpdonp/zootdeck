@@ -113,7 +113,7 @@ pub fn init(alloc: *Allocator) !void {
 pub fn readfile(filename: []const u8) !Settings {
     if (std.fs.cwd().openFile(filename, .{})) |*file| {
         try file.writeAll("{}\n");
-        warn("Warning: creating new {}\n", filename);
+        warn("Warning: creating new {}\n", .{filename});
         file.close();
     } else |err| {} // existing file is OK
     var json = try std.fs.cwd().readFileAlloc(allocator, filename, 65535); //max_size?

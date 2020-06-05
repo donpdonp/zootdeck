@@ -15,18 +15,18 @@ pub fn init(allocator: *Allocator) !void {
     var mdb_ret: c_int = 0;
     mdb_ret = c.mdb_env_create(@ptrCast([*c]?*c.MDB_env, &env));
     if (mdb_ret != 0) {
-        warn("mdb_env_create failed {}\n", mdb_ret);
+        warn("mdb_env_create failed {}\n", .{mdb_ret});
         return error.BadValue;
     }
     mdb_ret = c.mdb_env_set_mapsize(env, 250 * 1024 * 1024);
     if (mdb_ret != 0) {
-        warn("mdb_env_set_mapsize failed {}\n", mdb_ret);
+        warn("mdb_env_set_mapsize failed {}\n", .{mdb_ret});
         return error.BadValue;
     }
     std.os.mkdir(dbpath, 0644) catch {};
     mdb_ret = c.mdb_env_open(env, util.sliceToCstr(allocator, dbpath), 0, 0o644);
     if (mdb_ret != 0) {
-        warn("mdb_env_open failed {}\n", mdb_ret);
+        warn("mdb_env_open failed {}\n", .{mdb_ret});
         return error.BadValue;
     }
     stats();
@@ -35,7 +35,7 @@ pub fn init(allocator: *Allocator) !void {
 pub fn stats() void {
     var mdbStat: c.MDB_stat = undefined;
     var ret = c.mdb_env_stat(env, &mdbStat);
-    warn("lmdb cache {} entries\n", mdbStat.ms_entries);
+    warn("lmdb cache {} entries\n", .{mdbStat.ms_entries});
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
