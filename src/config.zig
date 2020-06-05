@@ -59,7 +59,7 @@ pub const ColumnInfo = struct {
             } else {
                 addon = "_";
             }
-            out = std.fmt.allocPrint(allocator, "{}@{}", addon, column.filter.host()) catch unreachable;
+            out = std.fmt.allocPrint(allocator, "{}@{}", .{ addon, column.filter.host() }) catch unreachable;
         }
         return out;
     }

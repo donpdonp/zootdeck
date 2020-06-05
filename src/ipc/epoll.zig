@@ -87,7 +87,7 @@ pub fn read(client: *Client, buf: []u8) []u8 {
             return buf[0..0];
         }
     } else {
-        warn("epoll client read starved. tried {} got {} bytes\n", .{ usize(pkt_fixed_portion), readCountOrErr });
+        warn("epoll client read starved. tried {} got {} bytes\n", .{ pkt_fixed_portion, readCountOrErr });
         return buf[0..0];
     }
 }

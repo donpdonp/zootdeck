@@ -36,7 +36,7 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
         }
         guilib.gui_end();
     } else |err| {
-        warn("gui error {}\n", err);
+        warn("gui error {}\n", .{err});
     }
     return null;
 }
