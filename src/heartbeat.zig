@@ -16,7 +16,7 @@ pub fn init(myAllocator: *Allocator) !void {
     }
 }
 
-pub fn go(data: ?*c_void) ?*c_void {
+pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     var actor = @ptrCast(*thread.Actor, data8);
     warn("heartbeat thread start {*} {}\n", actor, actor);

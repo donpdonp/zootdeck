@@ -38,7 +38,7 @@ pub fn main() !void {
 
         while (true) {
             statewalk();
-            warn("== epoll wait\n");
+            warn("== epoll wait\n", .{});
             thread.wait(); // main ipc listener
         }
     } else |err| {
@@ -77,7 +77,7 @@ fn statewalk() void {
 }
 
 fn hello() void {
-    warn("zootdeck {} {} tid {x}\n", @tagName(builtin.os.tag), @tagName(builtin.arch), thread.self());
+    warn("zootdeck {} {} tid {x}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.arch), thread.self() });
 }
 
 fn columnget(column: *config.ColumnInfo) void {

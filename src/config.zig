@@ -111,13 +111,12 @@ pub fn init(alloc: *Allocator) !void {
 }
 
 pub fn readfile(filename: []const u8) !Settings {
-    if (std.fs.File.openWriteNoClobber(filename, std.fs.File.default_mode)) |*file| {
-        try file.write("{}\n");
+    if (std.fs.cwd().openFile(filename, .{})) |*file| {
+        try file.writeAll("{}\n");
         warn("Warning: creating new {}\n", filename);
         file.close();
     } else |err| {} // existing file is OK
-
-    var json = try std.io.readFileAlloc(allocator, filename);
+    var json = try std.fs.cwd().readFileAlloc(allocator, filename, 65535); //max_size?
     return read(json);
 }
 
@@ -139,7 +138,7 @@ pub fn read(json: []const u8) !Settings {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        for (columns.value.Array.toSlice()) |value| {
+        for (columns.value.Array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
             colInfo.toots = toot_list.TootList.init();
@@ -152,7 +151,7 @@ pub fn read(json: []const u8) !Settings {
             colInfo.filter = filter_lib.parse(allocator, filter);
             var tokenTag = value.Object.get("token");
             if (tokenTag) |tokenKV| {
-                if (@TagType(std.json.Value)(tokenKV.value) == .String) {
+                if (@TagType(@TypeOf(tokenKV.value)) == []const u8) {
                     colInfo.config.token = tokenKV.value.String;
                 } else {
                     colInfo.config.token = null;
@@ -165,7 +164,7 @@ pub fn read(json: []const u8) !Settings {
             settings.columns.append(colInfo) catch unreachable;
         }
     } else {
-        warn("missing columns\n");
+        warn("missing columns\n", .{});
     }
     return settings.*;
 }

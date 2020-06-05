@@ -25,7 +25,7 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
 var myActor: *thread.Actor = undefined;
 var stop = false;
 
-pub fn go(data: ?*c_void) ?*c_void {
+pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     myActor = @ptrCast(*thread.Actor, data8);
     warn("gui {} thread start {*} {}\n", guilib.libname(), myActor, myActor);
