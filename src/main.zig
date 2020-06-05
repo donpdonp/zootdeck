@@ -59,13 +59,13 @@ fn initialize() !void {
 fn statewalk() void {
     if (statemachine.state == statemachine.States.Init) {
         statemachine.setState(statemachine.States.Setup); // transition
-        gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[_]u8{1}));
-        for (settings.columns.toSlice()) |column| {
+        gui.schedule(gui.show_main_schedule, @ptrCast(*const c_void, &[_]u8{1}));
+        for (settings.columns.items) |column| {
             if (column.config.token) |token| {
                 profileget(column);
             }
         }
-        for (settings.columns.toSlice()) |column| {
+        for (settings.columns.items) |column| {
             gui.schedule(gui.add_column_schedule, column);
         }
     }
@@ -223,7 +223,7 @@ fn netback(command: *thread.Command) void {
                 var rootJsonType = @TagType(std.json.Value)(tree.root);
                 if (rootJsonType == .Array) {
                     column.inError = false;
-                    for (tree.root.Array.toSlice()) |jsonValue| {
+                    for (tree.root.Array.items) |jsonValue| {
                         const item = jsonValue.Object;
                         const toot = allocator.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, allocator);
@@ -240,7 +240,7 @@ fn netback(command: *thread.Command) void {
                             html_lib.search(root);
                             cache_update(toot);
 
-                            for (images.toSlice()) |image| {
+                            for (images.items) |image| {
                                 const imgUrl = image.Object.get("preview_url").?.value.String;
                                 warn("toot #{} has img {}\n", toot.id(), imgUrl);
                                 mediaget(toot, imgUrl);
@@ -307,7 +307,8 @@ fn cache_update(toot: *toot_lib.Type) void {
 fn guiback(command: *thread.Command) void {
     warn("*guiback tid {x} {*}\n", .{ thread.self(), command });
     if (command.id == 1) {
-        gui.schedule(gui.show_main_schedule, @ptrCast(*c_void, &[_]u8{1}));
+        const param = @ptrCast(*const c_void, &[_]u8{1});
+        gui.schedule(gui.show_main_schedule, param);
     }
     if (command.id == 2) { // refresh button
         const column = command.verb.column;
@@ -340,7 +341,7 @@ fn guiback(command: *thread.Command) void {
         const column = command.verb.column;
         warn("gui col remove {}\n", column.config.title);
         var colpos: usize = undefined;
-        for (settings.columns.toSlice()) |col, idx| {
+        for (settings.columns.items) |col, idx| {
             if (col == column) {
                 _ = settings.columns.orderedRemove(idx);
                 break;
