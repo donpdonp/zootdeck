@@ -307,8 +307,7 @@ fn cache_update(toot: *toot_lib.Type) void {
 fn guiback(command: *thread.Command) void {
     warn("*guiback tid {x} {*}\n", .{ thread.self(), command });
     if (command.id == 1) {
-        const param = @ptrCast(*const c_void, &[_]u8{1});
-        gui.schedule(gui.show_main_schedule, param);
+        gui.schedule(gui.show_main_schedule, &[_]u8{1});
     }
     if (command.id == 2) { // refresh button
         const column = command.verb.column;
