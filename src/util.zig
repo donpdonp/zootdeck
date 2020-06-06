@@ -34,7 +34,7 @@ pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []
         if (filteredHost[filteredHost.len - 1] == '/') {
             filteredHost = filteredHost[0 .. filteredHost.len - 1];
         }
-        if (std.mem.compare(u8, filteredHost[0..6], "https:") != std.mem.Compare.Equal) {
+        if (std.mem.order(u8, filteredHost[0..6], "https:") != std.math.Order.eq) {
             url.append("https://") catch unreachable;
         }
         url.append(filteredHost) catch unreachable;
@@ -45,7 +45,7 @@ pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []
         }
         return url.toSliceConst();
     } else {
-        warn("mastodonExpandUrl given empty host!\n");
+        warn("mastodonExpandUrl given empty host!\n", .{});
         return "";
     }
 }
@@ -97,7 +97,7 @@ pub fn htmlEntityDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
                 try newStr.append(snip);
                 const sigil = str[escStart + 1 .. idx];
                 var newChar: u8 = undefined;
-                if (std.mem.compare(u8, sigil, "amp") == std.mem.Compare.Equal) {
+                if (std.mem.order(u8, sigil, "amp") == std.math.Order.eq) {
                     newChar = '&';
                 }
                 try newStr.appendByte(newChar);

@@ -187,13 +187,13 @@ fn oauthtokenback(command: *thread.Command) void {
 }
 
 fn oauthback(command: *thread.Command) void {
-    warn("*oauthback tid {x} {}\n", thread.self(), command);
+    warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
-        var rootJsonType = @TagType(std.json.Value)(tree.root);
-        if (rootJsonType == .Object) {
+        const rootJsonType = @TagType(@TypeOf(tree.root));
+        if (rootJsonType == std.json.ObjectMap) {
             if (tree.root.Object.get("client_id")) |cid| {
                 column.oauthClientId = cid.value.String;
             }
@@ -206,12 +206,12 @@ fn oauthback(command: *thread.Command) void {
             warn("*oauthback json err body {}\n", .{http.body});
         }
     } else {
-        warn("*oauthback net err {}\n", http.response_code);
+        warn("*oauthback net err {}\n", .{http.response_code});
     }
 }
 
 fn netback(command: *thread.Command) void {
-    warn("*netback tid {x} {}\n", thread.self(), command);
+    warn("*netback tid {x} {}\n", .{ thread.self(), command });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
         var column = command.verb.http.column;
@@ -228,7 +228,7 @@ fn netback(command: *thread.Command) void {
                         const toot = allocator.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, allocator);
                         var id = toot.id();
-                        warn("netback json create toot #{} {*}\n", toot.id(), toot);
+                        warn("netback json create toot #{} {*}\n", .{ toot.id(), toot });
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
@@ -242,14 +242,14 @@ fn netback(command: *thread.Command) void {
 
                             for (images.items) |image| {
                                 const imgUrl = image.Object.get("preview_url").?.value.String;
-                                warn("toot #{} has img {}\n", toot.id(), imgUrl);
+                                warn("toot #{} has img {}\n", .{ toot.id(), imgUrl });
                                 mediaget(toot, imgUrl);
                             }
                         }
                     }
                 } else if (rootJsonType == .Object) {
                     if (tree.root.Object.get("error")) |err| {
-                        warn("netback json err {} \n", err.value.String);
+                        warn("netback json err {} \n", .{err.value.String});
                     }
                 }
             } else { // empty body
@@ -267,7 +267,7 @@ fn mediaback(command: *thread.Command) void {
     const tootpic = allocator.create(gui.TootPic) catch unreachable;
     tootpic.toot = reqres.toot;
     tootpic.pic = reqres.body;
-    warn("mediaback toot #{} tootpic.toot {*} adding 1 img\n", tootpic.toot.id(), tootpic.toot);
+    warn("mediaback toot #{} tootpic.toot {*} adding 1 img\n", .{ tootpic.toot.id(), tootpic.toot });
     tootpic.toot.addImg(tootpic.pic);
     gui.schedule(gui.toot_media_schedule, @ptrCast(*c_void, tootpic));
 }
@@ -276,7 +276,7 @@ fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.value.Object;
     const acct = account.get("acct").?.value.String;
-    warn("photoback! acct {} type {} size {}\n", acct, reqres.content_type, reqres.body.len);
+    warn("photoback! acct {} type {} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, allocator) catch unreachable;
     const cAcct = util.sliceToCstr(allocator, acct);
     gui.schedule(gui.update_author_photo_schedule, @ptrCast(*c_void, cAcct));
@@ -403,7 +403,7 @@ fn columns_net_freshen() void {
 
 fn column_refresh(column: *config.ColumnInfo) void {
     if (column.refreshing) {
-        warn("column {} in {} Ignoring request.\n", .{ column.makeTitle(), if (column.inError) "error!" else "progress." });
+        warn("column {} in {} Ignoring request.\n", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
         warn("column http get {}\n", .{column.makeTitle()});
         column.refreshing = true;

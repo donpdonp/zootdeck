@@ -27,7 +27,7 @@ pub const ptree = struct {
         } else {
             for (self.tags.items) |filter_tag| {
                 for (toot.tagList.items) |toot_tag| {
-                    if (std.mem.compare(u8, filter_tag, toot_tag) == std.mem.Compare.Equal) {
+                    if (std.mem.order(u8, filter_tag, toot_tag) == std.math.Order.eq) {
                         return true;
                     }
                 }

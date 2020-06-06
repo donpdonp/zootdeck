@@ -174,7 +174,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     configFile.win_x = @intCast(c_int, settings.win_x);
     configFile.win_y = @intCast(c_int, settings.win_y);
     configFile.columns = std.ArrayList(*ColumnConfig).init(allocator);
-    for (settings.columns.toSlice()) |column, idx| {
+    for (settings.columns.items) |column, idx| {
         configFile.columns.append(column.config) catch unreachable;
     }
     if (std.fs.File.openWrite(filename)) |*file| {

@@ -49,7 +49,7 @@ pub fn Toot() type {
             if (self.hashmap.get("account")) |kv| {
                 if (kv.value.Object.get("acct")) |akv| {
                     const existing_acct = akv.value.String;
-                    return std.mem.compare(u8, acct, existing_acct) == std.mem.Compare.Equal;
+                    return std.mem.order(u8, acct, existing_acct) == std.math.Order.eq;
                 } else {
                     return false;
                 }
@@ -107,5 +107,5 @@ test "Toot" {
     const toot2 = Type.init(tootHash, allocator);
     warn("toot2 {*}\n", &toot2);
     testing.expect(toot2.tagList.count() == 1);
-    testing.expect(std.mem.compare(u8, toot2.tagList.at(0), "#xyz") == std.mem.Compare.Equal);
+    testing.expect(std.mem.order(u8, toot2.tagList.at(0), "#xyz") == std.math.Order.eq);
 }

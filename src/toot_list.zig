@@ -59,7 +59,7 @@ pub fn SomeList(comptime T: type) type {
             var current = self.list.first;
             while (current) |listItem| {
                 const listItemDate = listItem.data.get("created_at").?.value.String;
-                if (std.mem.compare(u8, itemDate, listItemDate) == std.mem.Compare.GreaterThan) {
+                if (std.mem.order(u8, itemDate, listItemDate) == std.math.Order.gt) {
                     self.list.insertBefore(listItem, node);
                     return;
                 } else {}
