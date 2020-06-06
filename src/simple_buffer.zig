@@ -18,18 +18,18 @@ pub const SimpleU8 = struct {
     }
 
     pub fn toSliceConst(self: *const SimpleU8) []const u8 {
-        return self.list.toSliceConst()[0..self.len()];
+        return self.list.items[0..self.len()];
     }
 
     pub fn append(self: *SimpleU8, m: []const u8) !void {
         const old_len = self.len();
         try self.resize(old_len + m.len);
-        std.mem.copy(u8, self.list.toSlice()[old_len..], m);
+        std.mem.copy(u8, self.list.items[old_len..], m);
     }
 
     pub fn appendByte(self: *SimpleU8, byte: u8) !void {
         const old_len = self.len();
         try self.resize(old_len + 1);
-        self.list.toSlice()[old_len] = byte;
+        self.list.items[old_len] = byte;
     }
 };

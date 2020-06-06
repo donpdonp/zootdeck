@@ -83,7 +83,7 @@ pub fn Toot() type {
 
         pub fn imgCount(self: *Self) usize {
             var images = self.hashmap.get("media_attachments").?.value.Array;
-            return images.len;
+            return images.items.len;
         }
     };
 }

@@ -51,7 +51,7 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
 }
 
 pub fn httpget(req: *config.HttpInfo) ![]const u8 {
-    warn("http {} {} {}\n", req.verb, req.url, if (req.token) |tk| "token" else "");
+    warn("http {} {} {}\n", .{ req.verb, req.url, if (req.token) |tk| @as([]const u8, "token") else @as([]const u8, "") });
     _ = c.curl_global_init(0);
     var curl = c.curl_easy_init();
     if (curl != null) {

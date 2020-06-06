@@ -25,10 +25,8 @@ pub const ptree = struct {
         if (self.tags.items.len == 0) {
             return true;
         } else {
-            var iter = self.tags.iterator();
-            while (iter.next()) |filter_tag| {
-                var iter2 = toot.tagList.iterator();
-                while (iter2.next()) |toot_tag| {
+            for (self.tags.items) |filter_tag| {
+                for (toot.tagList.items) |toot_tag| {
                     if (std.mem.compare(u8, filter_tag, toot_tag) == std.mem.Compare.Equal) {
                         return true;
                     }

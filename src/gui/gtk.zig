@@ -209,7 +209,7 @@ pub fn columns_resize() void {
         var app_width = c.gtk_widget_get_allocated_width(container);
         var avg_col_width = @divTrunc(app_width, @intCast(c_int, columns.items.len));
         warn("columns_resize app_width {} col_width {} columns {}\n", .{ app_width, avg_col_width, columns.items.len });
-        for (columns.toSlice()) |col| {
+        for (columns.items) |col| {
             c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
         }
     }
@@ -269,7 +269,7 @@ pub fn update_column_netstatus_schedule(in: *c_void) callconv(.C) c_int {
 
 fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
     var column: *Column = undefined;
-    for (columns.toSlice()) |col| {
+    for (columns.items) |col| {
         if (col.main == c_column) return col;
     }
     return null;
@@ -407,7 +407,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
 
     const tagBox = builder_get_widget(builder, "tag_flowbox");
     var tagidx: usize = 0;
-    for (toot.tagList.toSlice()) |tag| {
+    for (toot.tagList.items) |tag| {
         const cTag = util.sliceToCstr(allocator, tag);
         const tagLabel = c.gtk_label_new(cTag);
         const labelContext = c.gtk_widget_get_style_context(tagLabel);
@@ -431,7 +431,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
         }
     }
 
-    for (toot.imgList.toSlice()) |imgdata| {
+    for (toot.imgList.items) |imgdata| {
         warn("toot #{} rebuilding with img\n", .{toot.id()});
         toot_media(column, builder, toot, imgdata);
     }
@@ -452,8 +452,8 @@ fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, 
     c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
     var loader = c.gdk_pixbuf_loader_new();
     // todo: size-prepared signal
-    var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.len) * 0.9);
-    var colHeight = c_int(-1); // seems to work
+    var colWidth = @floatToInt(c_int, @intToFloat(f32, myAllocation.width) / @intToFloat(f32, columns.items.len) * 0.9);
+    var colHeight: c_int = -1; // seems to work
     const colWidth_ptr = allocator.create(c_int) catch unreachable;
     colWidth_ptr.* = colWidth;
     _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, colWidth_ptr);
@@ -520,7 +520,7 @@ fn escapeGtkString(str: []const u8) []const u8 {
     return str_esc;
 }
 
-pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: ...) void {
+pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: var) void {
     const buf = allocator.alloc(u8, 256) catch unreachable;
     const str = std.fmt.bufPrint(buf, fmt, args) catch unreachable;
     const cStr = util.sliceToCstr(allocator, str);
@@ -703,7 +703,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
     oauth_url_buf.append("&amp;response_type=code") catch unreachable;
     oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
     var markupBuf = allocator.alloc(u8, 512) catch unreachable;
-    var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>", oauth_url_buf.toSliceConst(), column.main.filter.host()) catch unreachable;
+    var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{}\">{} oauth</a>", .{ oauth_url_buf.toSliceConst(), column.main.filter.host() }) catch unreachable;
     var cLabel = util.sliceToCstr(allocator, markup);
     c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
 }

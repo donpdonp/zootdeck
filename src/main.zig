@@ -169,8 +169,8 @@ fn oauthtokenback(command: *thread.Command) void {
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
-        var rootJsonType = @TagType(std.json.Value)(tree.root);
-        if (rootJsonType == .Object) {
+        const rootJsonType = @TagType(@TypeOf(tree.root));
+        if (rootJsonType == std.json.ObjectMap) {
             if (tree.root.Object.get("access_token")) |cid| {
                 column.config.token = cid.value.String;
                 config.writefile(settings, "config.json");
@@ -179,10 +179,10 @@ fn oauthtokenback(command: *thread.Command) void {
                 gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*c_void, column));
             }
         } else {
-            warn("*oauthtokenback json err body {}\n", http.body);
+            warn("*oauthtokenback json err body {}\n", .{http.body});
         }
     } else {
-        warn("*oauthtokenback net err {}\n", http.response_code);
+        warn("*oauthtokenback net err {}\n", .{http.response_code});
     }
 }
 
@@ -200,10 +200,10 @@ fn oauthback(command: *thread.Command) void {
             if (tree.root.Object.get("client_secret")) |cid| {
                 column.oauthClientSecret = cid.value.String;
             }
-            warn("*oauthback client id {} secret {}\n", column.oauthClientId, column.oauthClientSecret);
+            warn("*oauthback client id {} secret {}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*c_void, column));
         } else {
-            warn("*oauthback json err body {}\n", http.body);
+            warn("*oauthback json err body {}\n", .{http.body});
         }
     } else {
         warn("*oauthback net err {}\n", http.response_code);
@@ -220,8 +220,8 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                var rootJsonType = @TagType(std.json.Value)(tree.root);
-                if (rootJsonType == .Array) {
+                var rootJsonType = @TagType(@TypeOf(tree.root));
+                if (rootJsonType == Array) {
                     column.inError = false;
                     for (tree.root.Array.items) |jsonValue| {
                         const item = jsonValue.Object;
