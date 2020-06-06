@@ -22,7 +22,7 @@ pub const ptree = struct {
     }
 
     pub fn match(self: *const Self, toot: *toot_lib.Type) bool {
-        if (self.tags.count() == 0) {
+        if (self.tags.items.len == 0) {
             return true;
         } else {
             var iter = self.tags.iterator();

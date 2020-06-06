@@ -279,11 +279,11 @@ pub fn update_column_toots(column: *Column) void {
     warn("update_column {} {} toots {}\n", .{
         column.main.config.title,
         column.main.toots.count(),
-        if (column.main.inError) "ERROR" else "",
+        if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
     });
     const column_toot_zone = builder_get_widget(column.builder, "toot_zone");
     var current = column.main.toots.first();
-    var idx = c_int(0);
+    var idx: c_int = 0;
     if (current != null) {
         while (current) |node| {
             const toot = node.data;
@@ -316,7 +316,7 @@ pub fn update_column_toots(column: *Column) void {
     }
     const column_footer_count_label = builder_get_widget(column.builder, "column_footer_count");
     const tootword = if (column.main.config.img_only) "images" else "toots";
-    const countStr = std.fmt.allocPrint(allocator, "{} {}", column.main.toots.count(), tootword) catch unreachable;
+    const countStr = std.fmt.allocPrint(allocator, "{} {}", .{ column.main.toots.count(), tootword }) catch unreachable;
     const cCountStr = util.sliceToCstr(allocator, countStr);
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
 }
@@ -370,7 +370,7 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
 }
 
 pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
-    warn("maketootbox toot #{} {*} gui building {} images\n", .{ toot.id(), toot, toot.imgList.count() });
+    warn("maketootbox toot #{} {*} gui building {} images\n", .{ toot.id(), toot, toot.imgList.items.len });
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
     const tootbox = builder_get_widget(builder, "tootbox");
 
@@ -383,20 +383,20 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     const created_at = toot.get("created_at").?.value.String;
 
     const name_label = builder_get_widget(builder, "toot_author_name");
-    labelBufPrint(name_label, "{}", author_name);
+    labelBufPrint(name_label, "{}", .{author_name});
     const url_label = builder_get_widget(builder, "toot_author_url");
-    labelBufPrint(url_label, "{}", author_url);
+    labelBufPrint(url_label, "{}", .{author_url});
     const author_url_minimode_label = builder_get_widget(builder, "toot_author_url_minimode");
-    labelBufPrint(author_url_minimode_label, "{}", author_url);
+    labelBufPrint(author_url_minimode_label, "{}", .{author_url});
     const date_label = builder_get_widget(builder, "toot_date");
-    labelBufPrint(date_label, "{}", created_at);
+    labelBufPrint(date_label, "{}", .{created_at});
     photo_refresh(author_acct, builder);
 
     const content = toot.content();
     var jDecode = json_lib.jsonStrDecode(content, allocator) catch unreachable;
     var hDecode = util.htmlEntityDecode(jDecode, allocator) catch unreachable;
     const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
-    var line_limit = 50 / columns.len;
+    var line_limit = 50 / columns.items.len;
     const html_wrapped = hardWrap(html_trim, line_limit) catch unreachable;
     var cText = util.sliceToCstr(allocator, html_trim);
 
@@ -406,7 +406,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
 
     const tagBox = builder_get_widget(builder, "tag_flowbox");
-    var tagidx = usize(0);
+    var tagidx: usize = 0;
     for (toot.tagList.toSlice()) |tag| {
         const cTag = util.sliceToCstr(allocator, tag);
         const tagLabel = c.gtk_label_new(cTag);
@@ -441,7 +441,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
 
 fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
     const avatar = builder_get_widget(builder, "toot_author_avatar");
-    const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", acct) catch unreachable;
+    const avatar_path = std.fmt.allocPrint(allocator, "./cache/{}/photo", .{acct}) catch unreachable;
     var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path), 50, -1, 1, null);
     c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
 }
@@ -505,7 +505,7 @@ fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
     var wrapped = try simple_buffer.SimpleU8.initSize(allocator, 0);
     var short_lines = str.len / limit;
     var extra_bytes = str.len % limit;
-    var idx = usize(0);
+    var idx: usize = 0;
     while (idx < short_lines) : (idx += 1) {
         try wrapped.append(str[limit * idx .. limit * (idx + 1)]);
         try wrapped.append("\n");
@@ -537,7 +537,7 @@ fn column_config_btn(columnptr: ?*c_void) callconv(.C) void {
 }
 
 fn findColumnByTootId(toot_id: []const u8) ?*Column {
-    for (columns.toSlice()) |column| {
+    for (columns.items) |column| {
         var kvMaybe = column.guitoots.get(toot_id);
         if (kvMaybe) |kv| {
             return column;
@@ -547,7 +547,7 @@ fn findColumnByTootId(toot_id: []const u8) ?*Column {
 }
 
 fn findColumnByInfo(info: *config.ColumnInfo) *Column {
-    for (columns.toSlice()) |col| {
+    for (columns.items) |col| {
         if (col.main == info) {
             return col;
         }
@@ -556,7 +556,7 @@ fn findColumnByInfo(info: *config.ColumnInfo) *Column {
 }
 
 fn findColumnByBox(box: [*c]c.GtkWidget) *Column {
-    for (columns.toSlice()) |col| {
+    for (columns.items) |col| {
         if (col.columnbox == box) {
             return col;
         }
@@ -566,7 +566,7 @@ fn findColumnByBox(box: [*c]c.GtkWidget) *Column {
 
 fn findColumnByConfigWindow(widget: [*c]c.GtkWidget) *Column {
     const parent = c.gtk_widget_get_toplevel(widget);
-    for (columns.toSlice()) |col| {
+    for (columns.items) |col| {
         if (col.config_window == parent) {
             return col;
         }

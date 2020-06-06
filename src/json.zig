@@ -48,7 +48,7 @@ pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
 
     var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
     var previousStrEndMark: usize = 0;
-    for (escMarks.toSlice()) |strMark, idx| {
+    for (escMarks.items) |strMark, idx| {
         // copy the segment before the mark
         const snip = str[previousStrEndMark..strMark.position];
         try newStr.append(snip);
