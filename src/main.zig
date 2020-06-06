@@ -61,7 +61,7 @@ fn statewalk() void {
         statemachine.setState(statemachine.States.Setup); // transition
         var ram = allocator.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
-        gui.schedule(gui.show_main_schedule, @ptrCast(*const c_void, &ram));
+        gui.schedule(gui.show_main_schedule, &ram);
         for (settings.columns.items) |column| {
             if (column.config.token) |token| {
                 profileget(column);

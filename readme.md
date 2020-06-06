@@ -38,3 +38,10 @@ $ ./zootdeck
 zootdeck linux x86_64 tid 7f565d1caf00
 STATE: Init
 ```
+
+dependencies
+```
+apt install libcurl4-openssl-dev
+apt install libglfw3-dev
+apt install libgumbo-dev
+```

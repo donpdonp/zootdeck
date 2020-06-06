@@ -80,9 +80,9 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_HTTPHEADER, slist);
 
         switch (req.verb) {
-            .get => _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_HTTPGET, 1),
+            .get => _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_HTTPGET, @as(c_long, 1)),
             .post => {
-                _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_POST, 1);
+                _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_POST, @as(c_long, 1));
                 const post_body_c: [*c]const u8 = util.sliceToCstr(allocator, req.post_body);
                 _ = c.curl_easy_setopt(curl, c.CURLoption.CURLOPT_POSTFIELDS, post_body_c);
                 warn("post body: {}\n", .{req.post_body});
