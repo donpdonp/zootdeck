@@ -108,18 +108,18 @@ pub fn toJson(allocator: *Allocator, value: var) []const u8 {
 pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
     var depth = oldDepth;
     var ram: []u8 = allocator.alloc(u8, 4096) catch unreachable;
-    var ptr = usize(0);
+    var ptr: usize = 0;
     const T = comptime @TypeOf(value);
     const info = comptime @typeInfo(T);
 
-    if (@typeId(T) == builtin.TypeId.Struct) {
-        if (comptime std.meta.trait.hasFn("toSlice")(T)) {
-            ptr += ramSetAt(ram, ptr, toJsonStep(value.toSlice(), depth, allocator));
+    if (@typeInfo(T) == builtin.TypeId.Struct) {
+        if (comptime std.meta.trait.hasField("items")(T)) {
+            ptr += ramSetAt(ram, ptr, toJsonStep(value.items, depth, allocator));
         } else {
             depth += 1;
             ptr += structToJson(ram, ptr, depth, value, allocator);
         }
-    } else if (@typeId(T) == builtin.TypeId.Union) {
+    } else if (@typeInfo(T) == builtin.TypeId.Union) {
         if (info.Union.tag_type) |UnionTagType| {
             inline for (info.Union.fields) |u_field| {
                 if (@enumToInt(UnionTagType(value)) == u_field.enum_field.?.value) {
@@ -127,14 +127,14 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
                 }
             }
         }
-    } else if (@typeId(T) == builtin.TypeId.Optional) {
+    } else if (@typeInfo(T) == builtin.TypeId.Optional) {
         if (value) |val| {
             ptr += ramSetAt(ram, ptr, toJsonStep(val, depth, allocator));
         } else {
             ptr += nullToJson(ram, ptr, depth);
         }
         //warn("typeid optional. child {}\n", info.Optional.child);
-    } else if (@typeId(T) == builtin.TypeId.Pointer) {
+    } else if (@typeInfo(T) == builtin.TypeId.Pointer) {
         if (info.Pointer.size == builtin.TypeInfo.Pointer.Size.Slice) {
             if (info.Pointer.child == u8) {
                 ptr += strToJson(ram, ptr, depth, value);
@@ -146,7 +146,7 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
         if (info.Pointer.size == builtin.TypeInfo.Pointer.Size.One) {
             ptr += ramSetAt(ram, ptr, toJsonStep(value.*, depth, allocator));
         }
-    } else if (@typeId(T) == builtin.TypeId.Array) {
+    } else if (@typeInfo(T) == builtin.TypeId.Array) {
         if (info.Array.child == u8) {
             depth += 1;
             ptr += strToJson(ram, ptr, depth, value);
@@ -156,12 +156,12 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
                 warn("array item {c}\n", item);
             }
         }
-    } else if (@typeId(T) == builtin.TypeId.Int) {
+    } else if (@typeInfo(T) == builtin.TypeId.Int) {
         ptr += intToJson(ram, ptr, depth, value, allocator);
-    } else if (@typeId(T) == builtin.TypeId.Bool) {
+    } else if (@typeInfo(T) == builtin.TypeId.Bool) {
         ptr += boolToJson(ram, ptr, depth, value, allocator);
     } else {
-        warn("JSON TYPE UNKNOWN {} {}\n", @typeId(T), @typeName(T));
+        warn("JSON TYPE UNKNOWN {} {}\n", @typeInfo(T), @typeName(T));
     }
     return ram[0..ptr];
 }
@@ -176,7 +176,7 @@ pub fn intToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator: *A
     var ptr = oldPtr; // params are const
     const intlen = 20;
     var intbuf = allocator.alloc(u8, intlen) catch unreachable;
-    var intstr = std.fmt.bufPrint(intbuf, "{}", value) catch unreachable;
+    var intstr = std.fmt.bufPrint(intbuf, "{}", .{value}) catch unreachable;
     ptr += ramSetAt(ram, ptr, intstr);
     return ptr;
 }

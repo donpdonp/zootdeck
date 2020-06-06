@@ -17,7 +17,7 @@ pub const Actor = struct {
 };
 
 pub const Command = packed struct {
-    id: u16, verb: *CommandVerb
+    id: u16, verb: *const CommandVerb
 };
 
 pub const CommandVerb = packed union {
@@ -86,7 +86,7 @@ pub fn wait() void {
     }
 }
 
-pub fn signal(actor: *Actor, command: *Command) void {
+pub fn signal(actor: *Actor, command: *const Command) void {
     const command_addr_bytes = @ptrCast(*const [@sizeOf(*Command)]u8, &command);
     //warn("signaling from tid {x} command bytes {x} len{} {}\n", actor.thread_id, command_addr_bytes, command_addr_bytes.len, command);
     ipc.send(actor.client, command_addr_bytes);

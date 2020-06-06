@@ -180,7 +180,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     if (std.fs.cwd().openFile(filename, .{})) |*file| {
         warn("config.write toJson\n", .{});
         var data = Json.toJson(allocator, configFile);
-        file.write(data) catch unreachable;
+        _ = file.write(data) catch unreachable;
         warn("config saved. {} {} bytes\n", .{ filename, data.len });
         file.close();
     } else |err| {
