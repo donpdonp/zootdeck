@@ -17,7 +17,7 @@ pub fn sliceToCstr(allocator: *Allocator, str: []const u8) [*]u8 {
 }
 
 pub fn cstrToSliceCopy(allocator: *Allocator, cstr: [*c]const u8) []const u8 {
-    var i: usize = std.mem.len(u8, cstr);
+    var i: usize = std.mem.len(cstr);
     var ram = allocator.alloc(u8, i) catch unreachable;
     std.mem.copy(u8, ram, cstr[0..i]);
     return ram;

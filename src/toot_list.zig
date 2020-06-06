@@ -69,7 +69,7 @@ pub fn SomeList(comptime T: type) type {
         }
 
         pub fn count(self: *Self) usize {
-            var counter = usize(0);
+            var counter: usize = 0;
             var current = self.list.first;
             while (current) |item| {
                 counter = counter + 1;

@@ -10,7 +10,7 @@ pub const SimpleU8 = struct {
     }
 
     pub fn len(self: *const SimpleU8) usize {
-        return self.list.len;
+        return self.list.items.len;
     }
 
     pub fn resize(self: *SimpleU8, new_len: usize) !void {

@@ -204,11 +204,11 @@ pub fn update_author_photo(acct: []const u8) void {
 }
 
 pub fn columns_resize() void {
-    if (columns.len > 0) {
+    if (columns.items.len > 0) {
         const container = builder_get_widget(myBuilder, "ZootColumns");
         var app_width = c.gtk_widget_get_allocated_width(container);
-        var avg_col_width = @divTrunc(app_width, @intCast(c_int, columns.len));
-        warn("columns_resize app_width {} col_width {} columns {}\n", .{ app_width, avg_col_width, columns.len });
+        var avg_col_width = @divTrunc(app_width, @intCast(c_int, columns.items.len));
+        warn("columns_resize app_width {} col_width {} columns {}\n", .{ app_width, avg_col_width, columns.items.len });
         for (columns.toSlice()) |col| {
             c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
         }

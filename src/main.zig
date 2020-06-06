@@ -99,7 +99,7 @@ fn columnget(column: *config.ColumnInfo) void {
 fn profileget(column: *config.ColumnInfo) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials", column.filter.host()) catch unreachable;
+    httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials", .{column.filter.host()}) catch unreachable;
     httpInfo.verb = .get;
     httpInfo.token = null;
     if (column.config.token) |tokenStr| {
@@ -288,7 +288,7 @@ fn profileback(command: *thread.Command) void {
         reqres.column.account = reqres.tree.root.Object;
         gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
     } else {
-        warn("profile fail http status {}\n", reqres.response_code);
+        warn("profile fail http status {}\n", .{reqres.response_code});
     }
 }
 
@@ -331,14 +331,14 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
-        warn("gui col config {}\n", column.config.title);
+        warn("gui col config {}\n", .{column.config.title});
         column.inError = false;
         column.refreshing = false;
         config.writefile(settings, "config.json");
     }
     if (command.id == 5) { // column remove
         const column = command.verb.column;
-        warn("gui col remove {}\n", column.config.title);
+        warn("gui col remove {}\n", .{column.config.title});
         var colpos: usize = undefined;
         for (settings.columns.items) |col, idx| {
             if (col == column) {
@@ -359,7 +359,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 7) { //oauth activate
         const myAuth = command.verb.auth.*;
-        warn("oauth authorization {}\n", myAuth.code);
+        warn("oauth authorization {}\n", .{myAuth.code});
         oauthtokenget(myAuth.column, myAuth.code);
     }
     if (command.id == 8) { //column config changed
