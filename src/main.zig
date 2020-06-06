@@ -59,7 +59,9 @@ fn initialize() !void {
 fn statewalk() void {
     if (statemachine.state == statemachine.States.Init) {
         statemachine.setState(statemachine.States.Setup); // transition
-        gui.schedule(gui.show_main_schedule, @ptrCast(*const c_void, &[_]u8{1}));
+        var ram = allocator.alloc(u8, 1) catch unreachable;
+        ram[0] = 1;
+        gui.schedule(gui.show_main_schedule, @ptrCast(*const c_void, &ram));
         for (settings.columns.items) |column| {
             if (column.config.token) |token| {
                 profileget(column);
@@ -307,7 +309,9 @@ fn cache_update(toot: *toot_lib.Type) void {
 fn guiback(command: *thread.Command) void {
     warn("*guiback tid {x} {*}\n", .{ thread.self(), command });
     if (command.id == 1) {
-        gui.schedule(gui.show_main_schedule, &[_]u8{1});
+        var ram = allocator.alloc(u8, 1) catch unreachable;
+        ram[0] = 1;
+        gui.schedule(gui.show_main_schedule, &ram);
     }
     if (command.id == 2) { // refresh button
         const column = command.verb.column;

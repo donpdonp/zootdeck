@@ -41,7 +41,7 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     return null;
 }
 
-pub fn schedule(func: ?extern fn (?*c_void) c_int, param: ?*const c_void) void {
+pub fn schedule(func: ?extern fn (?*c_void) c_int, param: ?*c_void) void {
     guilib.schedule(func, param);
 }
 
