@@ -41,47 +41,47 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     return null;
 }
 
-pub fn schedule(func: ?extern fn (*c_void) c_int, param: ?*const c_void) void {
+pub fn schedule(func: ?extern fn (?*c_void) c_int, param: ?*const c_void) void {
     guilib.schedule(func, param);
 }
 
-pub fn show_main_schedule(in: *c_void) callconv(.C) c_int {
+pub fn show_main_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.show_main_schedule(in);
 }
 
-pub fn add_column_schedule(in: *c_void) callconv(.C) c_int {
+pub fn add_column_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.add_column_schedule(in);
 }
 
-pub fn column_remove_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_remove_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.column_remove_schedule(in);
 }
 
-pub fn column_config_oauth_url_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_config_oauth_url_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.column_config_oauth_url_schedule(in);
 }
 
-pub fn update_column_config_oauth_finalize_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_config_oauth_finalize_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.update_column_config_oauth_finalize_schedule(in);
 }
 
-pub fn update_column_ui_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_ui_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.update_column_ui_schedule(in);
 }
 
-pub fn update_column_netstatus_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_netstatus_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.update_column_netstatus_schedule(in);
 }
 
-pub fn update_column_toots_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_toots_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.update_column_toots_schedule(in);
 }
 
-pub fn update_author_photo_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_author_photo_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.update_author_photo_schedule(in);
 }
 
 pub const TootPic = guilib.TootPic;
-pub fn toot_media_schedule(in: *c_void) callconv(.C) c_int {
+pub fn toot_media_schedule(in: ?*c_void) callconv(.C) c_int {
     return guilib.toot_media_schedule(in);
 }

@@ -88,9 +88,10 @@ fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) [*]c.GtkWidget 
     return gwidget;
 }
 
-pub fn schedule(func: ?extern fn (*c_void) c_int, param: ?*const c_void) void {
+pub fn schedule(func: ?extern fn (?*c_void) c_int, param: ?*const c_void) void {
     //pub const gpointer = ?*c_void;
     //pub extern fn gdk_threads_add_idle(function: GSourceFunc, data: gpointer) guint;
+    //pub const GSourceFunc = ?fn (gpointer) callconv(.C) gboolean;
     _ = c.gdk_threads_add_idle(func, param);
 }
 
