@@ -220,8 +220,8 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                var rootJsonType = @TagType(@TypeOf(tree.root));
-                if (rootJsonType == Array) {
+                const rootJsonType = @TagType(@TypeOf(tree.root));
+                if (rootJsonType == std.json.Array) {
                     column.inError = false;
                     for (tree.root.Array.items) |jsonValue| {
                         const item = jsonValue.Object;
@@ -247,7 +247,7 @@ fn netback(command: *thread.Command) void {
                             }
                         }
                     }
-                } else if (rootJsonType == .Object) {
+                } else if (rootJsonType == std.json.ObjectMap) {
                     if (tree.root.Object.get("error")) |err| {
                         warn("netback json err {} \n", .{err.value.String});
                     }

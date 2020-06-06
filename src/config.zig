@@ -177,14 +177,14 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     for (settings.columns.items) |column, idx| {
         configFile.columns.append(column.config) catch unreachable;
     }
-    if (std.fs.File.openWrite(filename)) |*file| {
-        warn("config.write toJson\n");
+    if (std.fs.cwd().openFile(filename, .{})) |*file| {
+        warn("config.write toJson\n", .{});
         var data = Json.toJson(allocator, configFile);
         file.write(data) catch unreachable;
-        warn("config saved. {} {} bytes\n", filename, data.len);
+        warn("config saved. {} {} bytes\n", .{ filename, data.len });
         file.close();
     } else |err| {
-        warn("config save fail. {}\n", err);
+        warn("config save fail. {}\n", .{err});
     } // existing file is OK
 }
 
@@ -200,7 +200,7 @@ test "read" {
     if (ret) |value| {
         assert(true);
     } else |err| {
-        warn("warn: {}\n", err);
+        warn("warn: {}\n", .{err});
         assert(false);
     }
 }
