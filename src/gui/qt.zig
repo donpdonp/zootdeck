@@ -41,7 +41,7 @@ pub fn gui_end() void {
     warn("gui ended\n");
 }
 
-pub fn schedule(func: ?extern fn (*c_void) c_int, param: *c_void) void {}
+pub fn schedule(func: ?fn (*c_void) callconv(.C) c_int, param: *c_void) void {}
 
 pub fn show_main_schedule(in: *c_void) callconv(.C) c_int {
     return 0;

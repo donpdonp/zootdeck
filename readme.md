@@ -26,6 +26,8 @@ https://donpdonp.github.io/zootdeck/
 
 ### Build instructions
 ```
+$ sudo apt install ragel libgtk-3-dev libcurl-dev libcurl4-openssl-dev libgumbo-dev libglfw3-dev
+
 $ git clone https://github.com/donpdonp/zootdeck
 Cloning into 'zootdeck'...
 

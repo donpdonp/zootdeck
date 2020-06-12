@@ -95,7 +95,7 @@ pub fn gui_end() void {
     c.glfwTerminate();
 }
 
-pub fn schedule(funcMaybe: ?extern fn (*c_void) c_int, param: *c_void) void {
+pub fn schedule(funcMaybe: ?fn (*c_void) callconv(.C) c_int, param: *c_void) void {
     if (funcMaybe) |func| {
         warn("schedule FUNC {}\n", func);
         _ = func(@ptrCast(*c_void, &"w"));

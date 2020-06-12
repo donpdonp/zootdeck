@@ -70,7 +70,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     // captures all keys oh no
     // _ = c.gtk_builder_add_callback_symbol(myBuilder, "zoot.keypress",
     //                                       @ptrCast(?extern fn() void, zoot_keypress));
-    _ = c.gtk_builder_add_callback_symbol(myBuilder, "main_check_resize", @ptrCast(?extern fn () void, main_check_resize));
+    _ = c.gtk_builder_add_callback_symbol(myBuilder, "main_check_resize", @ptrCast(?fn () callconv(.C) void, main_check_resize));
     _ = c.gtk_builder_connect_signals(myBuilder, null);
 
     // set main size before resize callback happens
@@ -88,7 +88,7 @@ fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) [*]c.GtkWidget 
     return gwidget;
 }
 
-pub fn schedule(func: ?extern fn (?*c_void) c_int, param: ?*c_void) void {
+pub fn schedule(func: ?fn (?*c_void) callconv(.C) c_int, param: ?*c_void) void {
     //pub const gpointer = ?*c_void;
     //pub extern fn gdk_threads_add_idle(function: GSourceFunc, data: gpointer) guint;
     //pub const GSourceFunc = ?fn (gpointer) callconv(.C) gboolean;
@@ -175,15 +175,15 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 
     c.gtk_grid_attach_next_to(@ptrCast([*c]c.GtkGrid, container), column.columnbox, null, c.GtkPositionType.GTK_POS_RIGHT, 1, 1);
 
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @ptrCast(?extern fn () void, column_top_label_title));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @ptrCast(?extern fn () void, column_config_btn));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.reload", @ptrCast(?extern fn () void, column_reload));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.imgonly", @ptrCast(?extern fn () void, column_imgonly));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.filter_done", @ptrCast(?extern fn () void, column_filter_done));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.done", @ptrCast(?extern fn () void, column_config_done));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.remove", @ptrCast(?extern fn () void, column_remove_btn));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_btn", @ptrCast(?extern fn () void, column_config_oauth_btn));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_auth_enter", @ptrCast(?extern fn () void, column_config_oauth_activate));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @ptrCast(?fn () callconv(.C) void, column_top_label_title));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @ptrCast(?fn () callconv(.C) void, column_config_btn));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.reload", @ptrCast(?fn () callconv(.C) void, column_reload));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.imgonly", @ptrCast(?fn () callconv(.C) void, column_imgonly));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.filter_done", @ptrCast(?fn () callconv(.C) void, column_filter_done));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.done", @ptrCast(?fn () callconv(.C) void, column_config_done));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.remove", @ptrCast(?fn () callconv(.C) void, column_remove_btn));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_btn", @ptrCast(?fn () callconv(.C) void, column_config_oauth_btn));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_auth_enter", @ptrCast(?fn () callconv(.C) void, column_config_oauth_activate));
     _ = c.gtk_builder_add_callback_symbol(column.builder, "zoot_drag", zoot_drag);
     _ = c.gtk_builder_connect_signals(column.builder, null);
     c.gtk_widget_show_all(container);

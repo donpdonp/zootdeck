@@ -29,7 +29,7 @@ pub fn listen(socket: *sock, url: []u8) void {
     }
 }
 
-pub fn wait(client: *Client, callback: extern fn (?*c_void) void) void {
+pub fn wait(client: *Client, callback: fn (?*c_void) callconv(.C) void) void {
     // special nng alloc call
     var myAio: ?*c.nng_aio = undefined;
     warn("wait master nng_aio {*}\n", &myAio);

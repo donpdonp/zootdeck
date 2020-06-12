@@ -48,7 +48,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
 fn build() void {
     var window = c.uiNewWindow("Zootdeck", 320, 240, 0);
     c.uiWindowSetMargined(window, 1);
-    const f: ?extern fn (*c.uiWindow, *c_void) c_int = onClosing;
+    const f: ?fn (*c.uiWindow, *c_void) callconv(.C) c_int = onClosing;
     c.uiWindowOnClosing(window, f, null);
 
     var hbox = c.uiNewHorizontalBox();
@@ -79,7 +79,7 @@ export fn onClosing(w: *c.uiWindow, data: *c_void) c_int {
     return 1;
 }
 
-pub fn schedule(funcMaybe: ?extern fn (*c_void) c_int, param: *c_void) void {
+pub fn schedule(funcMaybe: ?fn (*c_void) callconv(.C) c_int, param: *c_void) void {
     if (funcMaybe) |func| {
         warn("schedule FUNC {}\n", func);
         _ = func(@ptrCast(*c_void, &"w"));

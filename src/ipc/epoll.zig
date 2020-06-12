@@ -39,7 +39,7 @@ pub fn listen(socket: *sockSingle, url: []u8) void {
     warn("epoll_listen\n", .{});
 }
 
-pub fn register(client: *Client, callback: extern fn (?*c_void) void) void {}
+pub fn register(client: *Client, callback: fn (?*c_void) callconv(.C) void) void {}
 
 pub fn dial(client: *Client, url: []u8) void {
     //.events = u32(c_int(c.EPOLL_EVENTS.EPOLLIN))|u32(c_int(c.EPOLL_EVENTS.EPOLLET)),
