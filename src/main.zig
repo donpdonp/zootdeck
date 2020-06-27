@@ -33,8 +33,9 @@ pub fn main() !void {
 
     if (config.readfile("config.json")) |config_data| {
         settings = config_data;
-        var guiThread = thread.create(gui.go, undefined, guiback);
-        var heartbeatThread = thread.create(heartbeat.go, undefined, heartback);
+        var dummy_payload = allocator.create(thread.CommandVerb) catch unreachable;
+        var guiThread = thread.create(gui.go, dummy_payload, guiback);
+        var heartbeatThread = thread.create(heartbeat.go, dummy_payload, heartback);
 
         while (true) {
             statewalk();
