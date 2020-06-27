@@ -177,7 +177,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     for (settings.columns.items) |column, idx| {
         configFile.columns.append(column.config) catch unreachable;
     }
-    if (std.fs.cwd().openFile(filename, .{})) |*file| {
+    if (std.fs.cwd().openFile(filename, .{ .write = true })) |*file| {
         warn("config.write toJson\n", .{});
         var data = Json.toJson(allocator, configFile);
         _ = file.write(data) catch unreachable;
