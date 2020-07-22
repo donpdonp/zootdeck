@@ -2,7 +2,6 @@
 const std = @import("std");
 const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
-
 const util = @import("./util.zig");
 const Json = @import("./json.zig");
 const filter_lib = @import("./filter.zig");
@@ -128,6 +127,7 @@ pub fn read(json: []const u8) !Settings {
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
     if (root.get("win_x")) |w| {
+        warn("a", .{});
         settings.win_x = w.value.Integer;
     } else {
         settings.win_x = 800;

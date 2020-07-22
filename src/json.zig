@@ -1,5 +1,5 @@
 const std = @import("std");
-const warn = std.debug.warn;
+const print = std.debug.warn;
 const builtin = @import("builtin");
 const Allocator = std.mem.Allocator;
 const Buffers = @import("./simple_buffer.zig");
@@ -156,7 +156,7 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
         } else {
             ptr += nullToJson(ram, ptr, depth);
         }
-        //warn("typeid optional. child {}\n", info.Optional.child);
+        print("typeid optional. child {}\n", .{info.Optional.child});
     } else if (@typeInfo(T) == builtin.TypeId.Pointer) {
         if (info.Pointer.size == builtin.TypeInfo.Pointer.Size.Slice) {
             if (info.Pointer.child == u8) {
@@ -174,9 +174,9 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
             depth += 1;
             ptr += strToJson(ram, ptr, depth, value);
         } else {
-            warn("array unknown\n");
+            print("array unknown\n");
             for (value) |item| {
-                warn("array item {c}\n", item);
+                print("array item {c}\n", item);
             }
         }
     } else if (@typeInfo(T) == builtin.TypeId.Int) {
@@ -184,7 +184,7 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
     } else if (@typeInfo(T) == builtin.TypeId.Bool) {
         ptr += boolToJson(ram, ptr, depth, value, allocator);
     } else {
-        warn("JSON TYPE UNKNOWN {} {}\n", @typeInfo(T), @typeName(T));
+        print("JSON TYPE UNKNOWN {} {}\n", @typeInfo(T), @typeName(T));
     }
     return ram[0..ptr];
 }
@@ -224,7 +224,7 @@ pub fn structToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator:
     ptr += ramSetAt(ram, ptr, "{\n");
     inline for (info.Struct.fields) |*field_info, idx| {
         const name = field_info.name;
-        //warn("struct field {} name {}\n", idx, name);
+        //print("struct field {} name {}\n", idx, name);
         ptr += ramSetAt(ram, ptr, space(depth, allocator));
         ptr += ramSetAt(ram, ptr, "\"" ++ name ++ "\" : ");
         var fieldVal: field_info.field_type = @field(value, name);
