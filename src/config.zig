@@ -54,7 +54,7 @@ pub const ColumnInfo = struct {
         if (column.config.token) |tkn| {
             var addon: []const u8 = undefined;
             if (column.account) |account| {
-                addon = account.get("acct").?.value.String;
+                addon = account.get("acct").?.String;
             } else {
                 addon = "_";
             }
@@ -128,32 +128,32 @@ pub fn read(json: []const u8) !Settings {
 
     if (root.get("win_x")) |w| {
         print("win_x", .{});
-        settings.win_x = w.value.Integer;
+        settings.win_x = w.Integer;
     } else {
         settings.win_x = 800;
     }
     if (root.get("win_y")) |h| {
         print("win_y", .{});
-        settings.win_y = h.value.Integer;
+        settings.win_y = h.Integer;
     } else {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        print("columns {}", .{columns.value.Array.items.len});
-        for (columns.value.Array.items) |value| {
+        print("columns {}", .{columns.Array.items.len});
+        for (columns.Array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
             colInfo.toots = toot_list.TootList.init();
             var colconfig = allocator.create(ColumnConfig) catch unreachable;
             colInfo.config = colconfig;
-            var title = value.Object.get("title").?.value.String;
+            var title = value.Object.get("title").?.String;
             colInfo.config.title = title;
-            var filter = value.Object.get("filter").?.value.String;
+            var filter = value.Object.get("filter").?.String;
             colInfo.config.filter = filter;
             colInfo.filter = filter_lib.parse(allocator, filter);
             var tokenTag = value.Object.get("token");
             if (tokenTag) |tokenKV| {
-                if (@TagType(@TypeOf(tokenKV.value)) == []const u8) {
+                if (@TagType(@TypeOf(tokenKV)) == []const u8) {
                     colInfo.config.token = tokenKV.value.String;
                 } else {
                     colInfo.config.token = null;
@@ -161,7 +161,7 @@ pub fn read(json: []const u8) !Settings {
             } else {
                 colInfo.config.token = null;
             }
-            var img_only = value.Object.get("img_only").?.value.Bool;
+            var img_only = value.Object.get("img_only").?.Bool;
             colInfo.config.img_only = img_only;
             settings.columns.append(colInfo) catch unreachable;
         }

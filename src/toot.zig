@@ -33,13 +33,13 @@ pub fn Toot() type {
             return newToot;
         }
 
-        pub fn get(self: *const Self, key: K) ?*Toothashmap.KV {
+        pub fn get(self: *const Self, key: K) ?V {
             return self.hashmap.get(key);
         }
 
         pub fn id(self: *const Self) []const u8 {
             if (self.hashmap.get("id")) |kv| {
-                return kv.value.String;
+                return kv.String;
             } else {
                 unreachable;
             }
@@ -59,7 +59,7 @@ pub fn Toot() type {
         }
 
         pub fn content(self: *const Self) []const u8 {
-            return self.hashmap.get("content").?.value.String;
+            return self.hashmap.get("content").?.String;
         }
 
         pub fn parseTags(self: *Self, allocator: *Allocator) void {
@@ -82,7 +82,7 @@ pub fn Toot() type {
         }
 
         pub fn imgCount(self: *Self) usize {
-            var images = self.hashmap.get("media_attachments").?.value.Array;
+            var images = self.hashmap.get("media_attachments").?.Array;
             return images.items.len;
         }
     };

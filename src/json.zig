@@ -125,7 +125,7 @@ pub fn isHexDigit(char: u8) bool {
 }
 
 pub fn toJson(
-    value: var,
+    value: anytype,
     pretty: bool,
     allocator: *Allocator,
 ) []const u8 {
@@ -142,7 +142,7 @@ test "toJson" {
     std.testing.expectEqualSlices(u8, "{\n \"num\": 3\n}", json);
 }
 
-pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
+pub fn toJsonStep(value: anytype, oldDepth: u32, allocator: *Allocator) []const u8 {
     var depth = oldDepth;
     var ram: []u8 = allocator.alloc(u8, 4096) catch unreachable;
     var ptr: usize = 0;
@@ -209,7 +209,7 @@ pub fn boolToJson(ram: []u8, oldPtr: usize, depth: u32, value: bool, allocator: 
     return ptr;
 }
 
-pub fn intToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator: *Allocator) usize {
+pub fn intToJson(ram: []u8, oldPtr: usize, depth: u32, value: anytype, allocator: *Allocator) usize {
     var ptr = oldPtr; // params are const
     const intlen = 20;
     var intbuf = allocator.alloc(u8, intlen) catch unreachable;
@@ -219,7 +219,7 @@ pub fn intToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator: *A
     return ptr;
 }
 
-pub fn strToJson(ram: []u8, oldPtr: usize, depth: u32, value: var) usize {
+pub fn strToJson(ram: []u8, oldPtr: usize, depth: u32, value: anytype) usize {
     var ptr = oldPtr; // params are const
     ptr += ramSetAt(ram, ptr, "\"");
     ptr += ramSetAt(ram, ptr, value);
@@ -233,7 +233,7 @@ pub fn nullToJson(ram: []u8, oldPtr: usize, depth: u32) usize {
     return ptr;
 }
 
-pub fn structToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator: *Allocator) usize {
+pub fn structToJson(ram: []u8, oldPtr: usize, depth: u32, value: anytype, allocator: *Allocator) usize {
     var ptr = oldPtr; // params are const
     const info = comptime @typeInfo(@TypeOf(value));
     ptr += ramSetAt(ram, ptr, "{\n");
@@ -254,7 +254,7 @@ pub fn structToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator:
     return ptr;
 }
 
-pub fn arrayishToJson(ram: []u8, oldPtr: usize, oldDepth: u32, value: var, allocator: *Allocator) usize {
+pub fn arrayishToJson(ram: []u8, oldPtr: usize, oldDepth: u32, value: anytype, allocator: *Allocator) usize {
     var depth = oldDepth;
     var ptr = oldPtr; // params are const
     const info = comptime @typeInfo(@TypeOf(value));

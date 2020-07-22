@@ -89,9 +89,6 @@ fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) [*]c.GtkWidget 
 }
 
 pub fn schedule(func: ?fn (?*c_void) callconv(.C) c_int, param: ?*c_void) void {
-    //pub const gpointer = ?*c_void;
-    //pub extern fn gdk_threads_add_idle(function: GSourceFunc, data: gpointer) guint;
-    //pub const GSourceFunc = ?fn (gpointer) callconv(.C) gboolean;
     _ = c.gdk_threads_add_idle(func, param);
 }
 
@@ -105,13 +102,13 @@ pub fn show_login_schedule(in: *c_void) callconv(.C) c_int {
     return 0;
 }
 
-pub fn show_main_schedule(in: *c_void) callconv(.C) c_int {
+pub fn show_main_schedule(in: ?*c_void) callconv(.C) c_int {
     var main_window = builder_get_widget(myBuilder, "main");
     c.gtk_widget_show(main_window);
     return 0;
 }
 
-pub fn column_config_oauth_url_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_config_oauth_url_schedule(in: ?*c_void) callconv(.C) c_int {
     const column = @ptrCast(*config.ColumnInfo, @alignCast(8, in));
     column_config_oauth_url(column);
     return 0;
@@ -124,7 +121,7 @@ pub fn update_author_photo_schedule(in: *c_void) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_ui_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_ui_schedule(in: ?*c_void) callconv(.C) c_int {
     const columnInfo = @ptrCast(*config.ColumnInfo, @alignCast(8, in));
     const column = findColumnByInfo(columnInfo);
     update_column_ui(column);
@@ -145,7 +142,7 @@ pub fn toot_media_schedule(in: *c_void) callconv(.C) c_int {
     return 0;
 }
 
-pub fn add_column_schedule(in: *c_void) callconv(.C) c_int {
+pub fn add_column_schedule(in: ?*c_void) callconv(.C) c_int {
     const column = @ptrCast(*config.ColumnInfo, @alignCast(8, in));
     add_column(column);
     return 0;
@@ -223,7 +220,7 @@ pub fn update_column_ui(column: *Column) void {
     c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, label), title_null.ptr);
 }
 
-pub fn column_remove_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_remove_schedule(in: ?*c_void) callconv(.C) c_int {
     column_remove(@ptrCast(*config.ColumnInfo, @alignCast(8, in)));
     return 0;
 }
@@ -241,7 +238,7 @@ fn column_top_label_title(p: *c_void) callconv(.C) void {
     warn("column_top_label_title {}\n", .{p});
 }
 
-pub fn update_column_toots_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_toots_schedule(in: ?*c_void) callconv(.C) c_int {
     const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8, in));
     var columnMaybe = find_gui_column(c_column);
     if (columnMaybe) |column| {
@@ -259,7 +256,7 @@ pub fn update_column_config_oauth_finalize_schedule(in: *c_void) callconv(.C) c_
     return 0;
 }
 
-pub fn update_column_netstatus_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_netstatus_schedule(in: ?*c_void) callconv(.C) c_int {
     const http = @ptrCast(*config.HttpInfo, @alignCast(8, in));
     var columnMaybe = find_gui_column(http.column);
     if (columnMaybe) |column| {
@@ -291,7 +288,7 @@ pub fn update_column_toots(column: *Column) void {
             var tootbuilderMaybe = column.guitoots.get(toot.id());
             if (column.main.filter.match(toot)) {
                 if (tootbuilderMaybe) |kv| {
-                    const builder = kv.value;
+                    const builder = kv;
                     destroyTootBox(builder);
                     warn("update_column_toots destroyTootBox toot #{} {*} {*}\n", .{ toot.id(), toot, builder });
                 }
@@ -302,7 +299,7 @@ pub fn update_column_toots(column: *Column) void {
                 c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
             } else {
                 if (tootbuilderMaybe) |kv| {
-                    const builder = kv.value;
+                    const builder = kv;
                     var tootbox = builder_get_widget(builder, "tootbox");
                     c.gtk_widget_hide(tootbox);
                     warn("update_column_toots hide toot #{} {*} {*}\n", .{ toot.id(), toot, builder });
@@ -375,13 +372,13 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
     const tootbox = builder_get_widget(builder, "tootbox");
 
-    const id = toot.get("id").?.value.String;
-    const account = toot.get("account").?.value.Object;
-    const author_acct = account.get("acct").?.value.String;
+    const id = toot.get("id").?.String;
+    const account = toot.get("account").?.Object;
+    const author_acct = account.get("acct").?.String;
 
-    const author_name = account.get("display_name").?.value.String;
-    const author_url = account.get("url").?.value.String;
-    const created_at = toot.get("created_at").?.value.String;
+    const author_name = account.get("display_name").?.String;
+    const author_url = account.get("url").?.String;
+    const created_at = toot.get("created_at").?.String;
 
     const name_label = builder_get_widget(builder, "toot_author_name");
     labelBufPrint(name_label, "{}", .{author_name});
@@ -461,8 +458,8 @@ fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, 
     const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
     if (loadYN == c.gtk_true()) {
         var pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
-        const account = toot.get("account").?.value.Object;
-        const acct = account.get("acct").?.value.String;
+        const account = toot.get("account").?.Object;
+        const acct = account.get("acct").?.String;
         var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
         warn("toot_media #{} {*} {*} {} images. win {}x{} col {}x{}px pixbuf {}px\n", .{
             toot.id(),
@@ -521,7 +518,7 @@ fn escapeGtkString(str: []const u8) []const u8 {
     return str_esc;
 }
 
-pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: var) void {
+pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: anytype) void {
     const buf = allocator.alloc(u8, 256) catch unreachable;
     const str = std.fmt.bufPrint(buf, fmt, args) catch unreachable;
     const cStr = util.sliceToCstr(allocator, str);
@@ -825,7 +822,7 @@ fn signal_connect(window: [*c]c.GtkWidget, action: []const u8, fun: fn () void) 
     }
 }
 
-fn g_signal_connect(instance: var, signal_name: []const u8, callback: var, data: var) c.gulong {
+fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytype, data: anytype) c.gulong {
     //pub extern fn g_signal_connect_object(instance: gpointer,
     // detailed_signal: ?&const gchar, c_handler: GCallback, gobject: gpointer,
     // connect_flags: GConnectFlags) gulong;
