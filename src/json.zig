@@ -5,23 +5,30 @@ const Allocator = std.mem.Allocator;
 const Buffers = @import("./simple_buffer.zig");
 
 pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
+    var escMarks = try jsonTokenize(str, allocator);
+    defer allocator.free(escMarks);
+    return try jsonBuild(str, escMarks, allocator);
+}
+
+const escMark = struct { position: usize, char: u8 };
+
+pub fn jsonTokenize(str: []const u8, allocator: *Allocator) ![]escMark {
     const States = enum { Looking, EscBegin, uFound, Digit };
-    const escMark = struct { position: usize, char: u8 };
     var state = States.Looking;
     var escMarks = std.ArrayList(escMark).init(allocator);
-    var escStart: usize = undefined;
+    var escStartIdx: usize = undefined;
     for (str) |char, idx| {
         if (state == States.Looking and char == '\\') {
             state = States.EscBegin;
-            escStart = idx;
+            escStartIdx = idx;
         } else if (state == States.EscBegin) {
             if (char == 'u' or char == 'U') {
                 state = States.uFound;
             } else if (char == '"') {
-                try escMarks.append(escMark{ .position = escStart, .char = '"' });
+                try escMarks.append(escMark{ .position = escStartIdx, .char = '"' });
                 state = States.Looking;
             } else if (char == 'n') {
-                try escMarks.append(escMark{ .position = escStart, .char = '\n' });
+                try escMarks.append(escMark{ .position = escStartIdx, .char = '\n' });
                 state = States.Looking;
             } else {
                 state = States.Looking;
@@ -34,10 +41,9 @@ pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
             }
         } else if (state == States.Digit) {
             if (isHexDigit(char)) {
-                state = States.Digit;
-                const escLen = idx - escStart;
+                const escLen = idx - escStartIdx;
                 if (escLen == 5) { // last byte of the \uXXXX code
-                    try escMarks.append(escMark{ .position = escStart, .char = 'u' });
+                    try escMarks.append(escMark{ .position = escStartIdx, .char = 'u' });
                     state = States.Looking;
                 }
             } else {
@@ -45,34 +51,61 @@ pub fn jsonStrDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
             }
         }
     }
+    return escMarks.toOwnedSlice();
+}
 
-    var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
+test "jsonTokenize" {
+    var parts = try jsonTokenize("ab", std.testing.allocator);
+    defer std.testing.allocator.free(parts);
+    std.testing.expectEqual(@as(usize, 0), parts.len);
+
+    var parts2 = try jsonTokenize("ab\\n", std.testing.allocator);
+    defer std.testing.allocator.free(parts2);
+    std.testing.expectEqual(@as(usize, 1), parts2.len);
+    std.testing.expectEqual(@as(usize, 2), parts2[0].position);
+    std.testing.expectEqual(@as(u8, '\n'), parts2[0].char);
+}
+
+pub fn jsonBuild(str: []const u8, escMarks: []escMark, allocator: *Allocator) ![]const u8 {
+    var newStr = std.ArrayList(u8).init(allocator); //try Buffers.SimpleU8.initSize(allocator, 0);
     var previousStrEndMark: usize = 0;
-    for (escMarks.items) |strMark, idx| {
+    for (escMarks) |strMark, idx| {
         // copy the segment before the mark
         const snip = str[previousStrEndMark..strMark.position];
-        try newStr.append(snip);
+        try newStr.appendSlice(snip);
         if (strMark.char == 'u') {
             previousStrEndMark = strMark.position + 6;
 
             const digits = str[strMark.position + 2 .. strMark.position + 6];
             var decodedChar: u8 = (hexCharToByte(digits[2]) << 4) + (hexCharToByte(digits[3]));
-            try newStr.appendByte(decodedChar);
+            try newStr.append(decodedChar);
         }
         if (strMark.char == '"') {
             previousStrEndMark = strMark.position + 2;
-            try newStr.appendByte('"');
+            try newStr.append('\"');
         }
         if (strMark.char == 'n') {
             previousStrEndMark = strMark.position + 2;
-            try newStr.appendByte('\n');
+            try newStr.append('\n');
         }
     }
     // copy the segment after the last mark if there is one
     if (previousStrEndMark <= str.len) {
-        try newStr.append(str[previousStrEndMark..]);
+        try newStr.appendSlice(str[previousStrEndMark..]);
     }
-    return newStr.toSliceConst();
+    return newStr.toOwnedSlice();
+}
+
+test "jsonStrDecode" {
+    var allocator = std.testing.allocator;
+    var decoded: []const u8 = undefined;
+    decoded = jsonStrDecode("\\u0040p \\u003cY", allocator) catch unreachable;
+    defer allocator.free(decoded);
+    std.testing.expect(std.mem.eql(u8, decoded, "@p <Y"));
+
+    decoded = jsonStrDecode("a \\\"real\\\" fan.", allocator) catch unreachable;
+    defer allocator.free(decoded);
+    std.testing.expect(std.mem.eql(u8, decoded, "a \"real\" fan."));
 }
 
 pub fn hexCharToByte(char: u8) u8 {
@@ -89,16 +122,6 @@ pub fn hexCharToByte(char: u8) u8 {
 
 pub fn isHexDigit(char: u8) bool {
     return (char >= '0' and char <= '9') or (char >= 'a' and char <= 'f') or (char >= 'A' and char <= 'F');
-}
-
-test "JSON String Decode" {
-    var allocator = std.testing.allocator;
-    var decoded: []const u8 = undefined;
-    decoded = jsonStrDecode("\\u0040p \\u003cY", allocator) catch unreachable;
-    std.testing.expect(std.mem.eql(u8, decoded, "@p <Y"));
-
-    decoded = jsonStrDecode("a \\\"real\\\" fan.", allocator) catch unreachable;
-    std.testing.expect(std.mem.eql(u8, decoded, "a \"real\" fan."));
 }
 
 pub fn toJson(allocator: *Allocator, value: var) []const u8 {
