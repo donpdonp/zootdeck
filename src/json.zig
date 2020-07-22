@@ -92,7 +92,7 @@ pub fn isHexDigit(char: u8) bool {
 }
 
 test "JSON String Decode" {
-    var allocator = std.debug.global_allocator;
+    var allocator = std.testing.allocator;
     var decoded: []const u8 = undefined;
     decoded = jsonStrDecode("\\u0040p \\u003cY", allocator) catch unreachable;
     std.testing.expect(std.mem.eql(u8, decoded, "@p <Y"));
