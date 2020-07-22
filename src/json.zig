@@ -124,8 +124,22 @@ pub fn isHexDigit(char: u8) bool {
     return (char >= '0' and char <= '9') or (char >= 'a' and char <= 'f') or (char >= 'A' and char <= 'F');
 }
 
-pub fn toJson(allocator: *Allocator, value: var) []const u8 {
+pub fn toJson(
+    value: var,
+    pretty: bool,
+    allocator: *Allocator,
+) []const u8 {
     return toJsonStep(value, 0, allocator);
+}
+
+test "toJson" {
+    var allocator = std.testing.allocator;
+    const someStruct = struct { num: usize };
+    var thing: someStruct = .{ .num = 3 };
+    var json = toJson(thing, true, allocator);
+    defer allocator.free(json);
+    print("\n{}\n", .{json});
+    std.testing.expectEqualSlices(u8, "{\n \"num\": 3\n}", json);
 }
 
 pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
@@ -133,44 +147,44 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
     var ram: []u8 = allocator.alloc(u8, 4096) catch unreachable;
     var ptr: usize = 0;
     const T = comptime @TypeOf(value);
-    const info = comptime @typeInfo(T);
+    const typeinfo = comptime @typeInfo(T);
 
-    if (@typeInfo(T) == builtin.TypeId.Struct) {
+    if (typeinfo == builtin.TypeId.Struct) {
         if (comptime std.meta.trait.hasField("items")(T)) {
             ptr += ramSetAt(ram, ptr, toJsonStep(value.items, depth, allocator));
         } else {
             depth += 1;
             ptr += structToJson(ram, ptr, depth, value, allocator);
         }
-    } else if (@typeInfo(T) == builtin.TypeId.Union) {
-        if (info.Union.tag_type) |UnionTagType| {
+    } else if (typeinfo == builtin.TypeId.Union) {
+        if (typeinfo.Union.tag_type) |UnionTagType| {
             inline for (info.Union.fields) |u_field| {
                 if (@enumToInt(UnionTagType(value)) == u_field.enum_field.?.value) {
                     // TODO
                 }
             }
         }
-    } else if (@typeInfo(T) == builtin.TypeId.Optional) {
+    } else if (typeinfo == builtin.TypeId.Optional) {
         if (value) |val| {
             ptr += ramSetAt(ram, ptr, toJsonStep(val, depth, allocator));
         } else {
             ptr += nullToJson(ram, ptr, depth);
         }
-        print("typeid optional. child {}\n", .{info.Optional.child});
-    } else if (@typeInfo(T) == builtin.TypeId.Pointer) {
-        if (info.Pointer.size == builtin.TypeInfo.Pointer.Size.Slice) {
-            if (info.Pointer.child == u8) {
+        print("typeid optional. child {}\n", .{typeinfo.Optional.child});
+    } else if (typeinfo == builtin.TypeId.Pointer) {
+        if (typeinfo.Pointer.size == builtin.TypeInfo.Pointer.Size.Slice) {
+            if (typeinfo.Pointer.child == u8) {
                 ptr += strToJson(ram, ptr, depth, value);
             } else {
                 depth += 1;
                 ptr += arrayishToJson(ram, ptr, depth, value, allocator);
             }
         }
-        if (info.Pointer.size == builtin.TypeInfo.Pointer.Size.One) {
+        if (typeinfo.Pointer.size == builtin.TypeInfo.Pointer.Size.One) {
             ptr += ramSetAt(ram, ptr, toJsonStep(value.*, depth, allocator));
         }
-    } else if (@typeInfo(T) == builtin.TypeId.Array) {
-        if (info.Array.child == u8) {
+    } else if (typeinfo == builtin.TypeId.Array) {
+        if (typeinfo.Array.child == u8) {
             depth += 1;
             ptr += strToJson(ram, ptr, depth, value);
         } else {
@@ -179,12 +193,12 @@ pub fn toJsonStep(value: var, oldDepth: u32, allocator: *Allocator) []const u8 {
                 print("array item {c}\n", item);
             }
         }
-    } else if (@typeInfo(T) == builtin.TypeId.Int) {
+    } else if (typeinfo == builtin.TypeId.Int) {
         ptr += intToJson(ram, ptr, depth, value, allocator);
-    } else if (@typeInfo(T) == builtin.TypeId.Bool) {
+    } else if (typeinfo == builtin.TypeId.Bool) {
         ptr += boolToJson(ram, ptr, depth, value, allocator);
     } else {
-        print("JSON TYPE UNKNOWN {} {}\n", @typeInfo(T), @typeName(T));
+        print("JSON TYPE UNKNOWN {} {}\n", .{ @typeInfo(T), @typeName(T) });
     }
     return ram[0..ptr];
 }
@@ -199,6 +213,7 @@ pub fn intToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator: *A
     var ptr = oldPtr; // params are const
     const intlen = 20;
     var intbuf = allocator.alloc(u8, intlen) catch unreachable;
+    defer allocator.free(intbuf);
     var intstr = std.fmt.bufPrint(intbuf, "{}", .{value}) catch unreachable;
     ptr += ramSetAt(ram, ptr, intstr);
     return ptr;
@@ -224,22 +239,19 @@ pub fn structToJson(ram: []u8, oldPtr: usize, depth: u32, value: var, allocator:
     ptr += ramSetAt(ram, ptr, "{\n");
     inline for (info.Struct.fields) |*field_info, idx| {
         const name = field_info.name;
-        //print("struct field {} name {}\n", idx, name);
-        ptr += ramSetAt(ram, ptr, space(depth, allocator));
-        ptr += ramSetAt(ram, ptr, "\"" ++ name ++ "\" : ");
+        ptr += ramSetSpace(ram, ptr, depth, allocator);
+        ptr += ramSetAt(ram, ptr, "\"" ++ name ++ "\": ");
         var fieldVal: field_info.field_type = @field(value, name);
-        ptr += ramSetAt(ram, ptr, toJsonStep(fieldVal, depth, allocator));
+        var partial_json = toJsonStep(fieldVal, depth, allocator);
+        ptr += ramSetAt(ram, ptr, partial_json);
+        allocator.free(partial_json);
         if (idx < info.Struct.fields.len - 1) {
-            ptr += ramSetAt(ram, ptr, ",\n");
+            ptr += ramSetAt(ram, ptr, ",");
         }
+        ptr += ramSetAt(ram, ptr, "\n");
     }
     ptr += ramSetAt(ram, ptr, "}");
     return ptr;
-}
-pub fn space(depth: usize, allocator: *Allocator) []const u8 {
-    var newstr = allocator.alloc(u8, depth) catch unreachable;
-    std.mem.set(u8, newstr[0..depth], ' ');
-    return newstr;
 }
 
 pub fn arrayishToJson(ram: []u8, oldPtr: usize, oldDepth: u32, value: var, allocator: *Allocator) usize {
@@ -249,7 +261,7 @@ pub fn arrayishToJson(ram: []u8, oldPtr: usize, oldDepth: u32, value: var, alloc
     ptr += ramSetAt(ram, ptr, "[\n");
     depth += 1;
     for (value) |item, idx| {
-        ptr += ramSetAt(ram, ptr, space(depth, allocator));
+        ptr += ramSetSpace(ram, ptr, depth, allocator);
         ptr += ramSetAt(ram, ptr, toJsonStep(item, depth, allocator));
         if (idx < value.len - 1) {
             ptr += ramSetAt(ram, ptr, ",\n");
@@ -258,6 +270,23 @@ pub fn arrayishToJson(ram: []u8, oldPtr: usize, oldDepth: u32, value: var, alloc
     ptr += ramSetAt(ram, ptr, "]\n");
     return ptr;
 }
+
+pub fn space(depth: usize, allocator: *Allocator) []const u8 {
+    var newstr = allocator.alloc(u8, depth) catch unreachable;
+    std.mem.set(u8, newstr[0..depth], ' ');
+    return newstr;
+}
+
+test "space" {}
+
+pub fn ramSetSpace(ram: []u8, ptr: usize, count: usize, allocator: *Allocator) usize {
+    var seperator = space(count, allocator);
+    var written = ramSetAt(ram, ptr, seperator);
+    allocator.free(seperator);
+    return written;
+}
+
+test "ramSetSpace" {}
 
 pub fn ramSetAt(ram: []u8, ptr: usize, extra: []const u8) usize {
     var newPtr = ptr + extra.len;

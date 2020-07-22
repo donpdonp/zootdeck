@@ -1,6 +1,6 @@
 // config.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const print = std.debug.warn;
 const Allocator = std.mem.Allocator;
 const util = @import("./util.zig");
 const Json = @import("./json.zig");
@@ -23,7 +23,7 @@ pub const Settings = struct {
     config_path: []const u8,
 };
 
-// on-disk format
+// on-disk config
 pub const ConfigFile = struct {
     win_x: i64,
     win_y: i64,
@@ -112,7 +112,7 @@ pub fn init(alloc: *Allocator) !void {
 pub fn readfile(filename: []const u8) !Settings {
     if (std.fs.cwd().createFile(filename, .{})) |*file| {
         try file.writeAll("{}\n");
-        warn("Warning: creating new {}\n", .{filename});
+        print("Warning: creating new {}\n", .{filename});
         file.close();
     } else |err| {} // existing file is OK
     var json = try std.fs.cwd().readFileAlloc(allocator, filename, 65535); //max_size?
@@ -127,17 +127,19 @@ pub fn read(json: []const u8) !Settings {
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
     if (root.get("win_x")) |w| {
-        warn("a", .{});
+        print("win_x", .{});
         settings.win_x = w.value.Integer;
     } else {
         settings.win_x = 800;
     }
     if (root.get("win_y")) |h| {
+        print("win_y", .{});
         settings.win_y = h.value.Integer;
     } else {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
+        print("columns {}", .{columns.value.Array.items.len});
         for (columns.value.Array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
@@ -164,27 +166,28 @@ pub fn read(json: []const u8) !Settings {
             settings.columns.append(colInfo) catch unreachable;
         }
     } else {
-        warn("missing columns\n", .{});
+        print("missing columns\n", .{});
     }
     return settings.*;
 }
 
 pub fn writefile(settings: Settings, filename: []const u8) void {
     var configFile = allocator.create(ConfigFile) catch unreachable;
-    configFile.win_x = @intCast(c_int, settings.win_x);
-    configFile.win_y = @intCast(c_int, settings.win_y);
+    configFile.win_x = settings.win_x;
+    configFile.win_y = settings.win_y;
     configFile.columns = std.ArrayList(*ColumnConfig).init(allocator);
     for (settings.columns.items) |column, idx| {
         configFile.columns.append(column.config) catch unreachable;
     }
     if (std.fs.cwd().openFile(filename, .{ .write = true })) |*file| {
-        warn("config.write toJson\n", .{});
-        var data = Json.toJson(allocator, configFile);
+        print("config.write toJson\n", .{});
+        var data = Json.toJson(configFile, true, allocator);
         _ = file.write(data) catch unreachable;
-        warn("config saved. {} {} bytes\n", .{ filename, data.len });
+        print("config saved. {} {} bytes\n", .{ filename, data.len });
         file.close();
+        print("{}", .{data});
     } else |err| {
-        warn("config save fail. {}\n", .{err});
+        print("config save fail. {}\n", .{err});
     } // existing file is OK
 }
 
@@ -200,7 +203,7 @@ test "read" {
     if (ret) |value| {
         assert(true);
     } else |err| {
-        warn("warn: {}\n", .{err});
+        print("warn: {}\n", .{err});
         assert(false);
     }
 }
