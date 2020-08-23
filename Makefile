@@ -14,6 +14,9 @@ run: build
 push:
 	pijul push donpdonp@nest.pijul.com:donpdonp/tootdeck
 
+test:
+	find src -name \*zig -print -exec zig test {} \;
+
 dist:
 	mkdir ${DIST}
 	cp -r zootdeck themes theme.css img glade ${DIST}/
