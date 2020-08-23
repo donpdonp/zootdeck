@@ -17,7 +17,7 @@ pub fn SomeList(comptime T: type) type {
 
         pub fn init() Self {
             return Self{
-                .list = ListType.init(),
+                .list = ListType{},
             };
         }
 
