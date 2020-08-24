@@ -109,7 +109,7 @@ pub fn init(alloc: *Allocator) !void {
 }
 
 pub fn readfile(filename: []const u8) !Settings {
-    if (std.fs.cwd().createFile(filename, .{})) |*file| {
+    if (std.fs.cwd().createFile(filename, .{ .exclusive = true })) |*file| {
         try file.writeAll("{}\n");
         print("Warning: creating new {}\n", .{filename});
         file.close();
