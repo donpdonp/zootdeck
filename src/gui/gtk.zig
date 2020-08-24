@@ -754,7 +754,7 @@ pub fn columnReadFilter(column: *Column) []const u8 {
     var filter_entry = builder_get_widget(column.builder, "column_filter");
     var cFilter = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, filter_entry));
     const filter = util.cstrToSliceCopy(allocator, cFilter); // edit in guithread--
-    warn("columnReadFilter: {}\n", .{filter});
+    warn("columnReadFilter: {} {}\n", .{ filter, filter.len });
     return filter;
 }
 
