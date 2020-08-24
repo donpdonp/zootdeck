@@ -5,7 +5,6 @@ const Allocator = std.mem.Allocator;
 const testing = std.testing;
 
 const util = @import("util.zig");
-const json_lib = @import("json.zig");
 
 pub const Type = Toot();
 
@@ -63,9 +62,7 @@ pub fn Toot() type {
         }
 
         pub fn parseTags(self: *Self, allocator: *Allocator) void {
-            const content_zig_namespace_yuk = self.content();
-            const jDecode = json_lib.jsonStrDecode(content_zig_namespace_yuk, allocator) catch unreachable;
-            const hDecode = util.htmlEntityDecode(jDecode, allocator) catch unreachable;
+            const hDecode = util.htmlEntityDecode(self.content(), allocator) catch unreachable;
             const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
 
             var wordParts = std.mem.tokenize(html_trim, " ");

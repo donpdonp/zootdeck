@@ -12,11 +12,10 @@ pub fn init(allocator: *Allocator) !void {
 }
 
 pub fn has(namespace: []const u8, key: []const u8, allocator: *Allocator) bool {
-    var keypath = std.fmt.allocPrint(allocator, "{}/{}/{}", cache_dir, namespace, key) catch unreachable;
+    var keypath = std.fmt.allocPrint(allocator, "{}/{}/{}", .{ cache_dir, namespace, key }) catch unreachable;
     var found = false;
     // zig stat() not ready
-    if (std.fs.File.openRead(keypath)) |file| {
-        file.close();
+    if (std.fs.cwd().access(keypath, .{ .read = true })) {
         found = true;
     } else |err| {
         warn("dbfile did not find {}\n", keypath);
@@ -28,7 +27,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     var dirpath = try std.fmt.allocPrint(allocator, "{}/{}", cache_dir, namespace);
     std.fs.makeDir(dirpath) catch {};
     var keypath = try std.fmt.allocPrint(allocator, "{}/{}", dirpath, key);
-    if (std.fs.File.openWrite(keypath)) |*file| {
+    if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         try file.write(value);
         file.close();
     } else |err| {

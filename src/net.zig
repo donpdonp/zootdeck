@@ -29,7 +29,7 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
 
     if (httpget(actor.payload.http)) |body| {
         const maxlen = if (body.len > 400) 400 else body.len;
-        warn("net http body len {}\n", .{body.len});
+        warn("net http body len {}\n{}", .{ body.len, actor.payload.http.content_type });
         actor.payload.http.body = body;
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))

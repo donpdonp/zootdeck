@@ -34,7 +34,7 @@ pub fn search(node: *Node) void {
             //warn("A TAG found\n");
         }
         var children = node.v.element.children;
-        var idx = u32(0);
+        var idx = @intCast(u32, 0);
         while (idx < children.length) : (idx += 1) {
             const cnode = children.data[idx];
             if (cnode) |chld| {

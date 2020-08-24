@@ -222,9 +222,10 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                const rootJsonType = @TagType(@TypeOf(tree.root));
-                if (rootJsonType == std.json.Array) {
+                const rootJsonType = @TypeOf(tree.root);
+                if (rootJsonType == std.json.Value) {
                     column.inError = false;
+                    warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
                     for (tree.root.Array.items) |jsonValue| {
                         const item = jsonValue.Object;
                         const toot = allocator.create(toot_lib.Type) catch unreachable;
@@ -234,16 +235,16 @@ fn netback(command: *thread.Command) void {
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
-                            var images = toot.get("media_attachments").?.value.Array;
+                            var images = toot.get("media_attachments").?.Array;
                             column.toots.sortedInsert(toot, allocator);
-                            var jstr = toot.get("content").?.value.String;
-                            var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
+                            var html = toot.get("content").?.String;
+                            //var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
                             var root = html_lib.parse(html, allocator);
                             html_lib.search(root);
                             cache_update(toot);
 
                             for (images.items) |image| {
-                                const imgUrl = image.Object.get("preview_url").?.value.String;
+                                const imgUrl = image.Object.get("preview_url").?.String;
                                 warn("toot #{} has img {}\n", .{ toot.id(), imgUrl });
                                 mediaget(toot, imgUrl);
                             }
@@ -253,6 +254,8 @@ fn netback(command: *thread.Command) void {
                     if (tree.root.Object.get("error")) |err| {
                         warn("netback json err {} \n", .{err.value.String});
                     }
+                } else {
+                    warn("!netback json unknown type {}\n", .{@TypeOf(tree.root)});
                 }
             } else { // empty body
                 column.inError = true;
@@ -276,8 +279,8 @@ fn mediaback(command: *thread.Command) void {
 
 fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
-    var account = reqres.toot.get("account").?.value.Object;
-    const acct = account.get("acct").?.value.String;
+    var account = reqres.toot.get("account").?.Object;
+    const acct = account.get("acct").?.String;
     warn("photoback! acct {} type {} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, allocator) catch unreachable;
     const cAcct = util.sliceToCstr(allocator, acct);
@@ -295,11 +298,11 @@ fn profileback(command: *thread.Command) void {
 }
 
 fn cache_update(toot: *toot_lib.Type) void {
-    var account = toot.get("account").?.value.Object;
-    const acct: []const u8 = account.get("acct").?.value.String;
-    const avatar_url: []const u8 = account.get("avatar").?.value.String;
+    var account = toot.get("account").?.Object;
+    const acct: []const u8 = account.get("acct").?.String;
+    const avatar_url: []const u8 = account.get("avatar").?.String;
     db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
-    const name: []const u8 = account.get("display_name").?.value.String;
+    const name: []const u8 = account.get("display_name").?.String;
     db.write(acct, "name", name, allocator) catch unreachable;
     if (dbfile.has(acct, "photo", allocator)) {} else {
         photoget(toot, avatar_url);

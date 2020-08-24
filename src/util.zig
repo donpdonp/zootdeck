@@ -24,7 +24,7 @@ pub fn cstrToSliceCopy(allocator: *Allocator, cstr: [*c]const u8) []const u8 {
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
-    return std.mem.eql(u8, a.get("id").?.value.String, b.get("id").?.value.String);
+    return std.mem.eql(u8, a.get("id").?.String, b.get("id").?.String);
 }
 
 pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []const u8 {

@@ -131,7 +131,7 @@ pub const TootPic = struct {
     toot: *toot_lib.Type,
     pic: []const u8,
 };
-pub fn toot_media_schedule(in: *c_void) callconv(.C) c_int {
+pub fn toot_media_schedule(in: ?*c_void) callconv(.C) c_int {
     const tootpic = @ptrCast(*TootPic, @alignCast(8, in));
     const toot = tootpic.toot;
     if (findColumnByTootId(toot.id())) |column| {
@@ -188,7 +188,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 pub fn update_author_photo(acct: []const u8) void {
     warn("Update_author_photo {}\n", .{acct});
     // all toots in all columns :O
-    for (columns.toSlice()) |column| {
+    for (columns.items) |column| {
         const toots = column.main.toots.author(acct, allocator);
         for (toots) |toot| {
             warn("update_author_photo {} {} {}\n", .{ column.main.filter.host(), acct, toot.id() });
