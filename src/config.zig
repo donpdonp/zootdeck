@@ -3,7 +3,6 @@ const std = @import("std");
 const print = std.debug.warn;
 const Allocator = std.mem.Allocator;
 const util = @import("./util.zig");
-const Json = @import("./json.zig");
 const filter_lib = @import("./filter.zig");
 const toot_lib = @import("./toot.zig");
 const toot_list = @import("./toot_list.zig");
@@ -27,7 +26,7 @@ pub const Settings = struct {
 pub const ConfigFile = struct {
     win_x: i64,
     win_y: i64,
-    columns: std.ArrayList(*ColumnConfig),
+    columns: []*ColumnConfig,
 };
 
 pub const ColumnInfo = struct {
@@ -175,17 +174,16 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     var configFile = allocator.create(ConfigFile) catch unreachable;
     configFile.win_x = settings.win_x;
     configFile.win_y = settings.win_y;
-    configFile.columns = std.ArrayList(*ColumnConfig).init(allocator);
+    var column_infos = std.ArrayList(*ColumnConfig).init(allocator);
     for (settings.columns.items) |column, idx| {
-        configFile.columns.append(column.config) catch unreachable;
+        column_infos.append(column.config) catch unreachable;
     }
+    configFile.columns = column_infos.items;
     if (std.fs.cwd().openFile(filename, .{ .write = true })) |*file| {
         print("config.write toJson\n", .{});
-        var data = Json.toJson(configFile, true, allocator);
-        _ = file.write(data) catch unreachable;
-        print("config saved. {} {} bytes\n", .{ filename, data.len });
+        std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
+        print("config saved. {} {} bytes\n", .{ filename, file.getPos() });
         file.close();
-        print("{}", .{data});
     } else |err| {
         print("config save fail. {}\n", .{err});
     } // existing file is OK

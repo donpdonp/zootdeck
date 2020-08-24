@@ -21,7 +21,6 @@ const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
 const toot_list = @import("./toot_list.zig");
 const toot_lib = @import("./toot.zig");
-const json_lib = @import("./json.zig");
 const html_lib = @import("./html.zig");
 const filter_lib = @import("./filter.zig");
 
