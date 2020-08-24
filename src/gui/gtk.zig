@@ -389,11 +389,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     labelBufPrint(date_label, "{}", .{created_at});
     photo_refresh(author_acct, builder);
 
-    const content = toot.content();
-    var json_parser = std.json.Parser.init(allocator, true);
-    //var jDecode = std.json.parse([]const u8, &std.json.TokenStream.init(content), std.json.ParseOptions{}) catch unreachable;
-    var jDecode = json_parser.parse(content) catch unreachable;
-    var hDecode = util.htmlEntityDecode(jDecode.root.String, allocator) catch unreachable;
+    var hDecode = util.htmlEntityDecode(toot.content(), allocator) catch unreachable;
     const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
     var line_limit = 50 / columns.items.len;
     const html_wrapped = hardWrap(html_trim, line_limit) catch unreachable;
