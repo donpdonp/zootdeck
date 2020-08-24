@@ -46,8 +46,8 @@ pub fn Toot() type {
 
         pub fn author(self: *const Self, acct: []const u8) bool {
             if (self.hashmap.get("account")) |kv| {
-                if (kv.value.Object.get("acct")) |akv| {
-                    const existing_acct = akv.value.String;
+                if (kv.Object.get("acct")) |akv| {
+                    const existing_acct = akv.String;
                     return std.mem.order(u8, acct, existing_acct) == std.math.Order.eq;
                 } else {
                     return false;
@@ -74,7 +74,7 @@ pub fn Toot() type {
         }
 
         pub fn addImg(self: *Self, imgdata: ImgType) void {
-            warn("addImg toot {*}\n", self);
+            warn("addImg toot {*}\n", .{self});
             self.imgList.append(imgdata) catch unreachable;
         }
 

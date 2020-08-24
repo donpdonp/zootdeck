@@ -50,7 +50,7 @@ pub fn SomeList(comptime T: type) type {
                 }
                 ptr = listItem.next;
             }
-            return winners.toSlice();
+            return winners.items;
         }
 
         pub fn sortedInsert(self: *Self, item: T, allocator: *Allocator) void {

@@ -57,19 +57,19 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
                 if (ret == 0) {
                     _ = c.mdb_dbi_close(env, dbiptr.*);
                 } else {
-                    warn("mdb_txn_commit ERR {}\n", ret);
+                    warn("mdb_txn_commit ERR {}\n", .{ret});
                     return error.mdb_txn_commit;
                 }
             } else {
-                warn("mdb_put ERR {}\n", ret);
+                warn("mdb_put ERR {}\n", .{ret});
                 return error.mdb_put;
             }
         } else {
-            warn("mdb_dbi_open ERR {}\n", ret);
+            warn("mdb_dbi_open ERR {}\n", .{ret});
             return error.mdb_dbi_open;
         }
     } else {
-        warn("mdb_txn_begin ERR {}\n", ret);
+        warn("mdb_txn_begin ERR {}\n", .{ret});
         return error.mdb_txn_begin;
     }
 }

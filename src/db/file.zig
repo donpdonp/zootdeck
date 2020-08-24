@@ -18,19 +18,19 @@ pub fn has(namespace: []const u8, key: []const u8, allocator: *Allocator) bool {
     if (std.fs.cwd().access(keypath, .{ .read = true })) {
         found = true;
     } else |err| {
-        warn("dbfile did not find {}\n", keypath);
+        warn("dbfile did not find {}\n", .{keypath});
     }
     return found;
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
-    var dirpath = try std.fmt.allocPrint(allocator, "{}/{}", cache_dir, namespace);
-    std.fs.makeDir(dirpath) catch {};
-    var keypath = try std.fmt.allocPrint(allocator, "{}/{}", dirpath, key);
-    if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
-        try file.write(value);
+    var dirpath = try std.fmt.allocPrint(allocator, "{}/{}", .{ cache_dir, namespace });
+    std.fs.makeDirAbsolute(dirpath) catch {};
+    var keypath = try std.fmt.allocPrint(allocator, "{}/{}", .{ dirpath, key });
+    if (std.fs.cwd().createFile(keypath, .{ .truncate = true })) |*file| {
+        var ignore = file.write(value);
         file.close();
     } else |err| {
-        warn("open write err {} {}\n", keypath, err);
+        warn("open write err {} {}\n", .{ keypath, err });
     }
 }

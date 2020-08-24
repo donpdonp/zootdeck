@@ -113,7 +113,7 @@ pub fn column_config_oauth_url_schedule(in: ?*c_void) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_author_photo_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_author_photo_schedule(in: ?*c_void) callconv(.C) c_int {
     const cAcct = @ptrCast([*c]const u8, @alignCast(8, in));
     const acct = util.cstrToSliceCopy(allocator, cAcct);
     update_author_photo(acct);
@@ -135,7 +135,7 @@ pub fn toot_media_schedule(in: ?*c_void) callconv(.C) c_int {
     const tootpic = @ptrCast(*TootPic, @alignCast(8, in));
     const toot = tootpic.toot;
     if (findColumnByTootId(toot.id())) |column| {
-        const builder = column.guitoots.get(toot.id()).?.value;
+        const builder = column.guitoots.get(toot.id()).?;
         toot_media(column, builder, toot, tootpic.pic);
     }
     return 0;
@@ -194,7 +194,7 @@ pub fn update_author_photo(acct: []const u8) void {
             warn("update_author_photo {} {} {}\n", .{ column.main.filter.host(), acct, toot.id() });
             var tootbuilderMaybe = column.guitoots.get(toot.id());
             if (tootbuilderMaybe) |kv| {
-                photo_refresh(acct, kv.value);
+                photo_refresh(acct, kv);
             }
         }
     }
