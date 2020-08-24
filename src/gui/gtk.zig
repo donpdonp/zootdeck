@@ -246,7 +246,7 @@ pub fn update_column_toots_schedule(in: ?*c_void) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_config_oauth_finalize_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_config_oauth_finalize_schedule(in: ?*c_void) callconv(.C) c_int {
     const c_column = @ptrCast(*config.ColumnInfo, @alignCast(8, in));
     var columnMaybe = find_gui_column(c_column);
     if (columnMaybe) |column| {

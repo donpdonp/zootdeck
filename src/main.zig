@@ -172,9 +172,9 @@ fn oauthtokenback(command: *thread.Command) void {
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
         const rootJsonType = @TagType(@TypeOf(tree.root));
-        if (rootJsonType == std.json.ObjectMap) {
+        if (true) { // todo: rootJsonType == std.json.ObjectMap) {
             if (tree.root.Object.get("access_token")) |cid| {
-                column.config.token = cid.value.String;
+                column.config.token = cid.String;
                 config.writefile(settings, "config.json");
                 column.last_check = 0;
                 profileget(column);
@@ -195,17 +195,17 @@ fn oauthback(command: *thread.Command) void {
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
         const rootJsonType = @TagType(@TypeOf(tree.root));
-        if (rootJsonType == std.json.ObjectMap) {
+        if (true) { //todo: rootJsonType == std.json.Value) {
             if (tree.root.Object.get("client_id")) |cid| {
-                column.oauthClientId = cid.value.String;
+                column.oauthClientId = cid.String;
             }
             if (tree.root.Object.get("client_secret")) |cid| {
-                column.oauthClientSecret = cid.value.String;
+                column.oauthClientSecret = cid.String;
             }
             warn("*oauthback client id {} secret {}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*c_void, column));
         } else {
-            warn("*oauthback json err body {}\n", .{http.body});
+            warn("*oauthback json type err {}\n{}\n", .{ rootJsonType, http.body });
         }
     } else {
         warn("*oauthback net err {}\n", .{http.response_code});
@@ -223,6 +223,7 @@ fn netback(command: *thread.Command) void {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
                 const rootJsonType = @TypeOf(tree.root);
+                // todo: fix json type check
                 if (rootJsonType == std.json.Value) {
                     column.inError = false;
                     warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
