@@ -222,10 +222,8 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                const z = 0;
-                const rootJsonType = @TypeOf(tree.root);
                 // todo: fix json type check
-                if (rootJsonType == std.json.Value) {
+                if (tree.root == std.json.Value.Array) {
                     column.inError = false;
                     warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
                     for (tree.root.Array.items) |jsonValue| {
@@ -252,12 +250,12 @@ fn netback(command: *thread.Command) void {
                             }
                         }
                     }
-                } else if (rootJsonType == std.json.ObjectMap) {
+                } else if (tree.root == .Object) {
                     if (tree.root.Object.get("error")) |err| {
-                        warn("netback json err {} \n", .{err.value.String});
+                        warn("netback json err {} \n", .{err.String});
                     }
                 } else {
-                    warn("!netback json unknown root tagtype {} root value: {}\n", .{ rootJsonType, tree.root.jsonStringify() });
+                    warn("!netback json unknown root tagtype {}\n", .{tree.root});
                 }
             } else { // empty body
                 column.inError = true;
