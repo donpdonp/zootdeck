@@ -1,6 +1,6 @@
 // config.zig
 const std = @import("std");
-const print = std.debug.warn;
+const warn = std.debug.warn;
 const Allocator = std.mem.Allocator;
 const util = @import("./util.zig");
 const filter_lib = @import("./filter.zig");
@@ -111,7 +111,7 @@ pub fn init(alloc: *Allocator) !void {
 pub fn readfile(filename: []const u8) !Settings {
     if (std.fs.cwd().createFile(filename, .{ .exclusive = true })) |*file| {
         try file.writeAll("{}\n");
-        print("Warning: creating new {}\n", .{filename});
+        warn("Warning: creating new {}\n", .{filename});
         file.close();
     } else |err| {} // existing file is OK
     var json = try std.fs.cwd().readFileAlloc(allocator, filename, 65535); //max_size?
@@ -126,19 +126,19 @@ pub fn read(json: []const u8) !Settings {
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
     if (root.get("win_x")) |w| {
-        print("win_x", .{});
+        warn("config: win_x\n", .{});
         settings.win_x = w.Integer;
     } else {
         settings.win_x = 800;
     }
     if (root.get("win_y")) |h| {
-        print("win_y", .{});
+        warn("config: win_y\n", .{});
         settings.win_y = h.Integer;
     } else {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        print("columns {}", .{columns.Array.items.len});
+        warn("config: columns {}\n", .{columns.Array.items.len});
         for (columns.Array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
@@ -165,7 +165,7 @@ pub fn read(json: []const u8) !Settings {
             settings.columns.append(colInfo) catch unreachable;
         }
     } else {
-        print("missing columns\n", .{});
+        warn("missing columns\n", .{});
     }
     return settings.*;
 }
@@ -180,12 +180,12 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     }
     configFile.columns = column_infos.items;
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
-        print("config.write toJson\n", .{});
+        warn("config.write toJson\n", .{});
         std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
-        print("config saved. {} {} bytes\n", .{ filename, file.getPos() });
+        warn("config saved. {} {} bytes\n", .{ filename, file.getPos() });
         file.close();
     } else |err| {
-        print("config save fail. {}\n", .{err});
+        warn("config save fail. {}\n", .{err});
     } // existing file is OK
 }
 

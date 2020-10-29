@@ -3,9 +3,9 @@ const std = @import("std");
 const builtin = @import("builtin");
 const warn = std.debug.warn;
 const callocator = std.heap.c_allocator;
+const allocator = callocator;
 const logAlloc = @import("warning_allocator.zig").WarningAllocator;
 //const allocator = &logAlloc.init(callocator).allocator;
-const allocator = callocator;
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
@@ -222,9 +222,9 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                const rootJsonType = @TypeOf(tree.root);
+                const rootJsonType = @TagType(@TypeOf(tree.root));
                 // todo: fix json type check
-                if (rootJsonType == std.json.Value) {
+                if (rootJsonType.String == std.json.Value.Object) {
                     column.inError = false;
                     warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
                     for (tree.root.Array.items) |jsonValue| {
