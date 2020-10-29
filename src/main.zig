@@ -222,8 +222,7 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                // todo: fix json type check
-                if (tree.root == std.json.Value.Array) {
+                if (tree.root == .Array) {
                     column.inError = false;
                     warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
                     for (tree.root.Array.items) |jsonValue| {
