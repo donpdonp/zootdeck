@@ -10,10 +10,6 @@ const c = @cImport({
 
 pub fn init(myAllocator: *Allocator) !void {
     allocator = myAllocator;
-    var trickZig = false;
-    if (trickZig) {
-        return error.BadValue;
-    }
 }
 
 pub fn go(data: ?*c_void) callconv(.C) ?*c_void {

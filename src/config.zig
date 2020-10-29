@@ -102,10 +102,6 @@ const ConfigError = error{MissingParams};
 
 pub fn init(alloc: *Allocator) !void {
     allocator = alloc;
-    var trickZig = false;
-    if (trickZig) {
-        return error.BadValue;
-    }
 }
 
 pub fn readfile(filename: []const u8) !Settings {
