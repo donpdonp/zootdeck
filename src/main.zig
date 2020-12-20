@@ -3,9 +3,11 @@ const std = @import("std");
 const builtin = @import("builtin");
 const warn = std.debug.warn;
 const callocator = std.heap.c_allocator;
+const out = std.io.getStdOut().outStream(); // catch unreachable).outStream().stream;
+//var my_allocator = &std.heap.loggingAllocator(callocator, out);
+//var my_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+//const allocator = &my_allocator.allocator;
 const allocator = callocator;
-const logAlloc = @import("warning_allocator.zig").WarningAllocator;
-//const allocator = &logAlloc.init(callocator).allocator;
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
