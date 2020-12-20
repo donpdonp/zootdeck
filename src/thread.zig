@@ -13,11 +13,12 @@ const c = @cImport({
 });
 
 pub const Actor = struct {
-    thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void
+    thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void,
+    allocator: *std.mem.Allocator
 };
 
 pub const Command = packed struct {
-    id: u16, verb: *const CommandVerb
+    id: u16, verb: *const CommandVerb, actor: *Actor
 };
 
 pub const CommandVerb = packed union {

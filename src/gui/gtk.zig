@@ -579,18 +579,18 @@ fn main_check_resize(selfptr: *c_void) callconv(.C) void {
     if (w != settings.win_x) {
         warn("main_check_resize, win_x {} != w {}\n", .{ settings.win_x, w });
         settings.win_x = w;
-        thread.signal(myActor, &thread.Command{ .id = 10, .verb = &thread.CommandVerb{ .idle = undefined } });
+        thread.signal(myActor, &thread.Command{.actor = myActor,  .id = 10, .verb = &thread.CommandVerb{ .idle = undefined } });
     }
     if (h != settings.win_y) {
         warn("main_check_resize, win_x {} != w {}\n", .{ settings.win_x, w });
         settings.win_y = h;
-        thread.signal(myActor, &thread.Command{ .id = 10, .verb = &thread.CommandVerb{ .idle = undefined } });
+        thread.signal(myActor, &thread.Command{.actor = myActor,  .id = 10, .verb = &thread.CommandVerb{ .idle = undefined } });
     }
 }
 
 fn actionbar_add() callconv(.C) void {
     warn("actionbar_add\n", .{});
-    thread.signal(myActor, &thread.Command{ .id = 3, .verb = &thread.CommandVerb{ .idle = undefined } });
+    thread.signal(myActor, &thread.Command{.actor = myActor, .id = 3, .verb = &thread.CommandVerb{ .idle = undefined } });
 }
 
 fn zoot_drag() callconv(.C) void {
