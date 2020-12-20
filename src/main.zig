@@ -3,12 +3,10 @@ const std = @import("std");
 const builtin = @import("builtin");
 const warn = std.debug.print;
 const log = std.log;
-const callocator = std.heap.c_allocator;
-const out = std.io.getStdOut().outStream(); // catch unreachable).outStream().stream;
-//var my_allocator = &std.heap.loggingAllocator(callocator, out);
-//var my_allocator = std.heap.GeneralPurposeAllocator(.{}){};
-//const allocator = &my_allocator.allocator;
-const allocator = callocator;
+const CAllocator = std.heap.c_allocator;
+const out = std.io.getStdOut().outStream(); 
+const LogAllocator = &std.heap.loggingAllocator(CAllocator, out);
+const GPAllocator = (std.heap.GeneralPurposeAllocator(.{}){});
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
@@ -31,7 +29,8 @@ var settings: config.Settings = undefined;
 
 pub fn main() !void {
     hello();
-    try initialize();
+    var allocator = GPAllocator.allocator;
+    try initialize(&allocator);
 
     if (config.readfile("config.json")) |config_data| {
         settings = config_data;
@@ -40,7 +39,7 @@ pub fn main() !void {
         var heartbeatThread = thread.create(heartbeat.go, dummy_payload, heartback);
 
         while (true) {
-            statewalk();
+            statewalk(&allocator);
             log.debug("== epoll wait\n", .{});
             thread.wait(); // main ipc listener
         }
@@ -49,7 +48,7 @@ pub fn main() !void {
     }
 }
 
-fn initialize() !void {
+fn initialize(allocator: *std.mem.Allocator) !void {
     try config.init(allocator);
     try heartbeat.init(allocator);
     try statemachine.init(allocator);
@@ -59,7 +58,7 @@ fn initialize() !void {
     try gui.init(allocator, &settings);
 }
 
-fn statewalk() void {
+fn statewalk(allocator: *std.mem.Allocator) void {
     if (statemachine.state == statemachine.States.Init) {
         statemachine.setState(statemachine.States.Setup); // transition
         var ram = allocator.alloc(u8, 1) catch unreachable;
