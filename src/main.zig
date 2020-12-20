@@ -1,7 +1,8 @@
 // main.zig
 const std = @import("std");
 const builtin = @import("builtin");
-const warn = std.debug.warn;
+const warn = std.debug.print;
+const log = std.log;
 const callocator = std.heap.c_allocator;
 const out = std.io.getStdOut().outStream(); // catch unreachable).outStream().stream;
 //var my_allocator = &std.heap.loggingAllocator(callocator, out);
@@ -40,11 +41,11 @@ pub fn main() !void {
 
         while (true) {
             statewalk();
-            warn("== epoll wait\n", .{});
+            log.debug("== epoll wait\n", .{});
             thread.wait(); // main ipc listener
         }
     } else |err| {
-        warn("config error: {}\n", .{err});
+        log.err("config error: {}\n", .{err});
     }
 }
 
@@ -81,7 +82,7 @@ fn statewalk() void {
 }
 
 fn hello() void {
-    warn("zootdeck {} {} tid {x}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.arch), thread.self() });
+    log.info("zootdeck {} {} tid {x}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.arch), thread.self() });
 }
 
 fn columnget(column: *config.ColumnInfo) void {
