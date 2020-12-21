@@ -4,9 +4,9 @@ const builtin = @import("builtin");
 const warn = std.debug.print;
 const log = std.log;
 const CAllocator = std.heap.c_allocator;
-const out = std.io.getStdOut().outStream(); 
-const LogAllocator = &std.heap.loggingAllocator(CAllocator, out);
-const GPAllocator = (std.heap.GeneralPurposeAllocator(.{}){});
+const stdout = std.io.getStdOut(); 
+var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
+var GPAllocator = (std.heap.GeneralPurposeAllocator(.{}){});
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
@@ -29,8 +29,8 @@ var settings: config.Settings = undefined;
 
 pub fn main() !void {
     hello();
-    var allocator = LogAllocator.allocator;
-    try initialize(&allocator);
+    const allocator = &LogAllocator.allocator;
+    try initialize(allocator);
 
     if (config.readfile("config.json")) |config_data| {
         settings = config_data;
@@ -39,7 +39,7 @@ pub fn main() !void {
         var heartbeatThread = thread.create(heartbeat.go, dummy_payload, heartback);
 
         while (true) {
-            statewalk(&allocator);
+            statewalk(allocator);
             log.debug("== epoll wait\n", .{});
             thread.wait(); // main ipc listener
         }
