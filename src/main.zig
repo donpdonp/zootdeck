@@ -7,7 +7,7 @@ const CAllocator = std.heap.c_allocator;
 const stdout = std.io.getStdOut(); 
 var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
 var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
-var alloc = &GPAllocator.allocator;
+var alloc = &GPAllocator.allocator; // take the ptr in a separate step
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
