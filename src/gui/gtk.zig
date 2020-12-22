@@ -18,6 +18,7 @@ const GUIError = error{
     GtkInit,
     GladeLoad,
 };
+
 var allocator: *Allocator = undefined;
 var settings: *config.Settings = undefined;
 pub const queue = std.ArrayList(u8).init(allocator);
@@ -808,41 +809,40 @@ fn column_config_done(selfptr: *c_void) callconv(.C) void {
 }
 
 fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytype, data: anytype) c.gulong {
-    // pub extern fn g_signal_connect_data(instance: gpointer, 
-                                        // detailed_signal: [*c]const gchar, 
-                                        // c_handler: GCallback, 
-                                        // data: gpointer, 
-                                        // destroy_data: GClosureNotify, 
-                                        // connect_flags: GConnectFlags) gulong;
+    // pub extern fn g_signal_connect_data(instance: gpointer,
+    // detailed_signal: [*c]const gchar,
+    // c_handler: GCallback,
+    // data: gpointer,
+    // destroy_data: GClosureNotify,
+    // connect_flags: GConnectFlags) gulong;
     // connect_flags: GConnectFlags) gulong;
     // typedef void* gpointer;
-
     var signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
     var data_ptr: ?*c_void = undefined;
-    if (@sizeOf(@TypeOf(data)) != 0) { data_ptr = @ptrCast(?*c_void, data); } else { data_ptr = null; }
+    if (@sizeOf(@TypeOf(data)) != 0) {
+        data_ptr = @ptrCast(?*c_void, data);
+    } else {
+        data_ptr = null;
+    }
     var thing = @ptrCast(c.gpointer, instance);
-    return c.g_signal_connect_data(thing, signal_name_null.ptr, 
-        @ptrCast(c.GCallback, callback), data_ptr, null, c.GConnectFlags.G_CONNECT_AFTER);
+    return c.g_signal_connect_data(thing, signal_name_null.ptr, @ptrCast(c.GCallback, callback), data_ptr, null, c.GConnectFlags.G_CONNECT_AFTER);
 }
 
-pub fn mainloop() void {
-    //if(c.gtk_events_pending() != 0) {
-    //  warn("gtk pending {}\n", c.gtk_events_pending());
+pub fn mainloop() bool {
+    var stop = false;
+    warn("gtk pending {}\n", .{c.gtk_events_pending()});
+    warn("gtk main level {}\n", .{c.gtk_main_level()});
     var exitcode = c.gtk_main_iteration();
-    //  warn("gtk iteration exit {}\n", exitcode);
-    // }
+    warn("gtk main interaction return {}\n", .{exitcode});
+    //if(c.gtk_events_pending() != 0) {
+    if (exitcode == 0) { stop = true; }
+    return stop;
 }
 
 pub fn gtk_quit() callconv(.C) void {
     warn("gtk signal destroy - gtk_main_quit\n", .{});
     c.g_object_unref(myBuilder);
-    //var window = @ptrCast(?&c.GtkWindow, data);
-    //c.gtk_main_quit();
-}
-
-pub fn gtk_delete_event() void {
-    warn("gtk signal delete-event\n", .{});
-    stop = true;
+    c.gtk_main_quit();
 }
 
 pub fn gui_end() void {
