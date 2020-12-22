@@ -98,7 +98,9 @@ fn columnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
     httpInfo.response_code = 0;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-    var netthread = thread.create(net.go, verb, netback) catch unreachable;
+    if (thread.create(net.go, verb, netback)) |actor| {} else |err| {
+        warn("columnget {}", .{err});
+    }
 }
 
 fn profileget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
