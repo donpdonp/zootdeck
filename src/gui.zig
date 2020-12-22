@@ -34,8 +34,9 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     if (guilib.gui_setup(myActor)) {
         // mainloop
         while (!stop) {
-            guilib.mainloop();
+            stop = guilib.mainloop();
         }
+        warn("last mainloop {}\n",  .{  guilib.mainloop()});
         guilib.gui_end();
     } else |err| {
         warn("gui error {}\n", .{err});
