@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 const warn = std.debug.print;
 const log = std.log;
 const CAllocator = std.heap.c_allocator;
-const stdout = std.io.getStdOut(); 
+const stdout = std.io.getStdOut();
 var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
 var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
 var alloc = &GPAllocator.allocator; // take the ptr in a separate step
@@ -35,7 +35,7 @@ pub fn main() !void {
     if (config.readfile("config.json")) |config_data| {
         settings = config_data;
         var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        warn("main start guithread {}\n", .{ alloc });
+        warn("main start guithread {}\n", .{alloc});
         var guiThread = thread.create(gui.go, dummy_payload, guiback);
         var heartbeatThread = thread.create(heartbeat.go, dummy_payload, heartback);
 

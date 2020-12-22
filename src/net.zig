@@ -26,7 +26,7 @@ pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
     command.id = 1;
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     command.verb = actor.payload;
-    
+
     if (httpget(actor.payload.http)) |body| {
         const maxlen = if (body.len > 400) 400 else body.len;
         warn("net http body len {}\n{}", .{ body.len, actor.payload.http.content_type });
