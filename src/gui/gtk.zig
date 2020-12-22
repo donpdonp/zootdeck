@@ -64,6 +64,8 @@ pub fn gui_setup(actor: *thread.Actor) !void {
         warn("builder file fail", .{});
         return GUIError.GladeLoad;
     }
+
+    // Callbacks
     _ = c.gtk_builder_add_callback_symbol(myBuilder, "actionbar.add", actionbar_add);
     _ = c.gtk_builder_add_callback_symbol(myBuilder, "zoot_drag", zoot_drag);
     // captures all keys oh no
@@ -78,6 +80,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     var h = @intCast(c.gint, settings.win_y);
     //  c.gtk_widget_set_size_request(main_window, w, h);
     c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
+    _ = g_signal_connect(main_window, "destroy", gtk_quit, null);
     warn("{} gui_setup done\n", .{libname()});
 }
 
@@ -804,23 +807,22 @@ fn column_config_done(selfptr: *c_void) callconv(.C) void {
     thread.signal(myActor, command);
 }
 
-fn signal_connect(window: [*c]c.GtkWidget, action: []const u8, fun: fn () void) !void {
-    //var ret = g_signal_connect(@ptrCast(?*c.GtkWidget, window), action, fun, @ptrCast(?*c_void, window) );
-    var ret = "".len;
-    if (ret != 0) {
-        warn("ERR signal connect {}\n", .{ret});
-        return error.BadValue;
-    }
-}
-
 fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytype, data: anytype) c.gulong {
-    //pub extern fn g_signal_connect_object(instance: gpointer,
-    // detailed_signal: ?&const gchar, c_handler: GCallback, gobject: gpointer,
+    // pub extern fn g_signal_connect_data(instance: gpointer, 
+                                        // detailed_signal: [*c]const gchar, 
+                                        // c_handler: GCallback, 
+                                        // data: gpointer, 
+                                        // destroy_data: GClosureNotify, 
+                                        // connect_flags: GConnectFlags) gulong;
     // connect_flags: GConnectFlags) gulong;
     // typedef void* gpointer;
-    const signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
-    const data_ptr = @ptrCast(?*c_void, data);
-    return c.g_signal_connect_data(@ptrCast(c.gpointer, instance), signal_name_null.ptr, @ptrCast(c.GCallback, callback), data_ptr, null, c.GConnectFlags.G_CONNECT_AFTER);
+
+    var signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
+    var data_ptr: ?*c_void = undefined;
+    if (@sizeOf(@TypeOf(data)) != 0) { data_ptr = @ptrCast(?*c_void, data); } else { data_ptr = null; }
+    var thing = @ptrCast(c.gpointer, instance);
+    return c.g_signal_connect_data(thing, signal_name_null.ptr, 
+        @ptrCast(c.GCallback, callback), data_ptr, null, c.GConnectFlags.G_CONNECT_AFTER);
 }
 
 pub fn mainloop() void {
@@ -831,7 +833,7 @@ pub fn mainloop() void {
     // }
 }
 
-pub fn gtk_quit() void {
+pub fn gtk_quit() callconv(.C) void {
     warn("gtk signal destroy - gtk_main_quit\n", .{});
     c.g_object_unref(myBuilder);
     //var window = @ptrCast(?&c.GtkWindow, data);
