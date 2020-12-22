@@ -8,6 +8,9 @@ build: ragel/lang.c
 ragel/lang.c: ragel/lang.c.rl
 	ragel -o ragel/lang.c ragel/lang.c.rl
 
+format:
+	zig fmt src
+
 run: build
 	./zig-cache/bin/zootdeck
 
