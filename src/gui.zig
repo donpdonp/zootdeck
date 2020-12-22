@@ -16,6 +16,7 @@ var allocator: *Allocator = undefined;
 var settings: *config.Settings = undefined;
 
 pub fn init(alloca: *Allocator, set: *config.Settings) !void {
+    warn("gui init allocator {*} {}\n", .{ alloca, alloca });
     settings = set;
     allocator = alloca;
     columns = std.ArrayList(*Column).init(allocator);
@@ -26,9 +27,10 @@ var myActor: *thread.Actor = undefined;
 var stop = false;
 
 pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
+    warn("gui {} thread start &actor_data: {*} data: {}\n", .{ guilib.libname(), data, data });
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     myActor = @ptrCast(*thread.Actor, data8);
-    warn("gui {} thread start {*} {}\n", .{ guilib.libname(), myActor, myActor });
+    warn("gui {} thread start &actor: {*} actor:{}\n", .{ guilib.libname(), myActor, myActor });
     if (guilib.gui_setup(myActor)) {
         // mainloop
         while (!stop) {

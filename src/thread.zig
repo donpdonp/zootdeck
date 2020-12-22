@@ -13,8 +13,7 @@ const c = @cImport({
 });
 
 pub const Actor = struct {
-    thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void,
-    allocator: *std.mem.Allocator
+    thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void
 };
 
 pub const Command = packed struct {
@@ -56,6 +55,13 @@ pub fn create(
     return error.BadValue;
 }
 
+pub fn signal(actor: *Actor, command: *Command) void {
+    command.actor = actor; // fill in the command
+    const command_addr_bytes = @ptrCast(*const [@sizeOf(*Command)]u8, &command);
+    warn("signaling from tid {x} command bytes {x} len{} {}\n", .{ actor.thread_id, command_addr_bytes, command_addr_bytes.len, command });
+    ipc.send(actor.client, command_addr_bytes);
+}
+
 pub fn destroy(actor: *Actor) void {
     warn("thread.destroy {}\n", actor);
 }
@@ -66,6 +72,7 @@ pub fn self() c.pthread_t {
 
 pub fn wait() void {
     var client_aaaa = ipc.wait();
+    warn("ipc.wait {*}", .{client_aaaa});
     var cp_int: usize = @ptrToInt(client_aaaa); // possible zig 0.4 bug
     var cptr_zigbug = cp_int & 0x00000000ffffffff; // override unallocated ram marker of 0xaaaaaaaa
     var client = @intToPtr(*ipc.Client, cptr_zigbug);
@@ -85,12 +92,6 @@ pub fn wait() void {
             }
         }
     }
-}
-
-pub fn signal(actor: *Actor, command: *const Command) void {
-    const command_addr_bytes = @ptrCast(*const [@sizeOf(*Command)]u8, &command);
-    warn("signaling from tid {x} command bytes {x} len{} {}\n", .{ actor.thread_id, command_addr_bytes, command_addr_bytes.len, command });
-    ipc.send(actor.client, command_addr_bytes);
 }
 
 pub fn join(jthread: c.pthread_t, joinret: *?*c_void) c_int {
