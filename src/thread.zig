@@ -71,11 +71,7 @@ pub fn self() c.pthread_t {
 }
 
 pub fn wait() void {
-    var client_aaaa = ipc.wait();
-    warn("ipc.wait {*}", .{client_aaaa});
-    var cp_int: usize = @ptrToInt(client_aaaa); // possible zig 0.4 bug
-    var cptr_zigbug = cp_int & 0x00000000ffffffff; // override unallocated ram marker of 0xaaaaaaaa
-    var client = @intToPtr(*ipc.Client, cptr_zigbug);
+    var client = ipc.wait();
 
     var bufArray = [_]u8{0} ** 16; // arbitrary receive buffer
     const buf: []u8 = ipc.read(client, bufArray[0..]);

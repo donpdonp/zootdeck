@@ -68,6 +68,7 @@ pub fn wait() *Client {
 
 pub fn read(client: *Client, buf: []u8) []u8 {
     const pkt_fixed_portion = 1;
+    warn("c.read readSocket {*}\n", .{client});
     var readCountOrErr = c.read(client.readSocket, buf.ptr, pkt_fixed_portion);
     if (readCountOrErr >= pkt_fixed_portion) {
         const msglen: usize = buf[0];
