@@ -36,8 +36,8 @@ pub fn main() !void {
         settings = config_data;
         var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
         warn("main start guithread {}\n", .{alloc});
-        var guiThread = thread.create(gui.go, dummy_payload, guiback);
-        var heartbeatThread = thread.create(heartbeat.go, dummy_payload, heartback);
+        _ = thread.create(gui.go, dummy_payload, guiback);
+        _ = thread.create(heartbeat.go, dummy_payload, heartback);
 
         while (true) {
             statewalk(alloc);
@@ -67,6 +67,7 @@ fn statewalk(allocator: *std.mem.Allocator) void {
         gui.schedule(gui.show_main_schedule, &ram);
         for (settings.columns.items) |column| {
             if (column.config.token) |token| {
+                _ = token;
                 profileget(column, allocator);
             }
         }
@@ -88,7 +89,7 @@ fn hello() void {
 fn columnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    httpInfo.url = util.mastodonExpandUrl(column.filter.host(), if (column.config.token) |tk| true else false, allocator);
+    httpInfo.url = util.mastodonExpandUrl(column.filter.host(), if (column.config.token) true else false, allocator);
     httpInfo.verb = .get;
     httpInfo.token = null;
     if (column.config.token) |tokenStr| {
@@ -97,8 +98,8 @@ fn columnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
     httpInfo.column = column;
     httpInfo.response_code = 0;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-    if (thread.create(net.go, verb, netback)) |actor| {} else |err| {
+    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    if (thread.create(net.go, verb, netback)) {} else |err| {
         warn("columnget {}", .{err});
     }
 }
@@ -115,8 +116,8 @@ fn profileget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
     httpInfo.column = column;
     httpInfo.response_code = 0;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-    var netthread = thread.create(net.go, verb, profileback) catch unreachable;
+    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    _ = thread.create(net.go, verb, profileback) catch unreachable;
 }
 
 fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator) void {
@@ -128,7 +129,7 @@ fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator
     httpInfo.response_code = 0;
     httpInfo.toot = toot;
     verb.http = httpInfo;
-    var netthread = thread.create(net.go, verb, photoback) catch unreachable;
+    _ = thread.create(net.go, verb, photoback) catch unreachable;
 }
 
 fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator) void {
@@ -152,8 +153,8 @@ fn oauthcolumnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) voi
     httpInfo.response_code = 0;
     httpInfo.verb = .post;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-    var netthread = thread.create(net.go, verb, oauthback) catch unreachable;
+    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    _ = thread.create(net.go, verb, oauthback) catch unreachable;
     //  defer thread.destroy(allocator, netthread);
 }
 
@@ -166,8 +167,8 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: *std.m
     httpInfo.response_code = 0;
     httpInfo.verb = .post;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, httpInfo));
-    var netthread = thread.create(net.go, verb, oauthtokenback) catch unreachable;
+    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    _ = thread.create(net.go, verb, oauthtokenback) catch unreachable;
 }
 
 fn oauthtokenback(command: *thread.Command) void {
@@ -183,7 +184,7 @@ fn oauthtokenback(command: *thread.Command) void {
                 config.writefile(settings, "config.json");
                 column.last_check = 0;
                 profileget(column, alloc);
-                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*c_void, column));
+                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*anyopaque, column));
             }
         } else {
             warn("*oauthtokenback json err body {}\n", .{http.body});
@@ -208,7 +209,7 @@ fn oauthback(command: *thread.Command) void {
                 column.oauthClientSecret = cid.String;
             }
             warn("*oauthback client id {} secret {}\n", .{ column.oauthClientId, column.oauthClientSecret });
-            gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*c_void, column));
+            gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*anyopaque, column));
         } else {
             warn("*oauthback json type err {}\n{}\n", .{ rootJsonType, http.body });
         }
@@ -220,7 +221,7 @@ fn oauthback(command: *thread.Command) void {
 fn netback(command: *thread.Command) void {
     warn("*netback tid {x} {}\n", .{ thread.self(), command });
     if (command.id == 1) {
-        gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*c_void, command.verb.http));
+        gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, command.verb.http));
         var column = command.verb.http.column;
         column.refreshing = false;
         column.last_check = config.now();
@@ -235,7 +236,7 @@ fn netback(command: *thread.Command) void {
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, alloc);
                         var id = toot.id();
-                        warn("netback json create toot #{} {*}\n", .{ toot.id(), toot });
+                        warn("netback json create toot #{} {*}\n", .{ id, toot });
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
@@ -267,7 +268,7 @@ fn netback(command: *thread.Command) void {
         } else {
             column.inError = true;
         }
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
+        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*anyopaque, column));
     }
 }
 
@@ -278,7 +279,7 @@ fn mediaback(command: *thread.Command) void {
     tootpic.pic = reqres.body;
     warn("mediaback toot #{} tootpic.toot {*} adding 1 img\n", .{ tootpic.toot.id(), tootpic.toot });
     tootpic.toot.addImg(tootpic.pic);
-    gui.schedule(gui.toot_media_schedule, @ptrCast(*c_void, tootpic));
+    gui.schedule(gui.toot_media_schedule, @ptrCast(*anyopaque, tootpic));
 }
 
 fn photoback(command: *thread.Command) void {
@@ -288,14 +289,14 @@ fn photoback(command: *thread.Command) void {
     warn("photoback! acct {} type {} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
-    gui.schedule(gui.update_author_photo_schedule, @ptrCast(*c_void, cAcct));
+    gui.schedule(gui.update_author_photo_schedule, @ptrCast(*anyopaque, cAcct));
 }
 
 fn profileback(command: *thread.Command) void {
     const reqres = command.verb.http;
     if (reqres.response_code >= 200 and reqres.response_code < 300) {
         reqres.column.account = reqres.tree.root.Object;
-        gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, reqres.column));
+        gui.schedule(gui.update_column_ui_schedule, @ptrCast(*anyopaque, reqres.column));
     } else {
         warn("profile fail http status {}\n", .{reqres.response_code});
     }
@@ -337,7 +338,7 @@ fn guiback(command: *thread.Command) void {
         colInfo.config.title = ""[0..];
         colInfo.config.filter = "mastodon.example.com"[0..];
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
-        gui.schedule(gui.add_column_schedule, @ptrCast(*c_void, colInfo));
+        gui.schedule(gui.add_column_schedule, @ptrCast(*anyopaque, colInfo));
         config.writefile(settings, "config.json");
     }
     if (command.id == 4) { // save config params
@@ -350,7 +351,7 @@ fn guiback(command: *thread.Command) void {
     if (command.id == 5) { // column remove
         const column = command.verb.column;
         warn("gui col remove {}\n", .{column.config.title});
-        var colpos: usize = undefined;
+        //var colpos: usize = undefined;
         for (settings.columns.items) |col, idx| {
             if (col == column) {
                 _ = settings.columns.orderedRemove(idx);
@@ -358,12 +359,12 @@ fn guiback(command: *thread.Command) void {
             }
         }
         config.writefile(settings, "config.json");
-        gui.schedule(gui.column_remove_schedule, @ptrCast(*c_void, column));
+        gui.schedule(gui.column_remove_schedule, @ptrCast(*anyopaque, column));
     }
     if (command.id == 6) { //oauth
         const column = command.verb.column;
-        if (column.oauthClientId) |clientId| {
-            gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*c_void, column));
+        if (column.oauthClientId) {
+            gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*anyopaque, column));
         } else {
             oauthcolumnget(column, alloc);
         }
@@ -378,8 +379,8 @@ fn guiback(command: *thread.Command) void {
         // partial reset
         column.oauthClientId = null;
         column.oauthClientSecret = null;
-        gui.schedule(gui.update_column_ui_schedule, @ptrCast(*c_void, column));
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
+        gui.schedule(gui.update_column_ui_schedule, @ptrCast(*anyopaque, column));
+        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*anyopaque, column));
         // throw out toots in the toot list not from the new host
         column_refresh(column, alloc);
     }
@@ -387,7 +388,7 @@ fn guiback(command: *thread.Command) void {
         const column = command.verb.column;
         column.config.img_only = !column.config.img_only;
         config.writefile(settings, "config.json");
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*c_void, column));
+        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*anyopaque, column));
     }
     if (command.id == 10) { // window size changed
         config.writefile(settings, "config.json");
@@ -400,7 +401,7 @@ fn heartback(command: *thread.Command) void {
 }
 
 fn columns_net_freshen(allocator: *std.mem.Allocator) void {
-    for (settings.columns.items) |column, idx| {
+    for (settings.columns.items) |column| {
         var now = config.now();
         const refresh = 60;
         const since = now - column.last_check;

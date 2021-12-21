@@ -75,7 +75,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
 }
 
 fn mdbVal(data: []const u8, allocator: *Allocator) *c.MDB_val {
-    var dataptr = @intToPtr(?*c_void, @ptrToInt(data.ptr));
+    var dataptr = @intToPtr(?*anyopaque, @ptrToInt(data.ptr));
     var mdb_val = allocator.create(c.MDB_val) catch unreachable;
     mdb_val.mv_size = data.len;
     mdb_val.mv_data = dataptr;

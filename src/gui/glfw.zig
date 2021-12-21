@@ -16,9 +16,9 @@ const c = @cImport({
 });
 
 pub const Column = struct {
-//  columnbox: [*c]c.uiControl,
-//  config_window: [*c]c.GtkWidget,
-    main: *config.ColumnInfo
+    //  columnbox: [*c]c.uiControl,
+    //  config_window: [*c]c.GtkWidget,
+    main: *config.ColumnInfo,
 };
 
 var myActor: *thread.Actor = undefined;
@@ -95,42 +95,42 @@ pub fn gui_end() void {
     c.glfwTerminate();
 }
 
-pub fn schedule(funcMaybe: ?fn (*c_void) callconv(.C) c_int, param: *c_void) void {
+pub fn schedule(funcMaybe: ?fn (*anyopaque) callconv(.C) c_int, param: *anyopaque) void {
     if (funcMaybe) |func| {
         warn("schedule FUNC {}\n", func);
-        _ = func(@ptrCast(*c_void, &"w"));
+        _ = func(@ptrCast(*anyopaque, &"w"));
     }
 }
 
-pub fn show_main_schedule(in: *c_void) callconv(.C) c_int {
+pub fn show_main_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn add_column_schedule(in: *c_void) callconv(.C) c_int {
+pub fn add_column_schedule(in: *anyopaque) callconv(.C) c_int {
     warn("gl add column\n");
     return 0;
 }
 
-pub fn column_remove_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_remove_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn column_config_oauth_url_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_config_oauth_url_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_config_oauth_finalize_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_config_oauth_finalize_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_ui_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_ui_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_netstatus_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_netstatus_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_toots_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_toots_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }

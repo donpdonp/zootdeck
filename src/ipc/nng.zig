@@ -14,9 +14,7 @@ const c = @cImport({
 
 pub const sock = c.nng_socket;
 
-pub const Client = struct {
-    srv: *sock, clnt: *sock
-};
+pub const Client = struct { srv: *sock, clnt: *sock };
 
 const Url = "ipc:///tmp/nng-pair-";
 
@@ -29,7 +27,7 @@ pub fn listen(socket: *sock, url: []u8) void {
     }
 }
 
-pub fn wait(client: *Client, callback: fn (?*c_void) callconv(.C) void) void {
+pub fn wait(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void {
     // special nng alloc call
     var myAio: ?*c.nng_aio = undefined;
     warn("wait master nng_aio {*}\n", &myAio);
@@ -38,7 +36,7 @@ pub fn wait(client: *Client, callback: fn (?*c_void) callconv(.C) void) void {
     message[1] = 2;
     message[2] = 1;
     message[3] = 0;
-    _ = c.nng_aio_alloc(&myAio, callback, @ptrCast(?*c_void, &message));
+    _ = c.nng_aio_alloc(&myAio, callback, @ptrCast(?*anyopaque, &message));
     warn("wait master nng_aio post {*}\n", myAio);
 
     warn("wait master nng_recv {}\n", client.srv);

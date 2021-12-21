@@ -3,10 +3,6 @@ const builtin = @import("builtin");
 const Builder = @import("std").build.Builder;
 
 pub fn build(b: *Builder) void {
-    const windows = std.zig.CrossTarget{
-        .os_tag = .windows,
-        .abi = .gnu,
-    };
     const target = b.standardTargetOptions(.{});
     const exe = b.addExecutable("zootdeck", "src/main.zig");
     exe.setTarget(target);

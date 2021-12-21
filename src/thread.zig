@@ -12,17 +12,11 @@ const c = @cImport({
     @cInclude("sys/epoll.h");
 });
 
-pub const Actor = struct {
-    thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void
-};
+pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void };
 
-pub const Command = packed struct {
-    id: u16, verb: *const CommandVerb, actor: *Actor
-};
+pub const Command = packed struct { id: u16, verb: *const CommandVerb, actor: *Actor };
 
-pub const CommandVerb = packed union {
-    login: *config.LoginInfo, http: *config.HttpInfo, column: *config.ColumnInfo, auth: *config.ColumnAuth, idle: u16
-};
+pub const CommandVerb = packed union { login: *config.LoginInfo, http: *config.HttpInfo, column: *config.ColumnInfo, auth: *config.ColumnAuth, idle: u16 };
 
 var actors: std.ArrayList(Actor) = undefined;
 
@@ -33,7 +27,7 @@ pub fn init(myAllocator: *Allocator) !void {
 }
 
 pub fn create(
-    startFn: fn (?*c_void) callconv(.C) ?*c_void,
+    startFn: fn (?*anyopaque) callconv(.C) ?*anyopaque,
     startParams: *CommandVerb,
     recvback: fn (*Command) void,
 ) !*Actor {
@@ -90,7 +84,7 @@ pub fn wait() void {
     }
 }
 
-pub fn join(jthread: c.pthread_t, joinret: *?*c_void) c_int {
+pub fn join(jthread: c.pthread_t, joinret: *?*anyopaque) c_int {
     //pub extern fn pthread_join(__th: pthread_t, __thread_return: ?[*](?*c_void)) c_int;
-    return c.pthread_join(jthread, @ptrCast(?[*]?*c_void, joinret)); //expected type '?[*]?*c_void' / void **value_ptr
+    return c.pthread_join(jthread, @ptrCast(?[*]?*anyopaque, joinret)); //expected type '?[*]?*c_void' / void **value_ptr
 }

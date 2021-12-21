@@ -14,10 +14,10 @@ var myActor: *thread.Actor = undefined;
 var app = c.qApp;
 
 pub const Column = struct {
-//  builder: [*c]c.GtkBuilder,
-//  columnbox: [*c]c.GtkWidget,
-//  config_window: [*c]c.GtkWidget,
-    main: *config.ColumnInfo
+    //  builder: [*c]c.GtkBuilder,
+    //  columnbox: [*c]c.GtkWidget,
+    //  config_window: [*c]c.GtkWidget,
+    main: *config.ColumnInfo,
 };
 
 pub fn libname() []const u8 {
@@ -41,36 +41,36 @@ pub fn gui_end() void {
     warn("gui ended\n");
 }
 
-pub fn schedule(func: ?fn (*c_void) callconv(.C) c_int, param: *c_void) void {}
+pub fn schedule(func: ?fn (*anyopaque) callconv(.C) c_int, param: *anyopaque) void {}
 
-pub fn show_main_schedule(in: *c_void) callconv(.C) c_int {
+pub fn show_main_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn add_column_schedule(in: *c_void) callconv(.C) c_int {
+pub fn add_column_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn column_remove_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_remove_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn column_config_oauth_url_schedule(in: *c_void) callconv(.C) c_int {
+pub fn column_config_oauth_url_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_config_oauth_finalize_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_config_oauth_finalize_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_ui_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_ui_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_netstatus_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_netstatus_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }
 
-pub fn update_column_toots_schedule(in: *c_void) callconv(.C) c_int {
+pub fn update_column_toots_schedule(in: *anyopaque) callconv(.C) c_int {
     return 0;
 }

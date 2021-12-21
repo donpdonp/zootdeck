@@ -16,7 +16,7 @@ const c = @cImport({
 
 const NetError = error{ JSONparse, Curl, CurlInit, DNS };
 
-pub fn go(data: ?*c_void) callconv(.C) ?*c_void {
+pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     var actor = @ptrCast(*thread.Actor, data8);
     //warn("net thread start {*} {}\n", actor, actor);
@@ -118,7 +118,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
     }
 }
 
-pub fn curl_write(ptr: [*c]const u8, size: usize, nmemb: usize, userdata: *c_void) usize {
+pub fn curl_write(ptr: [*c]const u8, size: usize, nmemb: usize, userdata: *anyopaque) usize {
     var buf = @ptrCast(*std.ArrayListSentineled(u8, 0), @alignCast(8, userdata));
     var body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch |err| {
