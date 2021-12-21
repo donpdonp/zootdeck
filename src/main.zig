@@ -177,7 +177,7 @@ fn oauthtokenback(command: *thread.Command) void {
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
-        const rootJsonType = @TagType(@TypeOf(tree.root));
+        //const rootJsonType = @TypeOf(tree.root);
         if (true) { // todo: rootJsonType == std.json.ObjectMap) {
             if (tree.root.Object.get("access_token")) |cid| {
                 column.config.token = cid.String;
@@ -200,7 +200,7 @@ fn oauthback(command: *thread.Command) void {
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
-        const rootJsonType = @TagType(@TypeOf(tree.root));
+        const rootJsonType = @TypeOf(tree.root);
         if (true) { //todo: rootJsonType == std.json.Value) {
             if (tree.root.Object.get("client_id")) |cid| {
                 column.oauthClientId = cid.String;

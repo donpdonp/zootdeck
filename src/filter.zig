@@ -1,6 +1,6 @@
 // filter.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const util = @import("util.zig");

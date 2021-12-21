@@ -1,5 +1,5 @@
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const thread = @import("./thread.zig");
 const Allocator = std.mem.Allocator;
 var allocator: *Allocator = undefined;

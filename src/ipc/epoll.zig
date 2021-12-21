@@ -1,5 +1,5 @@
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const c = @cImport({
@@ -35,13 +35,15 @@ pub fn newClient(allocator: *Allocator) *Client {
     return client;
 }
 
-pub fn listen(socket: *sockSingle, url: []u8) void {
-    warn("epoll_listen\n", .{});
-}
+//pub fn listen(socket: u8, url: []u8) void {
+//    _ = socket;
+//    warn("epoll_listen\n", .{});
+//}
 
-pub fn register(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void {}
+pub fn register(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void { _ = callback; _ = client;}
 
 pub fn dial(client: *Client, url: []u8) void {
+    _ = url;
     //.events = u32(c_int(c.EPOLL_EVENTS.EPOLLIN))|u32(c_int(c.EPOLL_EVENTS.EPOLLET)),
     // IN=1, OUT=4, ET=-1
     client.readEvent.events = 0x001;

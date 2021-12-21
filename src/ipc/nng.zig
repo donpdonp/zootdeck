@@ -1,6 +1,6 @@
 // net.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 const std_allocator = std.heap.c_allocator; // passing through pthread nope
 const util = @import("./util.zig");

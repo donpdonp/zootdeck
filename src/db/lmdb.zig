@@ -1,6 +1,6 @@
 // db.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 const util = @import("../util.zig");
 
@@ -34,7 +34,7 @@ pub fn init(allocator: *Allocator) !void {
 
 pub fn stats() void {
     var mdbStat: c.MDB_stat = undefined;
-    var ret = c.mdb_env_stat(env, &mdbStat);
+    c.mdb_env_stat(env, &mdbStat);
     warn("lmdb cache {} entries\n", .{mdbStat.ms_entries});
 }
 

@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const Node = c.GumboNode;
@@ -9,7 +9,7 @@ const c = @cImport({
     @cInclude("gumbo.h");
 });
 
-pub fn parse(html: []const u8, allocator: *Allocator) *Node {
+pub fn parse(html: []const u8) *Node {
     // const GumboOptions kGumboDefaultOptions = {&malloc_wrapper, &free_wrapper, NULL, 8, false, -1, GUMBO_TAG_LAST, GUMBO_NAMESPACE_HTML};
     var options = c.GumboOptions{
         .allocator = c.kGumboDefaultOptions.allocator,
@@ -23,8 +23,8 @@ pub fn parse(html: []const u8, allocator: *Allocator) *Node {
     };
     var doc = c.gumbo_parse_with_options(&options, html.ptr, html.len);
     var root = doc.*.root;
-    var tagType = root.*.type;
-    var tagName = root.*.v.element.tag;
+    //var tagType = root.*.type;
+    //var tagName = root.*.v.element.tag;
     return root;
 }
 

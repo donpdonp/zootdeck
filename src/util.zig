@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const Buffers = @import("./simple_buffer.zig");

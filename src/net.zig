@@ -6,7 +6,7 @@ const allocator = std.heap.c_allocator;
 const config = @import("./config.zig");
 const util = @import("./util.zig");
 
-const warn = std.debug.warn;
+const warn = std.debug.print;
 
 const c = @cImport({
     @cInclude("unistd.h");
@@ -24,11 +24,11 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     // setup for the callback
     var command = allocator.create(thread.Command) catch unreachable;
     command.id = 1;
-    var verb = allocator.create(thread.CommandVerb) catch unreachable;
+    //var verb = allocator.create(thread.CommandVerb) catch unreachable;
     command.verb = actor.payload;
 
     if (httpget(actor.payload.http)) |body| {
-        const maxlen = if (body.len > 400) 400 else body.len;
+        //const maxlen = if (body.len > 400) 400 else body.len;
         warn("net http body len {}\n{}", .{ body.len, actor.payload.http.content_type });
         actor.payload.http.body = body;
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
@@ -51,7 +51,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
 }
 
 pub fn httpget(req: *config.HttpInfo) ![]const u8 {
-    warn("http {} {} {}\n", .{ req.verb, req.url, if (req.token) |tk| @as([]const u8, "token") else @as([]const u8, "") });
+    warn("http {} {} {}\n", .{ req.verb, req.url, if (req.token) @as([]const u8, "token") else @as([]const u8, "") });
     _ = c.curl_global_init(0);
     var curl = c.curl_easy_init();
     if (curl != null) {
@@ -119,10 +119,11 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
 }
 
 pub fn curl_write(ptr: [*c]const u8, size: usize, nmemb: usize, userdata: *anyopaque) usize {
+    _ = size;
     var buf = @ptrCast(*std.ArrayListSentineled(u8, 0), @alignCast(8, userdata));
     var body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch |err| {
-        warn("curl_write append fail\n", .{});
+        warn("curl_write append fail {}\n", .{err});
     };
     return nmemb;
 }

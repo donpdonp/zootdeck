@@ -1,6 +1,6 @@
 // thread.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 var allocator: *Allocator = undefined;
 const ipc = @import("./ipc/epoll.zig");
@@ -41,7 +41,7 @@ pub fn create(
     var terr = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
     if (terr == 0) {
         warn("created thread#{}\n", .{actor.thread_id});
-        var err = actors.append(actor.*);
+        actors.append(actor.*);
         return actor;
     } else {
         warn("ERROR thread {} {}\n", .{ terr, actor });

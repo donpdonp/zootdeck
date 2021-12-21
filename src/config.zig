@@ -1,6 +1,6 @@
 // config.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 const util = @import("./util.zig");
 const filter_lib = @import("./filter.zig");
@@ -42,7 +42,7 @@ pub const ColumnInfo = struct {
 
     const Self = @This();
 
-    pub fn reset(self: *const Self) void {}
+    pub fn reset(self: *const Self) void { _ = self; }
 
     pub fn parseFilter(self: *const Self, filter: []const u8) void {
         self.filter = filter_lib.parse(filter);
@@ -51,6 +51,7 @@ pub const ColumnInfo = struct {
     pub fn makeTitle(column: *ColumnInfo) []const u8 {
         var out: []const u8 = column.filter.host();
         if (column.config.token) |tkn| {
+            _ = tkn ;
             var addon: []const u8 = undefined;
             if (column.account) |account| {
                 addon = account.get("acct").?.String;
@@ -109,7 +110,7 @@ pub fn readfile(filename: []const u8) !Settings {
         try file.writeAll("{}\n");
         warn("Warning: creating new {}\n", .{filename});
         file.close();
-    } else |err| {} // existing file is OK
+    } else {} // existing file is OK
     var json = try std.fs.cwd().readFileAlloc(allocator, filename, 65535); //max_size?
     return read(json);
 }
@@ -148,7 +149,7 @@ pub fn read(json: []const u8) !Settings {
             colInfo.filter = filter_lib.parse(allocator, filter);
             var tokenTag = value.Object.get("token");
             if (tokenTag) |tokenKV| {
-                if (@TagType(@TypeOf(tokenKV)) == []const u8) {
+                if (@TypeOf(tokenKV) == []const u8) {
                     colInfo.config.token = tokenKV.value.String;
                 } else {
                     colInfo.config.token = null;
@@ -171,7 +172,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     configFile.win_x = settings.win_x;
     configFile.win_y = settings.win_y;
     var column_infos = std.ArrayList(*ColumnConfig).init(allocator);
-    for (settings.columns.items) |column, idx| {
+    for (settings.columns.items) |column| {
         column_infos.append(column.config) catch unreachable;
     }
     configFile.columns = column_infos.items;
@@ -194,10 +195,10 @@ pub fn now() Time {
 const assert = @import("std").debug.assert;
 test "read" {
     var ret = read("{\"url\":\"abc\"}");
-    if (ret) |value| {
+    if (ret) {
         assert(true);
     } else |err| {
-        print("warn: {}\n", .{err});
+        warn("warn: {}\n", .{err});
         assert(false);
     }
 }
