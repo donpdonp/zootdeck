@@ -2,13 +2,13 @@ const std = @import("std");
 const warn = std.debug.print;
 const thread = @import("./thread.zig");
 const Allocator = std.mem.Allocator;
-var allocator: *Allocator = undefined;
+var allocator: Allocator = undefined;
 
 const c = @cImport({
     @cInclude("unistd.h");
 });
 
-pub fn init(myAllocator: *Allocator) !void {
+pub fn init(myAllocator: Allocator) !void {
     allocator = myAllocator;
 }
 

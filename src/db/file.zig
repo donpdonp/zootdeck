@@ -11,25 +11,25 @@ pub fn init() !void {
     };
 }
 
-pub fn has(namespace: []const u8, key: []const u8, allocator: *Allocator) bool {
-    var keypath = std.fmt.allocPrint(allocator, "{}/{}/{}", .{ cache_dir, namespace, key }) catch unreachable;
+pub fn has(namespace: []const u8, key: []const u8, allocator: Allocator) bool {
+    var keypath = std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ cache_dir, namespace, key }) catch unreachable;
     var found = false;
     if (std.fs.cwd().access(keypath, .{ .read = true })) {
         found = true;
     } else |err| {
-        warn("dbfile did not find {} {}\n", .{keypath, err});
+        warn("dbfile did not find {s} {}\n", .{ keypath, err });
     }
     return found;
 }
 
-pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
-    var dirpath = try std.fmt.allocPrint(allocator, "{}/{}", .{ cache_dir, namespace });
-    warn("MKDIR {}\n", .{dirpath});
+pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
+    var dirpath = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ cache_dir, namespace });
+    warn("MKDIR {s}\n", .{dirpath});
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
     if (dir.createFile(key, .{ .truncate = true })) |*file| {
-        file.write(value);
+        _ = try file.write(value);
         file.close();
     } else |err| {
-        warn("open write err {} {} {}\n", .{ dirpath, key, err });
+        warn("open write err {s} {s} {}\n", .{ dirpath, key, err });
     }
 }

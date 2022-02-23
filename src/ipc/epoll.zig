@@ -24,7 +24,7 @@ pub fn init() !void {
     }
 }
 
-pub fn newClient(allocator: *Allocator) *Client {
+pub fn newClient(allocator: Allocator) *Client {
     const client = allocator.create(Client) catch unreachable;
     const fds = allocator.alloc(SocketType, 2) catch unreachable;
     _ = c.pipe(fds.ptr);
@@ -40,7 +40,10 @@ pub fn newClient(allocator: *Allocator) *Client {
 //    warn("epoll_listen\n", .{});
 //}
 
-pub fn register(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void { _ = callback; _ = client;}
+pub fn register(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void {
+    _ = callback;
+    _ = client;
+}
 
 pub fn dial(client: *Client, url: []u8) void {
     _ = url;

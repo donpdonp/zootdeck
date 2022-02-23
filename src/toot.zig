@@ -1,6 +1,6 @@
 // toot.zig
 const std = @import("std");
-const warn = std.debug.warn;
+const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
 
@@ -21,8 +21,8 @@ pub fn Toot() type {
         const ImgList = std.ArrayList(ImgType);
         const K = []const u8;
         const V = std.json.Value;
-        const Toothashmap = std.StringHashMap(V);
-        pub fn init(hash: Toothashmap, allocator: *Allocator) Self {
+        const Toothashmap = std.ArrayHashMap(K, V, std.array_hash_map.StringContext, true); //std.json.Object
+        pub fn init(hash: Toothashmap, allocator: Allocator) Self {
             var newToot = Self{
                 .hashmap = hash,
                 .tagList = TagList.init(allocator),
@@ -61,11 +61,11 @@ pub fn Toot() type {
             return self.hashmap.get("content").?.String;
         }
 
-        pub fn parseTags(self: *Self, allocator: *Allocator) void {
+        pub fn parseTags(self: *Self, allocator: Allocator) void {
             const hDecode = util.htmlEntityDecode(self.content(), allocator) catch unreachable;
             const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
 
-            var wordParts = std.mem.tokenize(html_trim, " ");
+            var wordParts = std.mem.tokenize(u8, html_trim, " ");
             while (wordParts.next()) |word| {
                 if (std.mem.startsWith(u8, word, "#")) {
                     self.tagList.append(word) catch unreachable;
@@ -87,7 +87,7 @@ pub fn Toot() type {
 
 test "Toot" {
     var bytes: [8096]u8 = undefined;
-    const allocator = &std.heap.FixedBufferAllocator.init(bytes[0..]).allocator;
+    const allocator = std.heap.FixedBufferAllocator.init(bytes[0..]).allocator;
     var tootHash = Type.Toothashmap.init(allocator);
 
     var jString = std.json.Value{ .String = "" };

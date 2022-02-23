@@ -40,7 +40,7 @@ pub fn SomeList(comptime T: type) type {
             return false;
         }
 
-        pub fn author(self: *Self, acct: []const u8, allocator: *Allocator) []T {
+        pub fn author(self: *Self, acct: []const u8, allocator: Allocator) []T {
             var winners = std.ArrayList(T).init(allocator);
             var ptr = self.list.first;
             while (ptr) |listItem| {
@@ -53,7 +53,7 @@ pub fn SomeList(comptime T: type) type {
             return winners.items;
         }
 
-        pub fn sortedInsert(self: *Self, item: T, allocator: *Allocator) void {
+        pub fn sortedInsert(self: *Self, item: T, allocator: Allocator) void {
             const itemDate = item.get("created_at").?.String;
             const node = allocator.create(ListType.Node) catch unreachable;
             node.data = item;

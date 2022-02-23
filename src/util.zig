@@ -5,18 +5,18 @@ const Allocator = std.mem.Allocator;
 
 const Buffers = @import("./simple_buffer.zig");
 
-pub fn sliceAddNull(allocator: *Allocator, str: []const u8) []const u8 {
+pub fn sliceAddNull(allocator: Allocator, str: []const u8) []const u8 {
     return std.cstr.addNullByte(allocator, str) catch unreachable;
 }
 
-pub fn sliceToCstr(allocator: *Allocator, str: []const u8) [*]u8 {
+pub fn sliceToCstr(allocator: Allocator, str: []const u8) [*]u8 {
     var str_null: []u8 = allocator.alloc(u8, str.len + 1) catch unreachable;
     std.mem.copy(u8, str_null[0..], str);
     str_null[str.len] = 0;
     return str_null.ptr;
 }
 
-pub fn cstrToSliceCopy(allocator: *Allocator, cstr: [*c]const u8) []const u8 {
+pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
     var i: usize = std.mem.len(cstr);
     var ram = allocator.alloc(u8, i) catch unreachable;
     std.mem.copy(u8, ram, cstr[0..i]);
@@ -27,7 +27,7 @@ pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
     return std.mem.eql(u8, a.get("id").?.String, b.get("id").?.String);
 }
 
-pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []const u8 {
+pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: Allocator) []const u8 {
     var url = Buffers.SimpleU8.initSize(allocator, 0) catch unreachable;
     var filteredHost = host;
     if (filteredHost.len > 0) {
@@ -50,7 +50,7 @@ pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: *Allocator) []
     }
 }
 
-pub fn htmlTagStrip(str: []const u8, allocator: *Allocator) ![]const u8 {
+pub fn htmlTagStrip(str: []const u8, allocator: Allocator) ![]const u8 {
     var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
     const States = enum { Looking, TagBegin };
     var state = States.Looking;
@@ -80,7 +80,7 @@ test "htmlTagStrip" {
     std.testing.expect(std.mem.eql(u8, stripped, "abc"));
 }
 
-pub fn htmlEntityDecode(str: []const u8, allocator: *Allocator) ![]const u8 {
+pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
     var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
     var previousStrEndMark: usize = 0;
     const States = enum { Looking, EntityBegin, EntityFound };

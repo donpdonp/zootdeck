@@ -18,8 +18,8 @@ pub fn parse(html: []const u8) *Node {
         .tab_stop = 8,
         .stop_on_first_error = false,
         .max_errors = -1,
-        .fragment_context = c.GumboTag.GUMBO_TAG_BODY,
-        .fragment_namespace = c.GumboNamespaceEnum.GUMBO_NAMESPACE_HTML,
+        .fragment_context = c.GUMBO_TAG_BODY,
+        .fragment_namespace = c.GUMBO_NAMESPACE_HTML,
     };
     var doc = c.gumbo_parse_with_options(&options, html.ptr, html.len);
     var root = doc.*.root;
@@ -29,8 +29,8 @@ pub fn parse(html: []const u8) *Node {
 }
 
 pub fn search(node: *Node) void {
-    if (node.type == c.GumboNodeType.GUMBO_NODE_ELEMENT) {
-        if (node.v.element.tag == c.GumboTag.GUMBO_TAG_A) {
+    if (node.type == c.GUMBO_NODE_ELEMENT) {
+        if (node.v.element.tag == c.GUMBO_TAG_A) {
             //warn("A TAG found\n");
         }
         var children = node.v.element.children;

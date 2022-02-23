@@ -6,7 +6,7 @@ const util = @import("./util.zig");
 const filter_lib = @import("./filter.zig");
 const toot_lib = @import("./toot.zig");
 const toot_list = @import("./toot_list.zig");
-var allocator: *Allocator = undefined;
+var allocator: Allocator = undefined;
 
 const c = @cImport({
     @cInclude("time.h");
@@ -36,13 +36,15 @@ pub const ColumnInfo = struct {
     refreshing: bool,
     last_check: Time,
     inError: bool,
-    account: ?std.StringHashMap(std.json.Value),
+    account: ?std.json.ObjectMap,
     oauthClientId: ?[]const u8,
     oauthClientSecret: ?[]const u8,
 
     const Self = @This();
 
-    pub fn reset(self: *const Self) void { _ = self; }
+    pub fn reset(self: *const Self) void {
+        _ = self;
+    }
 
     pub fn parseFilter(self: *const Self, filter: []const u8) void {
         self.filter = filter_lib.parse(filter);
@@ -50,15 +52,14 @@ pub const ColumnInfo = struct {
 
     pub fn makeTitle(column: *ColumnInfo) []const u8 {
         var out: []const u8 = column.filter.host();
-        if (column.config.token) |tkn| {
-            _ = tkn ;
+        if (column.config.token) |_| {
             var addon: []const u8 = undefined;
             if (column.account) |account| {
                 addon = account.get("acct").?.String;
             } else {
                 addon = "_";
             }
-            out = std.fmt.allocPrint(allocator, "{}@{}", .{ addon, column.filter.host() }) catch unreachable;
+            out = std.fmt.allocPrint(allocator, "{s}@{s}", .{ addon, column.filter.host() }) catch unreachable;
         }
         return out;
     }
@@ -101,17 +102,20 @@ pub const ColumnAuth = struct {
 
 const ConfigError = error{MissingParams};
 
-pub fn init(alloc: *Allocator) !void {
+pub fn init(alloc: Allocator) !void {
     allocator = alloc;
 }
 
 pub fn readfile(filename: []const u8) !Settings {
-    if (std.fs.cwd().createFile(filename, .{ .exclusive = true })) |*file| {
-        try file.writeAll("{}\n");
-        warn("Warning: creating new {}\n", .{filename});
-        file.close();
-    } else {} // existing file is OK
-    var json = try std.fs.cwd().readFileAlloc(allocator, filename, 65535); //max_size?
+    const cwd = std.fs.cwd();
+    cwd.access(filename, .{}) catch |err| switch (err) {
+        error.FileNotFound => {
+            warn("Warning: creating new {s}\n", .{filename});
+            try cwd.writeFile(filename, "{}\n");
+        },
+        else => return err,
+    };
+    var json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
     return read(json);
 }
 
@@ -179,7 +183,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         warn("config.write toJson\n", .{});
         std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
-        warn("config saved. {} {} bytes\n", .{ filename, file.getPos() });
+        warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() });
         file.close();
     } else |err| {
         warn("config save fail. {}\n", .{err});

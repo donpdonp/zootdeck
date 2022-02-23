@@ -2,7 +2,7 @@
 const std = @import("std");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
-var allocator: *Allocator = undefined;
+var allocator: Allocator = undefined;
 const ipc = @import("./ipc/epoll.zig");
 const config = @import("./config.zig");
 
@@ -20,7 +20,7 @@ pub const CommandVerb = packed union { login: *config.LoginInfo, http: *config.H
 
 var actors: std.ArrayList(Actor) = undefined;
 
-pub fn init(myAllocator: *Allocator) !void {
+pub fn init(myAllocator: Allocator) !void {
     allocator = myAllocator;
     actors = std.ArrayList(Actor).init(allocator);
     try ipc.init();
@@ -41,7 +41,7 @@ pub fn create(
     var terr = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
     if (terr == 0) {
         warn("created thread#{}\n", .{actor.thread_id});
-        actors.append(actor.*);
+        try actors.append(actor.*);
         return actor;
     } else {
         warn("ERROR thread {} {}\n", .{ terr, actor });
@@ -52,7 +52,7 @@ pub fn create(
 pub fn signal(actor: *Actor, command: *Command) void {
     command.actor = actor; // fill in the command
     const command_addr_bytes = @ptrCast(*const [@sizeOf(*Command)]u8, &command);
-    warn("signaling from tid {x} command bytes {x} len{} {}\n", .{ actor.thread_id, command_addr_bytes, command_addr_bytes.len, command });
+    warn("signaling from tid {} command bytes {} len{} {}\n", .{ actor.thread_id, std.fmt.fmtSliceHexLower(command_addr_bytes), command_addr_bytes.len, command });
     ipc.send(actor.client, command_addr_bytes);
 }
 

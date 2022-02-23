@@ -1,6 +1,7 @@
 const std = @import("std");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
+var allocator: Allocator = undefined;
 
 pub const States = enum {
     Init,
@@ -10,8 +11,8 @@ pub const States = enum {
 
 pub var state: States = undefined;
 
-pub fn init(allocator: *Allocator) !void {
-    _ = allocator;
+pub fn init(my_allocator: Allocator) !void {
+    _ = my_allocator;
     setState(States.Init);
     if (state != States.Init) return error.StatemachineSetupFail;
 }
@@ -27,5 +28,5 @@ pub fn needNetRefresh() bool {
 
 pub fn setState(new_state: States) void {
     state = new_state;
-    warn("STATE: {}\n", .{@tagName(state)});
+    warn("STATE: {s}\n", .{@tagName(state)});
 }

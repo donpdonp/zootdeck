@@ -37,26 +37,26 @@ pub const ptree = struct {
     }
 };
 
-pub fn parse(allocator: *Allocator, lang: []const u8) *ptree {
+pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
     var ragel_points = c.urlPoints{ .scheme_pos = 0, .loc_pos = 0 };
     var clang = util.sliceToCstr(allocator, lang);
     _ = c.url(clang, &ragel_points);
-    warn("ragel parse \"{}\"\n", .{lang});
+    warn("ragel parse \"{s}\"\n", .{lang});
 
     var newTree = allocator.create(ptree) catch unreachable;
     newTree.tags = allocator.create(toot_lib.Type.TagList) catch unreachable;
     newTree.tags.* = toot_lib.Type.TagList.init(allocator);
-    var spaceParts = std.mem.tokenize(lang, " ");
+    var spaceParts = std.mem.tokenize(u8, lang, " ");
     var idx: usize = 0;
     while (spaceParts.next()) |part| {
         idx += 1;
         if (idx == 1) {
             newTree.hostname = part;
-            warn("filter set host {}\n", .{part});
+            warn("filter set host {s}\n", .{part});
         }
         if (idx > 1) {
             newTree.tags.append(part) catch unreachable;
-            warn("filter set tag #{} {}\n", .{ newTree.tags.items.len, part });
+            warn("filter set tag #{} {s}\n", .{ newTree.tags.items.len, part });
         }
     }
     return newTree;

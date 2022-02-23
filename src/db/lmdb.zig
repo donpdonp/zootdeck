@@ -11,7 +11,7 @@ const c = @cImport({
 var env: *c.MDB_env = undefined;
 const dbpath = "./db";
 
-pub fn init(allocator: *Allocator) !void {
+pub fn init(allocator: Allocator) !void {
     var mdb_ret: c_int = 0;
     mdb_ret = c.mdb_env_create(@ptrCast([*c]?*c.MDB_env, &env));
     if (mdb_ret != 0) {
@@ -34,11 +34,11 @@ pub fn init(allocator: *Allocator) !void {
 
 pub fn stats() void {
     var mdbStat: c.MDB_stat = undefined;
-    c.mdb_env_stat(env, &mdbStat);
+    _ = c.mdb_env_stat(env, &mdbStat);
     warn("lmdb cache {} entries\n", .{mdbStat.ms_entries});
 }
 
-pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: *Allocator) !void {
+pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     var txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
     var ctxnMaybe = @ptrCast([*c]?*c.struct_MDB_txn, txnptr);
     var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
@@ -48,7 +48,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
         ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
         if (ret == 0) {
             // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
-            var fullkey = std.fmt.allocPrint(allocator, "{}:{}", .{ namespace, key }) catch unreachable;
+            var fullkey = std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
             var mdb_key = mdbVal(fullkey, allocator);
             var mdb_value = mdbVal(value, allocator);
             ret = c.mdb_put(txnptr.*, dbiptr.*, mdb_key, mdb_value, 0);
@@ -74,7 +74,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     }
 }
 
-fn mdbVal(data: []const u8, allocator: *Allocator) *c.MDB_val {
+fn mdbVal(data: []const u8, allocator: Allocator) *c.MDB_val {
     var dataptr = @intToPtr(?*anyopaque, @ptrToInt(data.ptr));
     var mdb_val = allocator.create(c.MDB_val) catch unreachable;
     mdb_val.mv_size = data.len;

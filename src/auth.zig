@@ -4,7 +4,7 @@ const Allocator = std.mem.Allocator;
 const simple_buffer = @import("./simple_buffer.zig");
 const config = @import("./config.zig");
 
-pub fn oauthClientRegister(allocator: *Allocator, httpInfo: *config.HttpInfo, url: []const u8) void {
+pub fn oauthClientRegister(allocator: Allocator, httpInfo: *config.HttpInfo, url: []const u8) void {
     var urlBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
     urlBuf.append("https://") catch unreachable;
     urlBuf.append(url) catch unreachable;
@@ -17,7 +17,7 @@ pub fn oauthClientRegister(allocator: *Allocator, httpInfo: *config.HttpInfo, ur
     httpInfo.post_body = postBodyBuf.toSliceConst();
 }
 
-pub fn oauthTokenUpgrade(allocator: *Allocator, httpInfo: *config.HttpInfo, url: []const u8, code: []const u8, clientId: []const u8, clientSecret: []const u8) void {
+pub fn oauthTokenUpgrade(allocator: Allocator, httpInfo: *config.HttpInfo, url: []const u8, code: []const u8, clientId: []const u8, clientSecret: []const u8) void {
     var urlBuf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
     urlBuf.append("https://") catch unreachable;
     urlBuf.append(url) catch unreachable;

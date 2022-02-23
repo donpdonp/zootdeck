@@ -7,7 +7,7 @@ const CAllocator = std.heap.c_allocator;
 const stdout = std.io.getStdOut();
 var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
 var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
-var alloc = &GPAllocator.allocator; // take the ptr in a separate step
+const alloc = GPAllocator.allocator(); // take the ptr in a separate step
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
@@ -36,8 +36,8 @@ pub fn main() !void {
         settings = config_data;
         var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
         warn("main start guithread {}\n", .{alloc});
-        _ = thread.create(gui.go, dummy_payload, guiback);
-        _ = thread.create(heartbeat.go, dummy_payload, heartback);
+        _ = try thread.create(gui.go, dummy_payload, guiback);
+        _ = try thread.create(heartbeat.go, dummy_payload, heartback);
 
         while (true) {
             statewalk(alloc);
@@ -49,17 +49,17 @@ pub fn main() !void {
     }
 }
 
-fn initialize(allocator: *std.mem.Allocator) !void {
+fn initialize(allocator: std.mem.Allocator) !void {
     try config.init(allocator);
     try heartbeat.init(allocator);
     try statemachine.init(allocator);
     try db.init(allocator);
-    try dbfile.init(allocator);
+    try dbfile.init();
     try thread.init(allocator);
     try gui.init(allocator, &settings);
 }
 
-fn statewalk(allocator: *std.mem.Allocator) void {
+fn statewalk(allocator: std.mem.Allocator) void {
     if (statemachine.state == statemachine.States.Init) {
         statemachine.setState(statemachine.States.Setup); // transition
         var ram = allocator.alloc(u8, 1) catch unreachable;
@@ -83,13 +83,13 @@ fn statewalk(allocator: *std.mem.Allocator) void {
 }
 
 fn hello() void {
-    log.info("zootdeck {} {} tid {x}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.arch), thread.self() });
+    log.info("zootdeck {s} {s} tid {}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
 }
 
-fn columnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
+fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    httpInfo.url = util.mastodonExpandUrl(column.filter.host(), if (column.config.token) true else false, allocator);
+    httpInfo.url = util.mastodonExpandUrl(column.filter.host(), column.config.token != null, allocator);
     httpInfo.verb = .get;
     httpInfo.token = null;
     if (column.config.token) |tokenStr| {
@@ -104,10 +104,10 @@ fn columnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
     }
 }
 
-fn profileget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
+fn profileget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    httpInfo.url = std.fmt.allocPrint(allocator, "https://{}/api/v1/accounts/verify_credentials", .{column.filter.host()}) catch unreachable;
+    httpInfo.url = std.fmt.allocPrint(allocator, "https://{s}/api/v1/accounts/verify_credentials", .{column.filter.host()}) catch unreachable;
     httpInfo.verb = .get;
     httpInfo.token = null;
     if (column.config.token) |tokenStr| {
@@ -120,7 +120,7 @@ fn profileget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
     _ = thread.create(net.go, verb, profileback) catch unreachable;
 }
 
-fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator) void {
+fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
     httpInfo.url = url;
@@ -132,7 +132,7 @@ fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator
     _ = thread.create(net.go, verb, photoback) catch unreachable;
 }
 
-fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator) void {
+fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.http = allocator.create(config.HttpInfo) catch unreachable;
     verb.http.url = url;
@@ -140,11 +140,11 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: *std.mem.Allocator
     verb.http.token = null;
     verb.http.response_code = 0;
     verb.http.toot = toot;
-    warn("mediaget toot #{} toot {*} verb.http.toot {*}\n", .{ toot.id(), toot, verb.http.toot });
+    warn("mediaget toot #{s} toot {*} verb.http.toot {*}\n", .{ toot.id(), toot, verb.http.toot });
     _ = thread.create(net.go, verb, mediaback) catch unreachable;
 }
 
-fn oauthcolumnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
+fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
     auth.oauthClientRegister(allocator, httpInfo, column.filter.host());
@@ -158,7 +158,7 @@ fn oauthcolumnget(column: *config.ColumnInfo, allocator: *std.mem.Allocator) voi
     //  defer thread.destroy(allocator, netthread);
 }
 
-fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: *std.mem.Allocator) void {
+fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
     auth.oauthTokenUpgrade(allocator, httpInfo, column.filter.host(), code, column.oauthClientId.?, column.oauthClientSecret.?);
@@ -208,10 +208,10 @@ fn oauthback(command: *thread.Command) void {
             if (tree.root.Object.get("client_secret")) |cid| {
                 column.oauthClientSecret = cid.String;
             }
-            warn("*oauthback client id {} secret {}\n", .{ column.oauthClientId, column.oauthClientSecret });
+            warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*anyopaque, column));
         } else {
-            warn("*oauthback json type err {}\n{}\n", .{ rootJsonType, http.body });
+            warn("*oauthback json type err {}\n{s}\n", .{ rootJsonType, http.body });
         }
     } else {
         warn("*oauthback net err {}\n", .{http.response_code});
@@ -236,7 +236,7 @@ fn netback(command: *thread.Command) void {
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, alloc);
                         var id = toot.id();
-                        warn("netback json create toot #{} {*}\n", .{ id, toot });
+                        warn("netback json create toot #{s} {*}\n", .{ id, toot });
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
@@ -244,20 +244,20 @@ fn netback(command: *thread.Command) void {
                             column.toots.sortedInsert(toot, alloc);
                             var html = toot.get("content").?.String;
                             //var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
-                            var root = html_lib.parse(html, alloc);
+                            var root = html_lib.parse(html);
                             html_lib.search(root);
                             cache_update(toot, alloc);
 
                             for (images.items) |image| {
                                 const imgUrl = image.Object.get("preview_url").?.String;
-                                warn("toot #{} has img {}\n", .{ toot.id(), imgUrl });
+                                warn("toot #{s} has img {s}\n", .{ toot.id(), imgUrl });
                                 mediaget(toot, imgUrl, alloc);
                             }
                         }
                     }
                 } else if (tree.root == .Object) {
                     if (tree.root.Object.get("error")) |err| {
-                        warn("netback json err {} \n", .{err.String});
+                        warn("netback json err {s} \n", .{err.String});
                     }
                 } else {
                     warn("!netback json unknown root tagtype {}\n", .{tree.root});
@@ -277,7 +277,7 @@ fn mediaback(command: *thread.Command) void {
     const tootpic = alloc.create(gui.TootPic) catch unreachable;
     tootpic.toot = reqres.toot;
     tootpic.pic = reqres.body;
-    warn("mediaback toot #{} tootpic.toot {*} adding 1 img\n", .{ tootpic.toot.id(), tootpic.toot });
+    warn("mediaback toot #{s} tootpic.toot {*} adding 1 img\n", .{ tootpic.toot.id(), tootpic.toot });
     tootpic.toot.addImg(tootpic.pic);
     gui.schedule(gui.toot_media_schedule, @ptrCast(*anyopaque, tootpic));
 }
@@ -286,7 +286,7 @@ fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.Object;
     const acct = account.get("acct").?.String;
-    warn("photoback! acct {} type {} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
+    warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @ptrCast(*anyopaque, cAcct));
@@ -302,7 +302,7 @@ fn profileback(command: *thread.Command) void {
     }
 }
 
-fn cache_update(toot: *toot_lib.Type, allocator: *std.mem.Allocator) void {
+fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     var account = toot.get("account").?.Object;
     const acct: []const u8 = account.get("acct").?.String;
     const avatar_url: []const u8 = account.get("avatar").?.String;
@@ -343,14 +343,14 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
-        warn("gui col config {}\n", .{column.config.title});
+        warn("gui col config {s}\n", .{column.config.title});
         column.inError = false;
         column.refreshing = false;
         config.writefile(settings, "config.json");
     }
     if (command.id == 5) { // column remove
         const column = command.verb.column;
-        warn("gui col remove {}\n", .{column.config.title});
+        warn("gui col remove {s}\n", .{column.config.title});
         //var colpos: usize = undefined;
         for (settings.columns.items) |col, idx| {
             if (col == column) {
@@ -363,7 +363,8 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 6) { //oauth
         const column = command.verb.column;
-        if (column.oauthClientId) {
+        if (column.oauthClientId) |id| {
+            _ = id;
             gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*anyopaque, column));
         } else {
             oauthcolumnget(column, alloc);
@@ -371,7 +372,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 7) { //oauth activate
         const myAuth = command.verb.auth.*;
-        warn("oauth authorization {}\n", .{myAuth.code});
+        warn("oauth authorization {s}\n", .{myAuth.code});
         oauthtokenget(myAuth.column, myAuth.code, alloc);
     }
     if (command.id == 8) { //column config changed
@@ -400,7 +401,7 @@ fn heartback(command: *thread.Command) void {
     columns_net_freshen(alloc);
 }
 
-fn columns_net_freshen(allocator: *std.mem.Allocator) void {
+fn columns_net_freshen(allocator: std.mem.Allocator) void {
     for (settings.columns.items) |column| {
         var now = config.now();
         const refresh = 60;
@@ -413,11 +414,11 @@ fn columns_net_freshen(allocator: *std.mem.Allocator) void {
     }
 }
 
-fn column_refresh(column: *config.ColumnInfo, allocator: *std.mem.Allocator) void {
+fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     if (column.refreshing) {
-        warn("column {} in {} Ignoring request.\n", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
+        warn("column {s} in {s} Ignoring request.\n", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        warn("column http get {}\n", .{column.makeTitle()});
+        warn("column http get {s}\n", .{column.makeTitle()});
         column.refreshing = true;
         columnget(column, allocator);
     }
