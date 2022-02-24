@@ -40,7 +40,6 @@ pub fn create(
     const null_pattr = @intToPtr([*c]const c.union_pthread_attr_t, 0);
     var terr = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
     if (terr == 0) {
-        warn("created thread#{}\n", .{actor.thread_id});
         try actors.append(actor.*);
         return actor;
     } else {
@@ -52,7 +51,7 @@ pub fn create(
 pub fn signal(actor: *Actor, command: *Command) void {
     command.actor = actor; // fill in the command
     const command_addr_bytes = @ptrCast(*const [@sizeOf(*Command)]u8, &command);
-    warn("signaling from tid {} command bytes {} len{} {}\n", .{ actor.thread_id, std.fmt.fmtSliceHexLower(command_addr_bytes), command_addr_bytes.len, command });
+    warn("tid {} is signaling {} to thread.wait()\n", .{ actor.thread_id, command.verb });
     ipc.send(actor.client, command_addr_bytes);
 }
 

@@ -165,8 +165,6 @@ pub fn read(json: []const u8) !Settings {
             colInfo.config.img_only = img_only;
             settings.columns.append(colInfo) catch unreachable;
         }
-    } else {
-        warn("missing columns\n", .{});
     }
     return settings.*;
 }

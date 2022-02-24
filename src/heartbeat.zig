@@ -15,7 +15,7 @@ pub fn init(myAllocator: Allocator) !void {
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     var actor = @ptrCast(*thread.Actor, data8);
-    warn("heartbeat thread start {*} \n", .{actor});
+    warn("heartbeat mainloop thread.self()={} actor.thread_id={} \n", .{ thread.self(), actor.thread_id });
     while (true) {
         _ = c.usleep(3 * 1000000);
         // signal crazy

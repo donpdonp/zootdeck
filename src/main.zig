@@ -35,13 +35,12 @@ pub fn main() !void {
     if (config.readfile("config.json")) |config_data| {
         settings = config_data;
         var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        warn("main start guithread {}\n", .{alloc});
         _ = try thread.create(gui.go, dummy_payload, guiback);
         _ = try thread.create(heartbeat.go, dummy_payload, heartback);
 
         while (true) {
             statewalk(alloc);
-            log.debug("== epoll wait\n", .{});
+            log.debug("== main() epoll wait tid {}\n", .{thread.self()});
             thread.wait(); // main ipc listener
         }
     } else |err| {
@@ -397,7 +396,7 @@ fn guiback(command: *thread.Command) void {
 }
 
 fn heartback(command: *thread.Command) void {
-    warn("*heartback tid {x} {}\n", .{ thread.self(), command });
+    warn("heartback() on tid {} received {}\n", .{ thread.self(), command.verb });
     columns_net_freshen(alloc);
 }
 

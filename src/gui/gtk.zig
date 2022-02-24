@@ -42,7 +42,7 @@ pub fn libname() []const u8 {
 }
 
 pub fn init(alloca: Allocator, set: *config.Settings) !void {
-    warn("{s} started\n", .{libname()});
+    warn("{s} init() on thread.self()={}\n", .{ libname(), thread.self() });
     settings = set;
     allocator = alloca;
     columns = std.ArrayList(*Column).init(allocator);
@@ -82,7 +82,6 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     //  c.gtk_widget_set_size_request(main_window, w, h);
     c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
     _ = g_signal_connect(main_window, "destroy", gtk_quit, null);
-    warn("{s} gui_setup done\n", .{libname()});
 }
 
 fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) [*]c.GtkWidget {

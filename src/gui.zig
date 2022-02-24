@@ -16,7 +16,7 @@ var allocator: Allocator = undefined;
 var settings: *config.Settings = undefined;
 
 pub fn init(alloca: Allocator, set: *config.Settings) !void {
-    warn("gui init allocator {} {}\n", .{ alloca, alloca });
+    warn("GUI init() on thread.self()={}\n", .{thread.self()});
     settings = set;
     allocator = alloca;
     columns = std.ArrayList(*Column).init(allocator);
@@ -27,10 +27,9 @@ var myActor: *thread.Actor = undefined;
 var stop = false;
 
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
-    warn("gui {s} thread start &actor_data: {*} data: {}\n", .{ guilib.libname(), data, data });
+    warn("GUI {s} mainloop thread.self()={}\n", .{ guilib.libname(), thread.self() });
     var data8 = @alignCast(@alignOf(thread.Actor), data);
     myActor = @ptrCast(*thread.Actor, data8);
-    warn("gui {s} thread start &actor: {*} actor:{}\n", .{ guilib.libname(), myActor, myActor });
     if (guilib.gui_setup(myActor)) {
         // mainloop
         var then = std.time.milliTimestamp();
@@ -46,7 +45,6 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         warn("gui error {}\n", .{err});
     }
     return null;
-
 }
 pub fn schedule(func: ?fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
     guilib.schedule(func, param);
