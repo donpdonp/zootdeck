@@ -835,10 +835,10 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
 
 pub fn mainloop() bool {
     var stop = false;
-    warn("gtk pending {}\n", .{c.gtk_events_pending()});
-    warn("gtk main level {}\n", .{c.gtk_main_level()});
+    //warn("gtk pending {}\n", .{c.gtk_events_pending()});
+    //warn("gtk main level {}\n", .{c.gtk_main_level()});
     var exitcode = c.gtk_main_iteration();
-    warn("gtk main interaction return {}\n", .{exitcode});
+    //warn("gtk main interaction return {}\n", .{exitcode});
     //if(c.gtk_events_pending() != 0) {
     if (exitcode == 0) {
         stop = true;

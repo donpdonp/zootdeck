@@ -33,17 +33,21 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     warn("gui {s} thread start &actor: {*} actor:{}\n", .{ guilib.libname(), myActor, myActor });
     if (guilib.gui_setup(myActor)) {
         // mainloop
+        var then = std.time.milliTimestamp();
         while (!stop) {
             stop = guilib.mainloop();
+            var now = std.time.milliTimestamp();
+            //warn("{}ms pause gui mainloop\n", .{now - then});
+            then = now;
         }
-        warn("last mainloop {}\n", .{guilib.mainloop()});
+        warn("final mainloop {}\n", .{guilib.mainloop()});
         guilib.gui_end();
     } else |err| {
         warn("gui error {}\n", .{err});
     }
     return null;
-}
 
+}
 pub fn schedule(func: ?fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
     guilib.schedule(func, param);
 }

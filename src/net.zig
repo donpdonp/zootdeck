@@ -118,8 +118,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
     }
 }
 
-pub fn curl_write(ptr: [*c]const u8, size: usize, nmemb: usize, userdata: *anyopaque) usize {
-    _ = size;
+pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) usize {
     var buf = @ptrCast(*std.ArrayList(u8), @alignCast(8, userdata));
     var body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch |err| {

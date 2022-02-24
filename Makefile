@@ -12,7 +12,7 @@ format:
 	zig fmt src
 
 run: build
-	./zig-cache/bin/zootdeck
+	./zig-out/bin/zootdeck
 
 push:
 	pijul push donpdonp@nest.pijul.com:donpdonp/tootdeck
