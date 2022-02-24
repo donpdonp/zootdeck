@@ -314,7 +314,7 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
 }
 
 fn guiback(command: *thread.Command) void {
-    warn("*guiback tid {x} {*}\n", .{ thread.self(), command });
+    warn("guiback() tid {} command.id {} command.verb {*}\n", .{ thread.self(), command.id, command.verb });
     if (command.id == 1) {
         var ram = alloc.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
@@ -384,7 +384,7 @@ fn guiback(command: *thread.Command) void {
         // throw out toots in the toot list not from the new host
         column_refresh(column, alloc);
     }
-    if (command.id == 9) { // imgonly button
+    if (command.id == 9) { // image-only button
         const column = command.verb.column;
         column.config.img_only = !column.config.img_only;
         config.writefile(settings, "config.json");
@@ -392,6 +392,10 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 10) { // window size changed
         config.writefile(settings, "config.json");
+    }
+    if (command.id == 11) { // Quit
+        warn("quitting...", .{});
+        std.os.exit(0);
     }
 }
 

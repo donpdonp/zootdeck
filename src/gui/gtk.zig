@@ -846,9 +846,9 @@ pub fn mainloop() bool {
 }
 
 pub fn gtk_quit() callconv(.C) void {
-    warn("gtk signal destroy - gtk_main_quit\n", .{});
+    warn("gtk signal destroy called.\n", .{});
     c.g_object_unref(myBuilder);
-    c.gtk_main_quit();
+    thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 11, .verb = &thread.CommandVerb{ .idle = undefined } });
 }
 
 pub fn gui_end() void {

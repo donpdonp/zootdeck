@@ -27,6 +27,7 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("gmodule-2.0");
     exe.linkSystemLibrary("pango-1.0");
     exe.linkSystemLibrary("atk-1.0");
+    exe.linkSystemLibrary("gio-2.0");
 
     // html
     exe.linkSystemLibrary("gumbo");
