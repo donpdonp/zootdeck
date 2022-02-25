@@ -87,6 +87,7 @@ pub fn read(client: *Client, buf: []u8) []u8 {
             }
         }
         if (msgrecv == msglen) {
+            //warn("epoll ipc.read() read {}\n", .{std.fmt.fmtSliceHexLower(buf[0..msgrecv])});
             return buf[0..msgrecv];
         } else {
             return buf[0..0];
@@ -101,4 +102,5 @@ pub fn send(client: *Client, buf: []const u8) void {
     var len8: u8 = @intCast(u8, buf.len);
     var writecount = c.write(client.writeSocket, &len8, 1); // send the fixed-size portion
     writecount = writecount + c.write(client.writeSocket, buf.ptr, buf.len);
+    //warn("epoll ipc.send() wrote {} {}\n", .{ writecount, std.fmt.fmtSliceHexLower(buf) });
 }

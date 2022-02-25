@@ -314,7 +314,7 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
 }
 
 fn guiback(command: *thread.Command) void {
-    warn("guiback() tid {} command.id {} command.verb {*}\n", .{ thread.self(), command.id, command.verb });
+    warn("guiback() tid {} command {} {} \n", .{ thread.self(), &command, command });
     if (command.id == 1) {
         var ram = alloc.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
