@@ -581,22 +581,34 @@ fn main_check_resize(selfptr: *anyopaque) callconv(.C) void {
     var h: c.gint = undefined;
     var w: c.gint = undefined;
     c.gtk_window_get_size(@ptrCast([*c]c.GtkWindow, self), &w, &h);
-    //warn("main_check_resize, gtk_window_get_size {} x {}\n", w, h);
     if (w != settings.win_x) {
-        warn("main_check_resize, win_x {} != w {}\n", .{ settings.win_x, w });
+        warn("main_check_resize() win_x {} != gtk_width {}\n", .{ settings.win_x, w });
         settings.win_x = w;
-        thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 10, .verb = &thread.CommandVerb{ .idle = undefined } });
+        var verb = allocator.create(thread.CommandVerb) catch unreachable;
+        verb.idle = undefined;
+        var command = allocator.create(thread.Command) catch unreachable;
+        command.id = 10;
+        command.verb = verb;
+        warn("main_check_resize() verb {*}\n", .{verb});
+        thread.signal(myActor, command);
     }
     if (h != settings.win_y) {
-        warn("main_check_resize, win_x {} != w {}\n", .{ settings.win_x, w });
+        warn("main_check_resize, win_y {} != gtk_height {}\n", .{ settings.win_x, w });
         settings.win_y = h;
-        thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 10, .verb = &thread.CommandVerb{ .idle = undefined } });
+        var verb = allocator.create(thread.CommandVerb) catch unreachable;
+        verb.idle = undefined;
+        var command = allocator.create(thread.Command) catch unreachable;
+        command.id = 10;
+        command.verb = verb;
+        thread.signal(myActor, command);
     }
 }
 
 fn actionbar_add() callconv(.C) void {
-    warn("actionbar_add\n", .{});
-    thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 3, .verb = &thread.CommandVerb{ .idle = undefined } });
+    warn("actionbar_add()\n", .{});
+    var verb = allocator.create(thread.CommandVerb) catch unreachable;
+    verb.idle = undefined;
+    thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 3, .verb = verb });
 }
 
 fn zoot_drag() callconv(.C) void {

@@ -50,8 +50,10 @@ pub fn create(
 
 pub fn signal(actor: *Actor, command: *Command) void {
     command.actor = actor; // fill in the command
-    const command_address_bytes = std.mem.toBytes(&command)[0..]; //@ptrCast([*]const u8, command)[0..7];
-    warn("tid {} is signaling command {} id {} {*} to thread.wait() addr bytes: {}\n", .{ actor.thread_id, &command, command.id, command.verb, std.fmt.fmtSliceHexLower(command_address_bytes) });
+    //const command_address_bytes: *const [8]u8 = @ptrCast([*]const u8, command)[0..8]; // not OK
+    const command_address_bytes: *align(8) const [8]u8 = std.mem.asBytes(&command); // OK
+    //const command_address_bytes = std.mem.asBytes(&@as(usize, @ptrToInt(command))); // OK
+    warn("tid {} is signaling command {*} id {} {*} to thread.wait() \n", .{ actor.thread_id, command, command.id, command.verb });
     ipc.send(actor.client, command_address_bytes);
 }
 
