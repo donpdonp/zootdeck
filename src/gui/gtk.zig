@@ -860,7 +860,12 @@ pub fn mainloop() bool {
 pub fn gtk_quit() callconv(.C) void {
     warn("gtk signal destroy called.\n", .{});
     c.g_object_unref(myBuilder);
-    thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 11, .verb = &thread.CommandVerb{ .idle = undefined } });
+    var verb = allocator.create(thread.CommandVerb) catch unreachable;
+    verb.idle = undefined;
+    var command = allocator.create(thread.Command) catch unreachable;
+    command.id = 11;
+    command.verb = verb;
+    thread.signal(myActor, command);
 }
 
 pub fn gui_end() void {
