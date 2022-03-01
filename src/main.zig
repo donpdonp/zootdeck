@@ -248,9 +248,14 @@ fn netback(command: *thread.Command) void {
                             cache_update(toot, alloc);
 
                             for (images.items) |image| {
-                                const imgUrl = image.Object.get("preview_url").?.String;
-                                warn("toot #{s} has img {s}\n", .{ toot.id(), imgUrl });
-                                mediaget(toot, imgUrl, alloc);
+                                const img_url_raw = image.Object.get("preview_url").?;
+                                if (img_url_raw == .String) {
+                                    const img_url = img_url_raw.String;
+                                    warn("toot #{s} has img {s}\n", .{ toot.id(), img_url });
+                                    mediaget(toot, img_url, alloc);
+                                } else {
+                                    warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
+                                }
                             }
                         }
                     }
