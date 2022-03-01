@@ -26,16 +26,16 @@ var myActor: *thread.Actor = undefined;
 var myAllocation = c.GtkAllocation{ .x = -1, .y = -1, .width = 0, .height = 0 };
 
 pub const Column = struct {
-    builder: [*c]c.GtkBuilder,
-    columnbox: [*c]c.GtkWidget,
-    config_window: [*c]c.GtkWidget,
+    builder: *c.GtkBuilder,
+    columnbox: *c.GtkWidget,
+    config_window: *c.GtkWidget,
     main: *config.ColumnInfo,
     guitoots: std.StringHashMap(*c.GtkBuilder),
 };
 
 var columns: std.ArrayList(*Column) = undefined;
 var myBuilder: *c.GtkBuilder = undefined;
-var myCssProvider: [*c]c.GtkCssProvider = undefined;
+var myCssProvider: *c.GtkCssProvider = undefined;
 
 pub fn libname() []const u8 {
     return "GTK";
@@ -80,13 +80,13 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     var w = @intCast(c.gint, settings.win_x);
     var h = @intCast(c.gint, settings.win_y);
     //  c.gtk_widget_set_size_request(main_window, w, h);
-    c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, main_window), w, h);
+    c.gtk_window_resize(@ptrCast(*c.GtkWindow, main_window), w, h);
     _ = g_signal_connect(main_window, "destroy", gtk_quit, null);
 }
 
-fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) [*]c.GtkWidget {
-    var gobject = @ptrCast([*c]c.GTypeInstance, c.gtk_builder_get_object(builder, name));
-    var gwidget = @ptrCast([*c]c.GtkWidget, c.g_type_check_instance_cast(gobject, c.gtk_widget_get_type()));
+fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) *c.GtkWidget {
+    var gobject = @ptrCast(*c.GTypeInstance, c.gtk_builder_get_object(builder, name));
+    var gwidget = @ptrCast(*c.GtkWidget, c.g_type_check_instance_cast(gobject, c.gtk_widget_get_type()));
     return gwidget;
 }
 
@@ -119,7 +119,7 @@ pub fn column_config_oauth_url_schedule(in: ?*anyopaque) callconv(.C) c_int {
 }
 
 pub fn update_author_photo_schedule(in: ?*anyopaque) callconv(.C) c_int {
-    const cAcct = @ptrCast([*c]const u8, @alignCast(8, in));
+    const cAcct = @ptrCast(*const u8, @alignCast(8, in));
     const acct = util.cstrToSliceCopy(allocator, cAcct);
     update_author_photo(acct);
     return 0;
@@ -160,21 +160,21 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
     column.main = colInfo;
     //var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
     column.config_window = builder_get_widget(column.builder, "column_config");
-    c.gtk_window_resize(@ptrCast([*c]c.GtkWindow, column.config_window), 600, 200);
+    c.gtk_window_resize(@ptrCast(*c.GtkWindow, column.config_window), 600, 200);
     column.guitoots = std.StringHashMap(*c.GtkBuilder).init(allocator);
     columns.append(column) catch unreachable;
     columns_resize();
     warn("column added {s}\n", .{column.main.makeTitle()});
     const filter = builder_get_widget(column.builder, "column_filter");
     const cFilter = util.sliceToCstr(allocator, column.main.config.filter);
-    c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, filter), cFilter);
+    c.gtk_entry_set_text(@ptrCast(*c.GtkEntry, filter), cFilter);
     //const footer = builder_get_widget(column.builder, "column_footer");
     const config_icon = builder_get_widget(column.builder, "column_config_icon");
-    c.gtk_misc_set_alignment(@ptrCast([*c]c.GtkMisc, config_icon), 1, 0);
+    c.gtk_misc_set_alignment(@ptrCast(*c.GtkMisc, config_icon), 1, 0);
 
     update_column_ui(column);
 
-    c.gtk_grid_attach_next_to(@ptrCast([*c]c.GtkGrid, container), column.columnbox, null, c.GTK_POS_RIGHT, 1, 1);
+    c.gtk_grid_attach_next_to(@ptrCast(*c.GtkGrid, container), column.columnbox, null, c.GTK_POS_RIGHT, 1, 1);
 
     _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @ptrCast(?fn () callconv(.C) void, column_top_label_title));
     _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @ptrCast(?fn () callconv(.C) void, column_config_btn));
@@ -221,7 +221,7 @@ pub fn update_column_ui(column: *Column) void {
     const label = builder_get_widget(column.builder, "column_top_label");
     //var topline_null: []u8 = undefined;
     const title_null = util.sliceAddNull(allocator, column.main.makeTitle());
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, label), title_null.ptr);
+    c.gtk_label_set_text(@ptrCast(*c.GtkLabel, label), title_null.ptr);
 }
 
 pub fn column_remove_schedule(in: ?*anyopaque) callconv(.C) c_int {
@@ -234,7 +234,7 @@ pub fn column_remove(colInfo: *config.ColumnInfo) void {
     const container = builder_get_widget(myBuilder, "ZootColumns");
     const column = findColumnByInfo(colInfo);
     hide_column_config(column);
-    c.gtk_container_remove(@ptrCast([*c]c.GtkContainer, container), column.columnbox);
+    c.gtk_container_remove(@ptrCast(*c.GtkContainer, container), column.columnbox);
 }
 
 //pub const GCallback = ?extern fn() void;
@@ -299,8 +299,8 @@ pub fn update_column_toots(column: *Column) void {
                 const tootbuilder = makeTootBox(toot, column);
                 var tootbox = builder_get_widget(tootbuilder, "tootbox");
                 _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
-                c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, c.gtk_true(), c.gtk_true(), 0);
-                c.gtk_box_reorder_child(@ptrCast([*c]c.GtkBox, column_toot_zone), tootbox, idx);
+                c.gtk_box_pack_start(@ptrCast(*c.GtkBox, column_toot_zone), tootbox, c.gtk_true(), c.gtk_true(), 0);
+                c.gtk_box_reorder_child(@ptrCast(*c.GtkBox, column_toot_zone), tootbox, idx);
             } else {
                 if (tootbuilderMaybe) |kv| {
                     const builder = kv;
@@ -320,38 +320,38 @@ pub fn update_column_toots(column: *Column) void {
     const tootword = if (column.main.config.img_only) "images" else "toots";
     const countStr = std.fmt.allocPrint(allocator, "{} {s}", .{ column.main.toots.count(), tootword }) catch unreachable;
     const cCountStr = util.sliceToCstr(allocator, countStr);
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_count_label), cCountStr);
+    c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_count_label), cCountStr);
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
     warn("update_netstatus_column {s} {}\n", .{ http.url, http.response_code });
     const column_footer_netstatus = builder_get_widget(column.builder, "column_footer_netstatus");
     var gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
-    //var netmsg: [*c]const u8 = undefined;
+    //var netmsg: *const u8 = undefined;
     if (http.response_code == 0) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "GET");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "GET");
         c.gtk_style_context_add_class(gtk_context_netstatus, "net_active");
     } else if (http.response_code >= 200 and http.response_code < 300) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "OK");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "OK");
         c.gtk_style_context_remove_class(gtk_context_netstatus, "net_active");
     } else if (http.response_code >= 300 and http.response_code < 400) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "redirect");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "redirect");
     } else if (http.response_code >= 400 and http.response_code < 500) {
         if (http.response_code == 401) {
-            c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "token bad");
+            c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "token bad");
         } else if (http.response_code == 404) {
-            c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "404 err");
+            c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "404 err");
         } else {
-            c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "4xx err");
+            c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "4xx err");
         }
     } else if (http.response_code >= 500 and http.response_code < 600) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "5xx err");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "5xx err");
     } else if (http.response_code >= 1000 and http.response_code < 1100) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "json err");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "json err");
     } else if (http.response_code == 2100) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "DNS err");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "DNS err");
     } else if (http.response_code == 2200) {
-        c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, column_footer_netstatus), "timeout err");
+        c.gtk_label_set_text(@ptrCast(*c.GtkLabel, column_footer_netstatus), "timeout err");
     }
     if (column.main.inError) {
         c.gtk_style_context_add_class(gtk_context_netstatus, "net_error");
@@ -360,7 +360,7 @@ pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
     }
 }
 
-fn widget_destroy(widget: [*c]c.GtkWidget, userdata: ?*anyopaque) callconv(.C) void {
+fn widget_destroy(widget: *c.GtkWidget, userdata: ?*anyopaque) callconv(.C) void {
     //warn("destroying {*}\n", widget);
     _ = userdata;
     c.gtk_widget_destroy(widget);
@@ -372,7 +372,7 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
     c.g_object_unref(builder);
 }
 
-pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
+pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     warn("maketootbox toot #{s} {*} gui building {} images\n", .{ toot.id(), toot, toot.imgList.items.len });
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
     //const tootbox = builder_get_widget(builder, "tootbox");
@@ -402,9 +402,9 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
     var cText = util.sliceToCstr(allocator, html_trim);
 
     const toottext_label = builder_get_widget(builder, "toot_text");
-    c.gtk_label_set_line_wrap_mode(@ptrCast([*c]c.GtkLabel, toottext_label), c.PANGO_WRAP_WORD_CHAR);
-    c.gtk_label_set_line_wrap(@ptrCast([*c]c.GtkLabel, toottext_label), 1);
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, toottext_label), cText);
+    c.gtk_label_set_line_wrap_mode(@ptrCast(*c.GtkLabel, toottext_label), c.PANGO_WRAP_WORD_CHAR);
+    c.gtk_label_set_line_wrap(@ptrCast(*c.GtkLabel, toottext_label), 1);
+    c.gtk_label_set_text(@ptrCast(*c.GtkLabel, toottext_label), cText);
 
     const tagBox = builder_get_widget(builder, "tag_flowbox");
     //var tagidx: usize = 0;
@@ -413,7 +413,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) [*c]c.GtkBuilder {
         const tagLabel = c.gtk_label_new(cTag);
         const labelContext = c.gtk_widget_get_style_context(tagLabel);
         c.gtk_style_context_add_class(labelContext, "toot_tag");
-        c.gtk_container_add(@ptrCast([*c]c.GtkContainer, tagBox), tagLabel);
+        c.gtk_container_add(@ptrCast(*c.GtkContainer, tagBox), tagLabel);
         c.gtk_widget_show(tagLabel);
     }
 
@@ -444,10 +444,10 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
     const avatar = builder_get_widget(builder, "toot_author_avatar");
     const avatar_path = std.fmt.allocPrint(allocator, "./cache/{s}/photo", .{acct}) catch unreachable;
     var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path), 50, -1, 1, null);
-    c.gtk_image_set_from_pixbuf(@ptrCast([*c]c.GtkImage, avatar), pixbuf);
+    c.gtk_image_set_from_pixbuf(@ptrCast(*c.GtkImage, avatar), pixbuf);
 }
 
-fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
+fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
     const tootBox = builder_get_widget(builder, "tootbox");
     const imageBox = builder_get_widget(builder, "image_box");
     c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
@@ -478,7 +478,7 @@ fn toot_media(column: *Column, builder: [*c]c.GtkBuilder, toot: *toot_lib.Type, 
         _ = c.gdk_pixbuf_loader_close(loader, null);
         if (pixbuf != null) {
             var new_img = c.gtk_image_new_from_pixbuf(pixbuf);
-            c.gtk_box_pack_start(@ptrCast([*c]c.GtkBox, imageBox), new_img, c.gtk_false(), c.gtk_false(), 0);
+            c.gtk_box_pack_start(@ptrCast(*c.GtkBox, imageBox), new_img, c.gtk_false(), c.gtk_false(), 0);
             c.gtk_widget_show(new_img);
         } else {
             warn("toot_media img from pixbuf FAILED\n", .{});
@@ -521,15 +521,15 @@ fn escapeGtkString(str: []const u8) []const u8 {
     return str_esc;
 }
 
-pub fn labelBufPrint(label: [*c]c.GtkWidget, comptime fmt: []const u8, args: anytype) void {
+pub fn labelBufPrint(label: *c.GtkWidget, comptime fmt: []const u8, args: anytype) void {
     const buf = allocator.alloc(u8, 256) catch unreachable;
     const str = std.fmt.bufPrint(buf, fmt, args) catch unreachable;
     const cStr = util.sliceToCstr(allocator, str);
-    c.gtk_label_set_text(@ptrCast([*c]c.GtkLabel, label), cStr);
+    c.gtk_label_set_text(@ptrCast(*c.GtkLabel, label), cStr);
 }
 
 fn column_config_btn(columnptr: ?*anyopaque) callconv(.C) void {
-    var columnbox = @ptrCast([*c]c.GtkWidget, @alignCast(8, columnptr));
+    var columnbox = @ptrCast(*c.GtkWidget, @alignCast(8, columnptr));
     var column: *Column = findColumnByBox(columnbox);
 
     columnConfigWriteGui(column);
@@ -556,7 +556,7 @@ fn findColumnByInfo(info: *config.ColumnInfo) *Column {
     unreachable;
 }
 
-fn findColumnByBox(box: [*c]c.GtkWidget) *Column {
+fn findColumnByBox(box: *c.GtkWidget) *Column {
     for (columns.items) |col| {
         if (col.columnbox == box) {
             return col;
@@ -565,7 +565,7 @@ fn findColumnByBox(box: [*c]c.GtkWidget) *Column {
     unreachable;
 }
 
-fn findColumnByConfigWindow(widget: [*c]c.GtkWidget) *Column {
+fn findColumnByConfigWindow(widget: *c.GtkWidget) *Column {
     const parent = c.gtk_widget_get_toplevel(widget);
     for (columns.items) |col| {
         if (col.config_window == parent) {
@@ -577,10 +577,10 @@ fn findColumnByConfigWindow(widget: [*c]c.GtkWidget) *Column {
 }
 
 fn main_check_resize(selfptr: *anyopaque) callconv(.C) void {
-    var self = @ptrCast([*c]c.GtkWidget, @alignCast(8, selfptr));
+    var self = @ptrCast(*c.GtkWidget, @alignCast(8, selfptr));
     var h: c.gint = undefined;
     var w: c.gint = undefined;
-    c.gtk_window_get_size(@ptrCast([*c]c.GtkWindow, self), &w, &h);
+    c.gtk_window_get_size(@ptrCast(*c.GtkWindow, self), &w, &h);
     if (w != settings.win_x) {
         warn("main_check_resize() win_x {} != gtk_width {}\n", .{ settings.win_x, w });
         settings.win_x = w;
@@ -618,7 +618,7 @@ fn zoot_drag() callconv(.C) void {
 // rebulid half of GdkEventKey, avoiding bitfield
 const EventKey = packed struct {
     _type: i32,
-    window: [*c]c.GtkWindow,
+    window: *c.GtkWindow,
     send_event: i8,
     time: u32,
     state: u32,
@@ -631,7 +631,7 @@ fn zoot_keypress(widgetptr: *anyopaque, evtptr: *EventKey) callconv(.C) void {
 }
 
 fn column_reload(columnptr: *anyopaque) callconv(.C) void {
-    var column_widget = @ptrCast([*c]c.GtkWidget, @alignCast(8, columnptr));
+    var column_widget = @ptrCast(*c.GtkWidget, @alignCast(8, columnptr));
     var column: *Column = findColumnByBox(column_widget);
     warn("column reload found {s}\n", .{column.main.config.title});
 
@@ -645,7 +645,7 @@ fn column_reload(columnptr: *anyopaque) callconv(.C) void {
 }
 
 fn column_imgonly(columnptr: *anyopaque) callconv(.C) void {
-    var column_widget = @ptrCast([*c]c.GtkWidget, @alignCast(8, columnptr));
+    var column_widget = @ptrCast(*c.GtkWidget, @alignCast(8, columnptr));
     var column: *Column = findColumnByBox(column_widget);
 
     // signal crazy
@@ -658,7 +658,7 @@ fn column_imgonly(columnptr: *anyopaque) callconv(.C) void {
 }
 
 fn column_remove_btn(selfptr: *anyopaque) callconv(.C) void {
-    var self = @ptrCast([*c]c.GtkWidget, @alignCast(8, selfptr));
+    var self = @ptrCast(*c.GtkWidget, @alignCast(8, selfptr));
     var column: *Column = findColumnByConfigWindow(self);
 
     // signal crazy
@@ -671,14 +671,14 @@ fn column_remove_btn(selfptr: *anyopaque) callconv(.C) void {
 }
 
 fn column_config_oauth_btn(selfptr: *anyopaque) callconv(.C) void {
-    var self = @ptrCast([*c]c.GtkWidget, @alignCast(8, selfptr));
+    var self = @ptrCast(*c.GtkWidget, @alignCast(8, selfptr));
     var column: *Column = findColumnByConfigWindow(self);
 
     var oauth_box = builder_get_widget(column.builder, "column_config_oauth_box");
     var host_box = builder_get_widget(column.builder, "column_config_host_box");
-    c.gtk_box_pack_end(@ptrCast([*c]c.GtkBox, host_box), oauth_box, 1, 0, 0);
+    c.gtk_box_pack_end(@ptrCast(*c.GtkBox, host_box), oauth_box, 1, 0, 0);
     var oauth_label = builder_get_widget(column.builder, "column_config_oauth_label");
-    c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), "contacting server...");
+    c.gtk_label_set_markup(@ptrCast(*c.GtkLabel, oauth_label), "contacting server...");
 
     columnConfigReadGui(column);
     column.main.filter = filter_lib.parse(allocator, column.main.config.filter);
@@ -713,15 +713,15 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
     var markupBuf = allocator.alloc(u8, 512) catch unreachable;
     var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{s}\">{s} oauth</a>", .{ oauth_url_buf.toSliceConst(), column.main.filter.host() }) catch unreachable;
     var cLabel = util.sliceToCstr(allocator, markup);
-    c.gtk_label_set_markup(@ptrCast([*c]c.GtkLabel, oauth_label), cLabel);
+    c.gtk_label_set_markup(@ptrCast(*c.GtkLabel, oauth_label), cLabel);
 }
 
 fn column_config_oauth_activate(selfptr: *anyopaque) callconv(.C) void {
-    var self = @ptrCast([*c]c.GtkWidget, @alignCast(8, selfptr));
+    var self = @ptrCast(*c.GtkWidget, @alignCast(8, selfptr));
     var column: *Column = findColumnByConfigWindow(self);
 
     var token_entry = builder_get_widget(column.builder, "column_config_authorization_entry");
-    const cAuthorization = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, token_entry));
+    const cAuthorization = c.gtk_entry_get_text(@ptrCast(*c.GtkEntry, token_entry));
     const authorization = util.cstrToSliceCopy(allocator, cAuthorization);
 
     // signal crazy
@@ -739,7 +739,7 @@ fn column_config_oauth_activate(selfptr: *anyopaque) callconv(.C) void {
 pub fn column_config_oauth_finalize(column: *Column) void {
     var oauth_box = builder_get_widget(column.builder, "column_config_oauth_box");
     var host_box = builder_get_widget(column.builder, "column_config_host_box");
-    c.gtk_container_remove(@ptrCast([*c]c.GtkContainer, host_box), oauth_box);
+    c.gtk_container_remove(@ptrCast(*c.GtkContainer, host_box), oauth_box);
     columnConfigWriteGui(column);
     update_column_ui(column);
 }
@@ -747,22 +747,21 @@ pub fn column_config_oauth_finalize(column: *Column) void {
 pub fn columnConfigWriteGui(column: *Column) void {
     var url_entry = builder_get_widget(column.builder, "column_config_url_entry");
     var cUrl = util.sliceToCstr(allocator, column.main.filter.host());
-    c.gtk_entry_set_text(@ptrCast([*c]c.GtkEntry, url_entry), cUrl);
+    c.gtk_entry_set_text(@ptrCast(*c.GtkEntry, url_entry), cUrl);
 
     var token_image = builder_get_widget(column.builder, "column_config_token_image");
-    var icon_name: [*c]const u8 = undefined;
-    if (column.main.config.token) |token| {
-        _ = token;
+    var icon_name: []const u8 = undefined;
+    if (column.main.config.token) |_| {
         icon_name = "gtk-apply";
     } else {
         icon_name = "gtk-close";
     }
-    c.gtk_image_set_from_icon_name(@ptrCast([*c]c.GtkImage, token_image), icon_name, c.GTK_ICON_SIZE_BUTTON);
+    c.gtk_image_set_from_icon_name(@ptrCast(*c.GtkImage, token_image), util.sliceToCstr(allocator, icon_name), c.GTK_ICON_SIZE_BUTTON);
 }
 
 pub fn columnReadFilter(column: *Column) []const u8 {
     var filter_entry = builder_get_widget(column.builder, "column_filter");
-    var cFilter = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, filter_entry));
+    var cFilter = c.gtk_entry_get_text(@ptrCast(*c.GtkEntry, filter_entry));
     const filter = util.cstrToSliceCopy(allocator, cFilter); // edit in guithread--
     warn("columnReadFilter: {s} {}\n", .{ filter, filter.len });
     return filter;
@@ -770,13 +769,13 @@ pub fn columnReadFilter(column: *Column) []const u8 {
 
 pub fn columnConfigReadGui(column: *Column) void {
     var url_entry = builder_get_widget(column.builder, "column_config_url_entry");
-    var cUrl = c.gtk_entry_get_text(@ptrCast([*c]c.GtkEntry, url_entry));
+    var cUrl = c.gtk_entry_get_text(@ptrCast(*c.GtkEntry, url_entry));
     const newFilter = util.cstrToSliceCopy(allocator, cUrl); // edit in guithread--
     column.main.filter = filter_lib.parse(allocator, newFilter);
 }
 
 fn column_filter_done(selfptr: *anyopaque) callconv(.C) void {
-    var self = @ptrCast([*c]c.GtkWidget, @alignCast(8, selfptr));
+    var self = @ptrCast(*c.GtkWidget, @alignCast(8, selfptr));
     var column: *Column = findColumnByBox(self);
 
     column.main.config.filter = columnReadFilter(column);
@@ -801,7 +800,7 @@ fn column_filter_done(selfptr: *anyopaque) callconv(.C) void {
 }
 
 fn column_config_done(selfptr: *anyopaque) callconv(.C) void {
-    var self = @ptrCast([*c]c.GtkWidget, @alignCast(8, selfptr));
+    var self = @ptrCast(*c.GtkWidget, @alignCast(8, selfptr));
     var column: *Column = findColumnByConfigWindow(self);
 
     columnConfigReadGui(column);
@@ -826,7 +825,7 @@ fn column_config_done(selfptr: *anyopaque) callconv(.C) void {
 
 fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytype, data: anytype) c.gulong {
     // pub extern fn g_signal_connect_data(instance: gpointer,
-    // detailed_signal: [*c]const gchar,
+    // detailed_signal: [*]const gchar,
     // c_handler: GCallback,
     // data: gpointer,
     // destroy_data: GClosureNotify,
