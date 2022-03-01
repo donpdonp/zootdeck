@@ -26,6 +26,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     var dirpath = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ cache_dir, namespace });
     warn("MKDIR {s}\n", .{dirpath});
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
+    defer dir.close();
     if (dir.createFile(key, .{ .truncate = true })) |*file| {
         _ = try file.write(value);
         file.close();
