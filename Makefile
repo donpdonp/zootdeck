@@ -1,6 +1,6 @@
 GITEPOCH=$(shell git log -1 --format="%at")
 TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
-DIST=zootdeck-linux-${TODAY}
+DIST=zootdeck-linux-`uname -i`-${TODAY}
 
 build: ragel/lang.c
 	zig build
@@ -22,7 +22,7 @@ test:
 
 dist:
 	mkdir ${DIST}
-	cp -r zootdeck themes theme.css img glade ${DIST}/
+	cp -r ./zig-out/bin/zootdeck theme.css img glade ${DIST}/
 	cp config.json.example ${DIST}/config.json
 	tar czf ${DIST}.tar.gz ${DIST}
 	ls -l ${DIST}

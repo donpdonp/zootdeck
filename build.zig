@@ -1,22 +1,14 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Builder = @import("std").build.Builder;
+const Builder = std.build.Builder;
 
 pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
     const exe = b.addExecutable("zootdeck", "src/main.zig");
     exe.setTarget(target);
+    exe.linkLibC();
     exe.addIncludeDir(".");
     exe.addCSourceFile("ragel/lang.c", &[_][]const u8{"-std=c99"});
-
-    // Ubuntu-x86_64
-    exe.addIncludeDir("/usr/include");
-    //exe.addIncludeDir("/usr/include/linux");
-    exe.addIncludeDir("/usr/include/x86_64-linux-gnu");
-    exe.addLibPath("/usr/lib");
-    exe.addLibPath("/usr/lib/x86_64-linux-gnu");
-
-    exe.linkSystemLibrary("c");
 
     // gtk3
     exe.linkSystemLibrary("glib-2.0");
