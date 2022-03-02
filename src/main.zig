@@ -399,7 +399,7 @@ fn guiback(command: *thread.Command) void {
         config.writefile(settings, "config.json");
     }
     if (command.id == 11) { // Quit
-        warn("quitting...", .{});
+        warn("byebye...\n", .{});
         std.os.exit(0);
     }
 }
