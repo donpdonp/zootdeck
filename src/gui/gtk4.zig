@@ -34,11 +34,11 @@ pub const Column = struct {
 };
 
 var columns: std.ArrayList(*Column) = undefined;
-var myBuilder: *c.GtkBuilder = undefined;
+var myBuilder: ?*c.GtkBuilder = undefined;
 var myCssProvider: *c.GtkCssProvider = undefined;
 
 pub fn libname() []const u8 {
-    return "GTK";
+    return "GTK4";
 }
 
 pub fn init(alloca: Allocator, set: *config.Settings) !void {
@@ -55,7 +55,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     // GtkCssProvider *cssProvider = gtk_css_provider_new();
     myCssProvider = c.gtk_css_provider_new();
     c.gtk_css_provider_load_from_path(myCssProvider, "theme.css");
-    c.gtk_style_context_add_provider_for_display(c.gdk_screen_get_default(), @ptrCast(*c.GtkStyleProvider, myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
+    c.gtk_style_context_add_provider_for_display(c.gdk_display_get_default(), @ptrCast(*c.GtkStyleProvider, myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
 
     myBuilder = c.gtk_builder_new();
     var ret = c.gtk_builder_add_from_file(myBuilder, "glade/zootdeck.glade", @intToPtr([*c][*c]c._GError, 0));
