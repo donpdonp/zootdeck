@@ -46,9 +46,7 @@ pub fn init(alloca: Allocator, set: *config.Settings) !void {
     settings = set;
     allocator = alloca;
     columns = std.ArrayList(*Column).init(allocator);
-    var argc: c_int = undefined;
-    var argv: ?[*]?[*]?[*]u8 = null;
-    var tf = c.gtk_init_check(@ptrCast([*]c_int, &argc), argv);
+    var tf = c.gtk_init_check();
     if (tf != 1) return GUIError.GtkInit;
 }
 
@@ -56,8 +54,8 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     myActor = actor;
     // GtkCssProvider *cssProvider = gtk_css_provider_new();
     myCssProvider = c.gtk_css_provider_new();
-    _ = c.gtk_css_provider_load_from_path(myCssProvider, "theme.css", null);
-    c.gtk_style_context_add_provider_for_screen(c.gdk_screen_get_default(), @ptrCast(*c.GtkStyleProvider, myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
+    c.gtk_css_provider_load_from_path(myCssProvider, "theme.css");
+    c.gtk_style_context_add_provider_for_display(c.gdk_screen_get_default(), @ptrCast(*c.GtkStyleProvider, myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
 
     myBuilder = c.gtk_builder_new();
     var ret = c.gtk_builder_add_from_file(myBuilder, "glade/zootdeck.glade", @intToPtr([*c][*c]c._GError, 0));

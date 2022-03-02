@@ -19,11 +19,11 @@ pub fn build(b: *Builder) void {
         exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/graphene-1.0/include");
         exe.linkSystemLibrary("gtk-4");
         exe.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
-        exe.linkSystemLibrary("gdk");
+        exe.linkSystemLibrary("gdk"); // does not add extra include path (see below)
     } else {
         // gtk3
         exe.linkSystemLibrary("gtk-3");
-        exe.linkSystemLibrary("gdk-3.0"); //gtk3
+        exe.linkSystemLibrary("gdk-3.0"); // add include path /usr/include/gtk-3.0
     }
 
     // gtk
