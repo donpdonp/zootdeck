@@ -3,6 +3,8 @@ const builtin = @import("builtin");
 const Builder = std.build.Builder;
 
 pub fn build(b: *Builder) void {
+    const gtk4_enabled = b.option(bool, "gtk4", "use GTK4 [default: false]") orelse false;
+
     const target = b.standardTargetOptions(.{});
     const exe = b.addExecutable("zootdeck", "src/main.zig");
     exe.setTarget(target);
@@ -10,11 +12,23 @@ pub fn build(b: *Builder) void {
     exe.addIncludeDir(".");
     exe.addCSourceFile("ragel/lang.c", &[_][]const u8{"-std=c99"});
 
-    // gtk3
+    if (gtk4_enabled) {
+        // gtk4
+        exe.addIncludeDir("/usr/include/gtk-4.0");
+        exe.addIncludeDir("/usr/include/graphene-1.0");
+        exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/graphene-1.0/include");
+        exe.linkSystemLibrary("gtk-4");
+        exe.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
+        exe.linkSystemLibrary("gdk");
+    } else {
+        // gtk3
+        exe.linkSystemLibrary("gtk-3");
+        exe.linkSystemLibrary("gdk-3.0"); //gtk3
+    }
+
+    // gtk
     exe.linkSystemLibrary("glib-2.0");
-    exe.linkSystemLibrary("gdk-3.0");
     exe.linkSystemLibrary("gdk_pixbuf-2.0");
-    exe.linkSystemLibrary("gtk-3");
     exe.linkSystemLibrary("gobject-2.0");
     exe.linkSystemLibrary("gmodule-2.0");
     exe.linkSystemLibrary("pango-1.0");
