@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const thread = @import("./thread.zig");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
@@ -21,6 +22,12 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
     var ram = allocator.alloc(u8, i) catch unreachable;
     std.mem.copy(u8, ram, cstr[0..i]);
     return ram;
+}
+
+pub fn log(comptime msg: []const u8, args: anytype) void {
+    const tid = thread.self();
+    const t_name = thread.name(tid);
+    std.debug.print("[{s}]" ++ msg, .{t_name} ++ args);
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
