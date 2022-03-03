@@ -191,12 +191,11 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 }
 
 pub fn update_author_photo(acct: []const u8) void {
-    warn("Update_author_photo {s}\n", .{acct});
-    // all toots in all columns :O
+    // upodate all toots in all columns for this author 
     for (columns.items) |column| {
         const toots = column.main.toots.author(acct, allocator);
         for (toots) |toot| {
-            warn("update_author_photo {s} {s} {s}\n", .{ column.main.filter.host(), acct, toot.id() });
+            warn("update_author_photo column:{s} author:{s} toot#{s}\n", .{ column.main.filter.host(), acct, toot.id() });
             var tootbuilderMaybe = column.guitoots.get(toot.id());
             if (tootbuilderMaybe) |kv| {
                 photo_refresh(acct, kv);
