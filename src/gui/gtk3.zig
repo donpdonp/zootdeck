@@ -119,7 +119,7 @@ pub fn column_config_oauth_url_schedule(in: ?*anyopaque) callconv(.C) c_int {
 }
 
 pub fn update_author_photo_schedule(in: ?*anyopaque) callconv(.C) c_int {
-    const cAcct = @ptrCast(*const u8, @alignCast(8, in));
+    const cAcct = @ptrCast([*]const u8, @alignCast(8, in));
     const acct = util.cstrToSliceCopy(allocator, cAcct);
     update_author_photo(acct);
     return 0;
