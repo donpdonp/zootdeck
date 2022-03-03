@@ -29,7 +29,6 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
 
     if (httpget(actor.payload.http)) |body| {
         //const maxlen = if (body.len > 400) 400 else body.len;
-        warn("net http body len {}\n{s}", .{ body.len, actor.payload.http.content_type });
         actor.payload.http.body = body;
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
@@ -51,7 +50,6 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
 }
 
 pub fn httpget(req: *config.HttpInfo) ![]const u8 {
-    warn("http {s} {s} {s}\n", .{ req.verb, req.url, if (req.token != null) @as([]const u8, "token") else @as([]const u8, "") });
     _ = c.curl_global_init(0);
     var curl = c.curl_easy_init();
     if (curl != null) {
@@ -95,7 +93,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
             var ccontent_type: [*c]const u8 = undefined;
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_CONTENT_TYPE, &ccontent_type);
             req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
-            warn("net curl OK {} {s}\n", .{ req.response_code, req.content_type });
+            warn("http {} {s} {} {s} {} bytes\n", .{ req.verb, req.url, req.response_code, req.content_type, body_buffer.items.len});
             return body_buffer.toOwnedSliceSentinel(0);
         } else if (res == c.CURLE_OPERATION_TIMEDOUT) {
             req.response_code = 2200;
