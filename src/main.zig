@@ -31,16 +31,17 @@ var settings: config.Settings = undefined;
 pub fn main() !void {
     hello();
     try initialize(alloc);
+    try thread.register_main_tid(thread.self());
 
     if (config.readfile("config.json")) |config_data| {
         settings = config_data;
         var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        _ = try thread.create(gui.go, dummy_payload, guiback);
-        _ = try thread.create(heartbeat.go, dummy_payload, heartback);
+        _ = try thread.create("gui", gui.go, dummy_payload, guiback);
+        _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);
 
         while (true) {
             statewalk(alloc);
-            log.debug("== main() epoll wait tid {}\n", .{thread.self()});
+            log.debug("== main() epoll wait tid {s}\n", .{thread.name(thread.self())});
             thread.wait(); // main ipc listener
         }
     } else |err| {
@@ -98,7 +99,7 @@ fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     httpInfo.response_code = 0;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
-    if (thread.create(net.go, verb, netback)) {} else |err| {
+    if (thread.create("net", net.go, verb, netback)) {} else |err| {
         warn("columnget {}", .{err});
     }
 }
@@ -116,7 +117,7 @@ fn profileget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     httpInfo.response_code = 0;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
-    _ = thread.create(net.go, verb, profileback) catch unreachable;
+    _ = thread.create("net", net.go, verb, profileback) catch unreachable;
 }
 
 fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator) void {
@@ -128,7 +129,7 @@ fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     httpInfo.response_code = 0;
     httpInfo.toot = toot;
     verb.http = httpInfo;
-    _ = thread.create(net.go, verb, photoback) catch unreachable;
+    _ = thread.create("net", net.go, verb, photoback) catch unreachable;
 }
 
 fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator) void {
@@ -140,7 +141,7 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     verb.http.response_code = 0;
     verb.http.toot = toot;
     warn("mediaget toot #{s} toot {*} verb.http.toot {*}\n", .{ toot.id(), toot, verb.http.toot });
-    _ = thread.create(net.go, verb, mediaback) catch unreachable;
+    _ = thread.create("net", net.go, verb, mediaback) catch unreachable;
 }
 
 fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
@@ -153,7 +154,7 @@ fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     httpInfo.verb = .post;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
-    _ = thread.create(net.go, verb, oauthback) catch unreachable;
+    _ = thread.create("net", net.go, verb, oauthback) catch unreachable;
     //  defer thread.destroy(allocator, netthread);
 }
 
@@ -167,7 +168,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.me
     httpInfo.verb = .post;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
-    _ = thread.create(net.go, verb, oauthtokenback) catch unreachable;
+    _ = thread.create("net", net.go, verb, oauthtokenback) catch unreachable;
 }
 
 fn oauthtokenback(command: *thread.Command) void {

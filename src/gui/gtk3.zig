@@ -191,7 +191,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 }
 
 pub fn update_author_photo(acct: []const u8) void {
-    // upodate all toots in all columns for this author 
+    // upodate all toots in all columns for this author
     for (columns.items) |column| {
         const toots = column.main.toots.author(acct, allocator);
         for (toots) |toot| {

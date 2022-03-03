@@ -12,21 +12,33 @@ const c = @cImport({
     @cInclude("sys/epoll.h");
 });
 
-pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void };
+pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void, name: []const u8 };
 
 pub const Command = packed struct { id: u16, verb: *const CommandVerb, actor: *Actor };
 
 pub const CommandVerb = packed union { login: *config.LoginInfo, http: *config.HttpInfo, column: *config.ColumnInfo, auth: *config.ColumnAuth, idle: u16 };
 
-var actors: std.ArrayList(Actor) = undefined;
+pub const ActorList = std.AutoArrayHashMap(u64, *Actor);
+var actors: ActorList = undefined;
 
 pub fn init(myAllocator: Allocator) !void {
     allocator = myAllocator;
-    actors = std.ArrayList(Actor).init(allocator);
+    actors = ActorList.init(allocator);
     try ipc.init();
 }
 
+pub fn register_main_tid(mtid: u64) !void {
+    var actor = try allocator.create(Actor);
+    actor.name = "main";
+    try actors.put(mtid, actor);
+}
+
+pub fn name(tid:u64) []const u8 {
+    return if (actors.get(tid)) |actor| actor.name else "-unregistered-thread-";
+}
+
 pub fn create(
+    actor_name: []const u8,
     startFn: fn (?*anyopaque) callconv(.C) ?*anyopaque,
     startParams: *CommandVerb,
     recvback: fn (*Command) void,
@@ -36,14 +48,15 @@ pub fn create(
     actor.payload = startParams; //unused
     ipc.dial(actor.client, "");
     actor.recvback = recvback;
+    actor.name = actor_name;
     //ipc.register(actor.client, recvback);
     const null_pattr = @intToPtr([*c]const c.union_pthread_attr_t, 0);
-    var terr = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
-    if (terr == 0) {
-        try actors.append(actor.*);
+    var pt_err = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
+    try actors.putNoClobber(actor.thread_id, actor);
+    if (pt_err == 0) {
         return actor;
     } else {
-        warn("ERROR thread {} {}\n", .{ terr, actor });
+        warn("ERROR thread pthread_create err: {} {}\n", .{ pt_err, actor });
     }
     return error.BadValue;
 }
@@ -76,7 +89,9 @@ pub fn wait() void {
     } else {
         const b8: *[@sizeOf(usize)]u8 = @ptrCast(*[@sizeOf(usize)]u8, buf.ptr);
         var command: *Command = std.mem.bytesAsValue(*Command, b8).*;
-        for (actors.items) |actor| { // todo: hashtable
+        var iter = actors.iterator();
+        while (iter.next()) |entry| { 
+            const actor = entry.value_ptr.*;
             if (actor.client == client) {
                 actor.recvback(command);
                 break;
