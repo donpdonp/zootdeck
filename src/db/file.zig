@@ -14,7 +14,7 @@ pub fn init() !void {
 pub fn has(namespace: []const u8, key: []const u8, allocator: Allocator) bool {
     var keypath = std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ cache_dir, namespace, key }) catch unreachable;
     var found = false;
-    if (std.fs.cwd().access(keypath, .{ .read = true })) {
+    if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
         found = true;
     } else |err| {
         warn("dbfile did not find {s} {}\n", .{ keypath, err });

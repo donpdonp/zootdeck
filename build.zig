@@ -51,7 +51,7 @@ pub fn build(b: *Builder) void {
     exe.addIncludeDir("../glfw/deps");
     exe.addIncludeDir("../nanovg/src");
     exe.linkSystemLibrary("glfw3");
-    exe.addLibPath("../glfw/build/src");
+    exe.addLibraryPath("../glfw/build/src");
 
     // opengl
     //exe.addObjectFile("ext/glad.o"); // build glad.c by hand for now
