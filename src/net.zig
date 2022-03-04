@@ -88,12 +88,14 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         }
 
         var res = c.curl_easy_perform(curl);
+        defer c.curl_easy_cleanup(curl);
         if (res == c.CURLE_OK) {
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_RESPONSE_CODE, &req.response_code);
             var ccontent_type: [*c]const u8 = undefined;
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_CONTENT_TYPE, &ccontent_type);
             req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
             warn("http {} {s} {} {s} {} bytes\n", .{ req.verb, req.url, req.response_code, req.content_type, body_buffer.items.len });
+
             return body_buffer.toOwnedSliceSentinel(0);
         } else if (res == c.CURLE_OPERATION_TIMEDOUT) {
             req.response_code = 2200;
@@ -109,7 +111,6 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
                 return NetError.Curl;
             }
         }
-        c.curl_easy_cleanup(curl);
     } else {
         warn("net curl easy init fail\n", .{});
         return NetError.CurlInit;

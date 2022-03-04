@@ -278,6 +278,7 @@ fn netback(command: *thread.Command) void {
 }
 
 fn mediaback(command: *thread.Command) void {
+    thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
     const tootpic = alloc.create(gui.TootPic) catch unreachable;
     tootpic.toot = reqres.toot;
@@ -288,6 +289,7 @@ fn mediaback(command: *thread.Command) void {
 }
 
 fn photoback(command: *thread.Command) void {
+    thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.Object;
     const acct = account.get("acct").?.String;
@@ -298,6 +300,7 @@ fn photoback(command: *thread.Command) void {
 }
 
 fn profileback(command: *thread.Command) void {
+    thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
     if (reqres.response_code >= 200 and reqres.response_code < 300) {
         reqres.column.account = reqres.tree.root.Object;

@@ -35,6 +35,11 @@ pub fn newClient(allocator: Allocator) *Client {
     return client;
 }
 
+pub fn close(client: *Client) void {
+    _ = c.close(client.readSocket);
+    _ = c.close(client.writeSocket);
+}
+
 //pub fn listen(socket: u8, url: []u8) void {
 //    _ = socket;
 //    warn("epoll_listen\n", .{});

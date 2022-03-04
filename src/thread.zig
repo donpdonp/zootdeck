@@ -33,7 +33,7 @@ pub fn register_main_tid(mtid: u64) !void {
     try actors.put(mtid, actor);
 }
 
-pub fn name(tid:u64) []const u8 {
+pub fn name(tid: u64) []const u8 {
     return if (actors.get(tid)) |actor| actor.name else "-unregistered-thread-";
 }
 
@@ -71,7 +71,9 @@ pub fn signal(actor: *Actor, command: *Command) void {
 }
 
 pub fn destroy(actor: *Actor) void {
-    warn("thread.destroy {}\n", actor);
+    ipc.close(actor.client);
+    _ = actors.swapRemove(actor.thread_id);
+    allocator.destroy(actor);
 }
 
 pub fn self() c.pthread_t {
@@ -90,7 +92,7 @@ pub fn wait() void {
         const b8: *[@sizeOf(usize)]u8 = @ptrCast(*[@sizeOf(usize)]u8, buf.ptr);
         var command: *Command = std.mem.bytesAsValue(*Command, b8).*;
         var iter = actors.iterator();
-        while (iter.next()) |entry| { 
+        while (iter.next()) |entry| {
             const actor = entry.value_ptr.*;
             if (actor.client == client) {
                 actor.recvback(command);
