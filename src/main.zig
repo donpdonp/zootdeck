@@ -41,7 +41,7 @@ pub fn main() !void {
 
         while (true) {
             statewalk(alloc);
-            util.log("== main() epoll wait", .{});
+            util.log("== thread.wait()/epoll", .{});
             thread.wait(); // main ipc listener
         }
     } else |err| {

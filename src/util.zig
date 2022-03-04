@@ -3,6 +3,8 @@ const builtin = @import("builtin");
 const thread = @import("./thread.zig");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
+var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
+const alloc = GPAllocator.allocator();
 
 const Buffers = @import("./simple_buffer.zig");
 
@@ -27,7 +29,9 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
 pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
     const t_name = thread.name(tid);
-    std.debug.print("[{s}]" ++ msg, .{t_name} ++ args);
+    const now = std.time.milliTimestamp();
+    const time_str = std.fmt.allocPrint(alloc, "{}", .{now});
+    std.debug.print("[{s} {s}]" ++ msg, .{time_str, t_name} ++ args);
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
