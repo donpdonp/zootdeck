@@ -5,7 +5,7 @@
   <object class="GtkWindow" id="main">
     <property name="can_focus">False</property>
     <property name="events">GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>
-    <property name="title" translatable="yes">Zootdeck 20190827</property>
+    <property name="title" translatable="yes">Zootdeck 20220301</property>
     <property name="icon">../img/zootlogo.png</property>
     <signal name="check-resize" handler="main_check_resize" swapped="no"/>
     <signal name="drag-begin" handler="zoot_drag" swapped="no"/>
