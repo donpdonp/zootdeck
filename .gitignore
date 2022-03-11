@@ -5,3 +5,5 @@
 /cache/
 /ragel/*.c
 /ragel/*.o
+.zigmod
+deps.zig

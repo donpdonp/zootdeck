@@ -408,7 +408,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     const tagBox = builder_get_widget(builder, "tag_flowbox");
     //var tagidx: usize = 0;
     for (toot.tagList.items) |tag| {
-        const cTag = util.sliceToCstr(allocator, tag);
+        const cTag = util.sliceToCstr(allocator, tag[0..std.math.min(tag.len, 40)]);
         const tagLabel = c.gtk_label_new(cTag);
         const labelContext = c.gtk_widget_get_style_context(tagLabel);
         c.gtk_style_context_add_class(labelContext, "toot_tag");

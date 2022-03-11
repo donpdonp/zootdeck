@@ -31,7 +31,7 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     const t_name = thread.name(tid);
     const now = std.time.milliTimestamp();
     const time_str = std.fmt.allocPrint(alloc, "{}", .{now});
-    std.debug.print("[{s} {s}]" ++ msg, .{ time_str, t_name } ++ args);
+    std.debug.print("[{s} {s}]" ++ msg ++ "\n", .{ time_str, t_name } ++ args);
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
