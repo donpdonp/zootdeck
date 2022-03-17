@@ -33,7 +33,7 @@ pub fn main() !void {
     try initialize(alloc);
     try thread.register_main_tid(thread.self());
 
-    if (config.readfile("config.json")) |config_data| {
+    if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
         var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
         _ = try thread.create("gui", gui.go, dummy_payload, guiback);
