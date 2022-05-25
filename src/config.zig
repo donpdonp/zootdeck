@@ -107,11 +107,12 @@ pub fn init(alloc: Allocator) !void {
 }
 
 pub fn config_file_path() []const u8 {
-    const buf = allocator.alloc(u8, 255) catch unreachable;
-    const exe_path = std.os.readlink("/proc/self/exe", buf) catch unreachable;
-    const dir = std.fs.path.dirname(exe_path).?;
-    const file = std.fs.path.join(allocator, &.{ dir, "config.json" }) catch unreachable;
-    return file;
+    const home_path = std.os.getenv("HOME").?;
+    const home_dir = std.fs.openDirAbsolute(home_path, .{}) catch unreachable;
+    const config_path = std.fs.path.join(allocator, &.{ home_path, ".config", "zootdeck" }) catch unreachable;
+    home_dir.makePath(config_path) catch unreachable;
+    const config_file = std.fs.path.join(allocator, &.{ config_path, "config.json" }) catch unreachable;
+    return config_file;
 }
 
 pub fn readfile(filename: []const u8) !Settings {

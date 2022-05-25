@@ -32,7 +32,7 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     //const tz = std.os.timezone.tz_minuteswest;
     var tz = std.os.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
     std.os.gettimeofday(null, &tz); // does not set tz
-    const now_ms = std.time.milliTimestamp() + tz.tz_minuteswest * 60 * 1000;
+    const now_ms = std.time.milliTimestamp() + tz.tz_minuteswest * std.time.ms_per_hour;
     const esec = std.time.epoch.EpochSeconds{ .secs = @intCast(u64, @divTrunc(now_ms, std.time.ms_per_s)) };
     const eday = esec.getEpochDay();
     const yday = eday.calculateYearDay();
