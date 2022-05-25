@@ -41,7 +41,7 @@ pub fn main() !void {
 
         while (true) {
             statewalk(alloc);
-            util.log("== thread.wait()/epoll", .{});
+            util.log("thread.wait()/epoll", .{});
             thread.wait(); // main ipc listener
         }
     } else |err| {
@@ -83,7 +83,7 @@ fn statewalk(allocator: std.mem.Allocator) void {
 }
 
 fn hello() void {
-    log.info("zootdeck {s} {s} tid {}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
+    util.log("zootdeck {s} {s} tid {}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
 }
 
 fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {

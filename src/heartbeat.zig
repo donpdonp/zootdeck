@@ -1,4 +1,5 @@
 const std = @import("std");
+const util = @import("./util.zig");
 const warn = std.debug.print;
 const thread = @import("./thread.zig");
 const Allocator = std.mem.Allocator;
@@ -15,10 +16,10 @@ pub fn init(myAllocator: Allocator) !void {
 pub fn go(actor_ptr: ?*anyopaque) callconv(.C) ?*anyopaque {
     var data8 = @alignCast(@alignOf(thread.Actor), actor_ptr);
     var actor = @ptrCast(*thread.Actor, data8);
-    const seconds = 60;
-    warn("heartbeat mainloop thread.self()={} actor.thread_id={} \n", .{ thread.self(), actor.thread_id });
+    util.log("heartbeat mainloop started", .{});
+    const sleep_seconds = 60;
     while (true) {
-        _ = c.usleep(seconds * 1000000);
+        _ = c.usleep(sleep_seconds * 1000000);
         // signal crazy
         var command = allocator.create(thread.Command) catch unreachable;
         var verb = allocator.create(thread.CommandVerb) catch unreachable;

@@ -1,6 +1,7 @@
 // gui.zig
 const std = @import("std");
-const warn = std.debug.print;
+const util = @import("./util.zig");
+const warn = util.log;
 const Allocator = std.mem.Allocator;
 
 const config = @import("./config.zig");

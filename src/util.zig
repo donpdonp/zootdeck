@@ -28,10 +28,14 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
 
 pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
-    const t_name = thread.name(tid);
-    const now = std.time.milliTimestamp();
-    const time_str = std.fmt.allocPrint(alloc, "{}", .{now});
-    std.debug.print("[{s} {s}]" ++ msg ++ "\n", .{ time_str, t_name } ++ args);
+    const tid_name = thread.name(tid);
+    const now_ms = std.time.milliTimestamp();
+    const esec = std.time.epoch.EpochSeconds{ .secs = @intCast(u64, @divTrunc(now_ms, std.time.ms_per_s)) };
+    const eday = esec.getEpochDay();
+    const yday = eday.calculateYearDay();
+    const mday = yday.calculateMonthDay();
+    const time_str = std.fmt.allocPrint(alloc, "{d}-{d}-{d}", .{ yday.year, mday.month.numeric(), mday.day_index + 1 });
+    std.debug.print("[tid#{d}/{s} {s}] " ++ msg ++ "\n", .{ tid, tid_name, time_str } ++ args);
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {

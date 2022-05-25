@@ -110,11 +110,12 @@ pub fn config_file_path() []const u8 {
     const buf = allocator.alloc(u8, 255) catch unreachable;
     const exe_path = std.os.readlink("/proc/self/exe", buf) catch unreachable;
     const dir = std.fs.path.dirname(exe_path).?;
-    const file = std.fs.path.join(allocator, & .{ dir, "config.json" }) catch unreachable;
+    const file = std.fs.path.join(allocator, &.{ dir, "config.json" }) catch unreachable;
     return file;
 }
 
 pub fn readfile(filename: []const u8) !Settings {
+    util.log("config file {s}", .{filename});
     const cwd = std.fs.cwd();
     cwd.access(filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
