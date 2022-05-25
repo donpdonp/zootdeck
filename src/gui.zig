@@ -17,7 +17,7 @@ var allocator: Allocator = undefined;
 var settings: *config.Settings = undefined;
 
 pub fn init(alloca: Allocator, set: *config.Settings) !void {
-    warn("GUI init() on thread.self()={}\n", .{thread.self()});
+    warn("GUI init()", .{});
     settings = set;
     allocator = alloca;
     columns = std.ArrayList(*Column).init(allocator);

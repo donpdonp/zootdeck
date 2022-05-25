@@ -1,9 +1,8 @@
 // GTK+
 const std = @import("std");
-const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
-
 const util = @import("../util.zig");
+const warn = util.log;
 const config = @import("../config.zig");
 const simple_buffer = @import("../simple_buffer.zig");
 const toot_lib = @import("../toot.zig");
@@ -42,7 +41,7 @@ pub fn libname() []const u8 {
 }
 
 pub fn init(alloca: Allocator, set: *config.Settings) !void {
-    warn("{s} init() on thread.self()={}\n", .{ libname(), thread.self() });
+    warn("{s} init()", .{ libname() });
     settings = set;
     allocator = alloca;
     columns = std.ArrayList(*Column).init(allocator);

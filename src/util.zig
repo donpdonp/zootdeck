@@ -38,8 +38,8 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     const yday = eday.calculateYearDay();
     const mday = yday.calculateMonthDay();
     const dsec = esec.getDaySeconds();
-    const time_str = std.fmt.allocPrint(alloc, "{d}-{d}-{d} {d}:{d}:{d} {d}", .{ yday.year, mday.month.numeric(), mday.day_index + 1, dsec.getHoursIntoDay(), dsec.getMinutesIntoHour(), dsec.getSecondsIntoMinute(), tz.tz_minuteswest });
-    std.debug.print("[tid#{d}/{s} {s}] " ++ msg ++ "\n", .{ tid, tid_name, time_str } ++ args);
+    const time_str = std.fmt.allocPrint(alloc, "{d}-{d}-{d} {d}:{d}:{d}", .{ yday.year, mday.month.numeric(), mday.day_index + 1, dsec.getHoursIntoDay(), dsec.getMinutesIntoHour(), dsec.getSecondsIntoMinute() });
+    std.debug.print("{s}[tid#{d}/{s}] " ++ msg ++ "\n", .{ time_str, tid, tid_name } ++ args);
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
