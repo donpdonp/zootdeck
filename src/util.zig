@@ -29,12 +29,16 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
 pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
     const tid_name = thread.name(tid);
-    const now_ms = std.time.milliTimestamp();
+    //const tz = std.os.timezone.tz_minuteswest;
+    var tz = std.os.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
+    std.os.gettimeofday(null, &tz); // does not set tz
+    const now_ms = std.time.milliTimestamp() + tz.tz_minuteswest * 60 * 1000;
     const esec = std.time.epoch.EpochSeconds{ .secs = @intCast(u64, @divTrunc(now_ms, std.time.ms_per_s)) };
     const eday = esec.getEpochDay();
     const yday = eday.calculateYearDay();
     const mday = yday.calculateMonthDay();
-    const time_str = std.fmt.allocPrint(alloc, "{d}-{d}-{d}", .{ yday.year, mday.month.numeric(), mday.day_index + 1 });
+    const dsec = esec.getDaySeconds();
+    const time_str = std.fmt.allocPrint(alloc, "{d}-{d}-{d} {d}:{d}:{d} {d}", .{ yday.year, mday.month.numeric(), mday.day_index + 1, dsec.getHoursIntoDay(), dsec.getMinutesIntoHour(), dsec.getSecondsIntoMinute(), tz.tz_minuteswest });
     std.debug.print("[tid#{d}/{s} {s}] " ++ msg ++ "\n", .{ tid, tid_name, time_str } ++ args);
 }
 
