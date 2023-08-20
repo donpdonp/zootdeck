@@ -22,7 +22,7 @@ pub fn init() void {}
 
 pub fn listen(socket: *sock, url: []u8) void {
     warn("nng master listen {} {}\n", socket, url);
-    if (c.nng_listen(socket.*, util.sliceToCstr(std_allocator, url), @intToPtr([*c]c.struct_nng_listener_s, 0), 0) != 0) {
+    if (c.nng_listen(socket.*, util.sliceToCstr(std_allocator, url), @as([*c]c.struct_nng_listener_s, @ptrFromInt(0)), 0) != 0) {
         warn("nng_listen FAIL\n");
     }
 }
@@ -36,7 +36,7 @@ pub fn wait(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void 
     message[1] = 2;
     message[2] = 1;
     message[3] = 0;
-    _ = c.nng_aio_alloc(&myAio, callback, @ptrCast(?*anyopaque, &message));
+    _ = c.nng_aio_alloc(&myAio, callback, @as(?*anyopaque, @ptrCast(&message)));
     warn("wait master nng_aio post {*}\n", myAio);
 
     warn("wait master nng_recv {}\n", client.srv);
@@ -45,7 +45,7 @@ pub fn wait(client: *Client, callback: fn (?*anyopaque) callconv(.C) void) void 
 
 pub fn dial(socket: *sock, url: []u8) void {
     warn("nng dial {} {s}\n", socket, util.sliceToCstr(std_allocator, url));
-    if (c.nng_dial(socket.*, util.sliceToCstr(std_allocator, url), @intToPtr([*c]c.struct_nng_dialer_s, 0), 0) != 0) {
+    if (c.nng_dial(socket.*, util.sliceToCstr(std_allocator, url), @as([*c]c.struct_nng_dialer_s, @ptrFromInt(0)), 0) != 0) {
         warn("nng_pair0_dial FAIL\n");
     }
 }

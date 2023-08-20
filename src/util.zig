@@ -33,7 +33,7 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     var tz = std.os.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
     std.os.gettimeofday(null, &tz); // does not set tz
     const now_ms = std.time.milliTimestamp() + tz.tz_minuteswest * std.time.ms_per_hour;
-    const esec = std.time.epoch.EpochSeconds{ .secs = @intCast(u64, @divTrunc(now_ms, std.time.ms_per_s)) };
+    const esec = std.time.epoch.EpochSeconds{ .secs = @as(u64, @intCast(@divTrunc(now_ms, std.time.ms_per_s))) };
     const eday = esec.getEpochDay();
     const yday = eday.calculateYearDay();
     const mday = yday.calculateMonthDay();
@@ -74,7 +74,7 @@ pub fn htmlTagStrip(str: []const u8, allocator: Allocator) ![]const u8 {
     const States = enum { Looking, TagBegin };
     var state = States.Looking;
     var tagEndPlusOne: usize = 0;
-    for (str) |char, idx| {
+    for (str, 0..) |char, idx| {
         if (state == States.Looking and char == '<') {
             state = States.TagBegin;
             try newStr.append(str[tagEndPlusOne..idx]);
@@ -105,7 +105,7 @@ pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
     const States = enum { Looking, EntityBegin, EntityFound };
     var state = States.Looking;
     var escStart: usize = undefined;
-    for (str) |char, idx| {
+    for (str, 0..) |char, idx| {
         if (state == States.Looking and char == '&') {
             state = States.EntityBegin;
             escStart = idx;

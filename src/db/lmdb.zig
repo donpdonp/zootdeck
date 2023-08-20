@@ -13,7 +13,7 @@ const dbpath = "./db";
 
 pub fn init(allocator: Allocator) !void {
     var mdb_ret: c_int = 0;
-    mdb_ret = c.mdb_env_create(@ptrCast([*c]?*c.MDB_env, &env));
+    mdb_ret = c.mdb_env_create(@as([*c]?*c.MDB_env, @ptrCast(&env)));
     if (mdb_ret != 0) {
         warn("mdb_env_create failed {}\n", .{mdb_ret});
         return error.BadValue;
@@ -40,7 +40,7 @@ pub fn stats() void {
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     var txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
-    var ctxnMaybe = @ptrCast([*c]?*c.struct_MDB_txn, txnptr);
+    var ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));
     var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
     if (ret == 0) {
         //    warn("lmdb write {} {}={}\n", namespace, key, value);
@@ -75,7 +75,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
 }
 
 fn mdbVal(data: []const u8, allocator: Allocator) *c.MDB_val {
-    var dataptr = @intToPtr(?*anyopaque, @ptrToInt(data.ptr));
+    var dataptr = @as(?*anyopaque, @ptrFromInt(@intFromPtr(data.ptr)));
     var mdb_val = allocator.create(c.MDB_val) catch unreachable;
     mdb_val.mv_size = data.len;
     mdb_val.mv_data = dataptr;

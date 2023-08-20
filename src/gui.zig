@@ -29,8 +29,7 @@ var stop = false;
 
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     warn("GUI {s} mainloop thread.self()={}\n", .{ guilib.libname(), thread.self() });
-    var data8 = @alignCast(@alignOf(thread.Actor), data);
-    myActor = @ptrCast(*thread.Actor, data8);
+    myActor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     if (guilib.gui_setup(myActor)) {
         // mainloop
         var then = std.time.milliTimestamp();

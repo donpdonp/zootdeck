@@ -50,7 +50,7 @@ pub fn create(
     actor.recvback = recvback;
     actor.name = actor_name;
     //ipc.register(actor.client, recvback);
-    const null_pattr = @intToPtr([*c]const c.union_pthread_attr_t, 0);
+    const null_pattr = @as([*c]const c.union_pthread_attr_t, @ptrFromInt(0));
     var pt_err = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
     try actors.putNoClobber(actor.thread_id, actor);
     if (pt_err == 0) {
@@ -89,7 +89,7 @@ pub fn wait() void {
         // todo: skip read() and pass ptr with event_data
         warn("thread.wait ipc.read no socket payload! DEFLECTED!\n", .{});
     } else {
-        const b8: *[@sizeOf(usize)]u8 = @ptrCast(*[@sizeOf(usize)]u8, buf.ptr);
+        const b8: *[@sizeOf(usize)]u8 = @as(*[@sizeOf(usize)]u8, @ptrCast(buf.ptr));
         var command: *Command = std.mem.bytesAsValue(*Command, b8).*;
         var iter = actors.iterator();
         while (iter.next()) |entry| {
@@ -104,5 +104,5 @@ pub fn wait() void {
 
 pub fn join(jthread: c.pthread_t, joinret: *?*anyopaque) c_int {
     //pub extern fn pthread_join(__th: pthread_t, __thread_return: ?[*](?*c_void)) c_int;
-    return c.pthread_join(jthread, @ptrCast(?[*]?*anyopaque, joinret)); //expected type '?[*]?*c_void' / void **value_ptr
+    return c.pthread_join(jthread, @as(?[*]?*anyopaque, @ptrCast(joinret))); //expected type '?[*]?*c_void' / void **value_ptr
 }

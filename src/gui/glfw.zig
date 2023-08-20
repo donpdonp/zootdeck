@@ -61,7 +61,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
 pub fn vulkanInit(window: *c.struct_GLFWwindow) void {
     var count: c_int = -1;
     warn("GLFS EXT GO\n");
-    var extensions = c.glfwGetRequiredInstanceExtensions(@ptrCast([*c]u32, &count));
+    var extensions = c.glfwGetRequiredInstanceExtensions(@as([*c]u32, @ptrCast(&count)));
     if (count == 0) {
         var errcode = c.glfwGetError(null);
         if (errcode == c.GLFW_NOT_INITIALIZED) {
@@ -98,7 +98,7 @@ pub fn gui_end() void {
 pub fn schedule(funcMaybe: ?fn (*anyopaque) callconv(.C) c_int, param: *anyopaque) void {
     if (funcMaybe) |func| {
         warn("schedule FUNC {}\n", func);
-        _ = func(@ptrCast(*anyopaque, &"w"));
+        _ = func(@as(*anyopaque, @ptrCast(&"w")));
     }
 }
 

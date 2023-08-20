@@ -6,19 +6,22 @@ pub fn build(b: *Builder) void {
     const gtk4_enabled = b.option(bool, "gtk4", "use GTK4 [default: false]") orelse false;
 
     const target = b.standardTargetOptions(.{});
-    const exe = b.addExecutable("zootdeck", "src/main.zig");
-    exe.setTarget(target);
+    const exe = b.addExecutable(.{
+        .name = "init-exe",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+    });
     exe.linkLibC();
-    exe.addIncludeDir(".");
-    exe.addCSourceFile("ragel/lang.c", &[_][]const u8{"-std=c99"});
+    const cflags = [_][]const u8{};
+    exe.addCSourceFile(.{ .file = .{ .path = "ragel/lang.c" }, .flags = &cflags });
 
     if (gtk4_enabled) {
         // gtk4
-        exe.addIncludeDir("/usr/include/gtk-4.0");
-        exe.addIncludeDir("/usr/include/graphene-1.0");
-        exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/graphene-1.0/include");
+        // exe.addIncludeDir("/usr/include/gtk-4.0");
+        // exe.addIncludeDir("/usr/include/graphene-1.0");
+        // exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/graphene-1.0/include");
         exe.linkSystemLibrary("gtk-4");
-        exe.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
+        // exe.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
         exe.linkSystemLibrary("gdk"); // does not add extra include path (see below)
     } else {
         // gtk3
@@ -39,7 +42,7 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("gumbo");
 
     // qt5
-    exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");
+    //exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");
 
     // libui (local)
     // exe.addIncludeDir("../libui");
@@ -47,11 +50,11 @@ pub fn build(b: *Builder) void {
     // exe.addLibPath("../libui/build/out");
 
     // glfw (local)
-    exe.addIncludeDir("../glfw/include");
-    exe.addIncludeDir("../glfw/deps");
-    exe.addIncludeDir("../nanovg/src");
+    // exe.addIncludeDir("../glfw/include");
+    // exe.addIncludeDir("../glfw/deps");
+    // exe.addIncludeDir("../nanovg/src");
     exe.linkSystemLibrary("glfw3");
-    exe.addLibraryPath("../glfw/build/src");
+    exe.addLibraryPath(.{ .path = "../glfw/build/src" });
 
     // opengl
     //exe.addObjectFile("ext/glad.o"); // build glad.c by hand for now
@@ -65,5 +68,5 @@ pub fn build(b: *Builder) void {
     // lmdb
     exe.linkSystemLibrary("lmdb");
 
-    exe.install();
+    b.installArtifact(exe);
 }

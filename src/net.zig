@@ -17,8 +17,7 @@ const c = @cImport({
 const NetError = error{ JSONparse, Curl, CurlInit, DNS };
 
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
-    var data8 = @alignCast(@alignOf(thread.Actor), data);
-    var actor = @ptrCast(*thread.Actor, data8);
+    var actor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     //warn("net thread start {*} {}\n", actor, actor);
 
     // setup for the callback
@@ -66,7 +65,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         _ = c.curl_easy_setopt(curl, c.CURLOPT_WRITEDATA, &body_buffer);
 
         //var slist: ?[*c]c.curl_slist = null;
-        var slist = @intToPtr([*c]c.curl_slist, 0); // 0= new list
+        var slist = @as([*c]c.curl_slist, @ptrFromInt(0)); // 0= new list
         slist = c.curl_slist_append(slist, "Accept: application/json");
         if (req.token) |token| {
             warn("Authorization: {s}\n", .{token});
@@ -118,7 +117,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
 }
 
 pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) usize {
-    var buf = @ptrCast(*std.ArrayList(u8), @alignCast(8, userdata));
+    var buf = @as(*std.ArrayList(u8), @ptrCast(@alignCast(userdata)));
     var body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch |err| {
         warn("curl_write append fail {}\n", .{err});

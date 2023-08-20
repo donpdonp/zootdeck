@@ -52,19 +52,19 @@ fn build() void {
     c.uiWindowOnClosing(window, f, null);
 
     var hbox = c.uiNewHorizontalBox();
-    c.uiWindowSetChild(window, @ptrCast(*c.uiControl, @alignCast(8, hbox)));
+    c.uiWindowSetChild(window, @as(*c.uiControl, @ptrCast(@alignCast(8, hbox))));
     //columnbox = @ptrCast(*c.uiControl, @alignCast(8, hbox));
     if (hbox) |hb| {
         columnbox = hb;
     }
 
     var controls_vbox = c.uiNewVerticalBox();
-    c.uiBoxAppend(hbox, @ptrCast(*c.uiControl, @alignCast(8, controls_vbox)), 0);
+    c.uiBoxAppend(hbox, @as(*c.uiControl, @ptrCast(@alignCast(8, controls_vbox))), 0);
 
     var addButton = c.uiNewButton("+");
-    c.uiBoxAppend(controls_vbox, @ptrCast(*c.uiControl, @alignCast(8, addButton)), 0);
+    c.uiBoxAppend(controls_vbox, @as(*c.uiControl, @ptrCast(@alignCast(8, addButton))), 0);
 
-    c.uiControlShow(@ptrCast(*c.uiControl, @alignCast(8, window)));
+    c.uiControlShow(@as(*c.uiControl, @ptrCast(@alignCast(8, window))));
 }
 
 pub fn mainloop() void {
@@ -82,7 +82,7 @@ export fn onClosing(w: *c.uiWindow, data: *anyopaque) c_int {
 pub fn schedule(funcMaybe: ?fn (*anyopaque) callconv(.C) c_int, param: *anyopaque) void {
     if (funcMaybe) |func| {
         warn("schedule FUNC {}\n", func);
-        _ = func(@ptrCast(*anyopaque, &"w"));
+        _ = func(@as(*anyopaque, @ptrCast(&"w")));
     }
 }
 
@@ -94,9 +94,9 @@ pub fn add_column_schedule(in: *anyopaque) callconv(.C) c_int {
     warn("libui add column\n");
     var column_vbox = c.uiNewVerticalBox(); // crashes here
     var url_label = c.uiNewLabel("site.xyz");
-    c.uiBoxAppend(column_vbox, @ptrCast(*c.uiControl, @alignCast(8, url_label)), 0);
+    c.uiBoxAppend(column_vbox, @as(*c.uiControl, @ptrCast(@alignCast(8, url_label))), 0);
 
-    c.uiBoxAppend(columnbox, @ptrCast(*c.uiControl, @alignCast(8, column_vbox)), 0);
+    c.uiBoxAppend(columnbox, @as(*c.uiControl, @ptrCast(@alignCast(8, column_vbox))), 0);
     return 0;
 }
 

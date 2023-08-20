@@ -98,7 +98,7 @@ fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     httpInfo.column = column;
     httpInfo.response_code = 0;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
     if (thread.create("net", net.go, verb, netback)) {} else |err| {
         warn("columnget {}", .{err});
     }
@@ -116,7 +116,7 @@ fn profileget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     httpInfo.column = column;
     httpInfo.response_code = 0;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
     _ = thread.create("net", net.go, verb, profileback) catch unreachable;
 }
 
@@ -153,7 +153,7 @@ fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     httpInfo.response_code = 0;
     httpInfo.verb = .post;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
     _ = thread.create("net", net.go, verb, oauthback) catch unreachable;
     //  defer thread.destroy(allocator, netthread);
 }
@@ -167,7 +167,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.me
     httpInfo.response_code = 0;
     httpInfo.verb = .post;
     verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, httpInfo));
+    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
     _ = thread.create("net", net.go, verb, oauthtokenback) catch unreachable;
 }
 
@@ -184,7 +184,7 @@ fn oauthtokenback(command: *thread.Command) void {
                 config.writefile(settings, "config.json");
                 column.last_check = 0;
                 profileget(column, alloc);
-                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @ptrCast(*anyopaque, column));
+                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
             }
         } else {
             warn("*oauthtokenback json err body {}\n", .{http.body});
@@ -209,7 +209,7 @@ fn oauthback(command: *thread.Command) void {
                 column.oauthClientSecret = cid.String;
             }
             warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
-            gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*anyopaque, column));
+            gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
         } else {
             warn("*oauthback json type err {}\n{s}\n", .{ rootJsonType, http.body });
         }
@@ -221,7 +221,7 @@ fn oauthback(command: *thread.Command) void {
 fn netback(command: *thread.Command) void {
     warn("*netback tid {x} {}\n", .{ thread.self(), command });
     if (command.id == 1) {
-        gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(*anyopaque, command.verb.http));
+        gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
         column.refreshing = false;
         column.last_check = config.now();
@@ -273,7 +273,7 @@ fn netback(command: *thread.Command) void {
         } else {
             column.inError = true;
         }
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*anyopaque, column));
+        gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
     }
 }
 
@@ -285,7 +285,7 @@ fn mediaback(command: *thread.Command) void {
     tootpic.pic = reqres.body;
     warn("mediaback toot #{s} tootpic.toot {*} adding 1 img\n", .{ tootpic.toot.id(), tootpic.toot });
     tootpic.toot.addImg(tootpic.pic);
-    gui.schedule(gui.toot_media_schedule, @ptrCast(*anyopaque, tootpic));
+    gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
 }
 
 fn photoback(command: *thread.Command) void {
@@ -296,7 +296,7 @@ fn photoback(command: *thread.Command) void {
     warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
-    gui.schedule(gui.update_author_photo_schedule, @ptrCast(*anyopaque, cAcct));
+    gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
 }
 
 fn profileback(command: *thread.Command) void {
@@ -304,7 +304,7 @@ fn profileback(command: *thread.Command) void {
     const reqres = command.verb.http;
     if (reqres.response_code >= 200 and reqres.response_code < 300) {
         reqres.column.account = reqres.tree.root.Object;
-        gui.schedule(gui.update_column_ui_schedule, @ptrCast(*anyopaque, reqres.column));
+        gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(reqres.column)));
     } else {
         warn("profile fail http status {}\n", .{reqres.response_code});
     }
@@ -346,7 +346,7 @@ fn guiback(command: *thread.Command) void {
         colInfo.config.title = ""[0..];
         colInfo.config.filter = "mastodon.example.com"[0..];
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
-        gui.schedule(gui.add_column_schedule, @ptrCast(*anyopaque, colInfo));
+        gui.schedule(gui.add_column_schedule, @as(*anyopaque, @ptrCast(colInfo)));
         config.writefile(settings, "config.json");
     }
     if (command.id == 4) { // save config params
@@ -360,20 +360,20 @@ fn guiback(command: *thread.Command) void {
         const column = command.verb.column;
         warn("gui col remove {s}\n", .{column.config.title});
         //var colpos: usize = undefined;
-        for (settings.columns.items) |col, idx| {
+        for (settings.columns.items, 0..) |col, idx| {
             if (col == column) {
                 _ = settings.columns.orderedRemove(idx);
                 break;
             }
         }
         config.writefile(settings, "config.json");
-        gui.schedule(gui.column_remove_schedule, @ptrCast(*anyopaque, column));
+        gui.schedule(gui.column_remove_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 6) { //oauth
         const column = command.verb.column;
         if (column.oauthClientId) |id| {
             _ = id;
-            gui.schedule(gui.column_config_oauth_url_schedule, @ptrCast(*anyopaque, column));
+            gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
         } else {
             oauthcolumnget(column, alloc);
         }
@@ -388,8 +388,8 @@ fn guiback(command: *thread.Command) void {
         // partial reset
         column.oauthClientId = null;
         column.oauthClientSecret = null;
-        gui.schedule(gui.update_column_ui_schedule, @ptrCast(*anyopaque, column));
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*anyopaque, column));
+        gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(column)));
+        gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
         // throw out toots in the toot list not from the new host
         column_refresh(column, alloc);
     }
@@ -397,7 +397,7 @@ fn guiback(command: *thread.Command) void {
         const column = command.verb.column;
         column.config.img_only = !column.config.img_only;
         config.writefile(settings, "config.json");
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(*anyopaque, column));
+        gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 10) { // window size changed
         config.writefile(settings, "config.json");
