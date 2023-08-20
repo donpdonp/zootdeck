@@ -90,7 +90,7 @@ pub const HttpInfo = struct {
     body: []const u8,
     content_type: []const u8,
     response_code: c_long,
-    tree: std.json.ValueTree,
+    tree: std.json.Value,
     column: *ColumnInfo,
     toot: *toot_lib.Type,
 };
@@ -130,48 +130,47 @@ pub fn readfile(filename: []const u8) !Settings {
 }
 
 pub fn read(json: []const u8) !Settings {
-    var json_parser = std.json.Parser.init(allocator, false);
-    var value_tree = try json_parser.parse(json);
+    var value_tree = try std.json.parseFromSlice(std.json.Value, allocator, json, .{});
+    var root = value_tree.value.object;
     var settings = allocator.create(Settings) catch unreachable;
-    var root = value_tree.root.Object;
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
     if (root.get("win_x")) |w| {
         warn("config: win_x\n", .{});
-        settings.win_x = w.Integer;
+        settings.win_x = w.integer;
     } else {
         settings.win_x = 800;
     }
     if (root.get("win_y")) |h| {
         warn("config: win_y\n", .{});
-        settings.win_y = h.Integer;
+        settings.win_y = h.integer;
     } else {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        warn("config: columns {}\n", .{columns.Array.items.len});
-        for (columns.Array.items) |value| {
+        warn("config: columns {}\n", .{columns.array.items.len});
+        for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
             colInfo.toots = toot_list.TootList.init();
             var colconfig = allocator.create(ColumnConfig) catch unreachable;
             colInfo.config = colconfig;
-            var title = value.Object.get("title").?.String;
+            var title = value.object.get("title").?.string;
             colInfo.config.title = title;
-            var filter = value.Object.get("filter").?.String;
+            var filter = value.object.get("filter").?.string;
             colInfo.config.filter = filter;
             colInfo.filter = filter_lib.parse(allocator, filter);
-            var tokenTag = value.Object.get("token");
+            var tokenTag = value.object.get("token");
             if (tokenTag) |tokenKV| {
                 if (@TypeOf(tokenKV) == []const u8) {
-                    colInfo.config.token = tokenKV.value.String;
+                    colInfo.config.token = tokenKV.value.string;
                 } else {
                     colInfo.config.token = null;
                 }
             } else {
                 colInfo.config.token = null;
             }
-            var img_only = value.Object.get("img_only").?.Bool;
+            var img_only = value.object.get("img_only").?.bool;
             colInfo.config.img_only = img_only;
             settings.columns.append(colInfo) catch unreachable;
         }
