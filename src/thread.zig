@@ -12,7 +12,7 @@ const c = @cImport({
     @cInclude("sys/epoll.h");
 });
 
-pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: fn (*Command) void, name: []const u8 };
+pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: *const fn (*Command) void, name: []const u8 };
 
 pub const Command = packed struct { id: u16, verb: *const CommandVerb, actor: *Actor };
 
@@ -39,9 +39,9 @@ pub fn name(tid: u64) []const u8 {
 
 pub fn create(
     actor_name: []const u8,
-    startFn: fn (?*anyopaque) callconv(.C) ?*anyopaque,
+    startFn: *const fn (?*anyopaque) callconv(.C) ?*anyopaque,
     startParams: *CommandVerb,
-    recvback: fn (*Command) void,
+    recvback: *const fn (*Command) void,
 ) !*Actor {
     var actor = try allocator.create(Actor);
     actor.client = ipc.newClient(allocator);
