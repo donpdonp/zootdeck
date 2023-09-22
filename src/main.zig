@@ -64,7 +64,7 @@ fn statewalk(allocator: std.mem.Allocator) void {
         statemachine.setState(statemachine.States.Setup); // transition
         var ram = allocator.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
-        gui.schedule(gui.show_main_schedule, &ram);
+        gui.schedule(gui.show_main_schedule, @ptrCast(&ram));
         for (settings.columns.items) |column| {
             if (column.config.token) |token| {
                 _ = token;
@@ -327,7 +327,7 @@ fn guiback(command: *thread.Command) void {
     if (command.id == 1) {
         var ram = alloc.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
-        gui.schedule(gui.show_main_schedule, &ram);
+        gui.schedule(gui.show_main_schedule, @ptrCast(&ram));
     }
     if (command.id == 2) { // refresh button
         const column = command.verb.column;

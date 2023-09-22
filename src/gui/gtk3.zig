@@ -71,7 +71,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     // captures all keys oh no
     // _ = c.gtk_builder_add_callback_symbol(myBuilder, "zoot.keypress",
     //                                       @ptrCast(?extern fn() void, zoot_keypress));
-    _ = c.gtk_builder_add_callback_symbol(myBuilder, "main_check_resize", @as(?fn () callconv(.C) void, @ptrCast(main_check_resize)));
+    _ = c.gtk_builder_add_callback_symbol(myBuilder, "main_check_resize", c.G_CALLBACK(main_check_resize));
     _ = c.gtk_builder_connect_signals(myBuilder, null);
 
     // set main size before resize callback happens
