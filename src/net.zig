@@ -52,7 +52,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
     _ = c.curl_global_init(0);
     var curl = c.curl_easy_init();
     if (curl != null) {
-        var cstr = std.cstr.addNullByte(allocator, req.url) catch unreachable;
+        var cstr = allocator.dupeZ(u8, req.url) catch unreachable;
         _ = c.curl_easy_setopt(curl, c.CURLOPT_URL, cstr.ptr);
 
         var zero: c_long = 0;

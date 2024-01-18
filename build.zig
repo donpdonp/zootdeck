@@ -38,8 +38,10 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("atk-1.0");
     exe.linkSystemLibrary("gio-2.0");
 
+    exe.addIncludePath(.{ .path = "." });
+
     // html
-    exe.linkSystemLibrary("gumbo");
+    // exe.linkSystemLibrary("gumbo");
 
     // qt5
     //exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");

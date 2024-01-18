@@ -89,7 +89,7 @@ fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) *c.GtkWidget {
     return gwidget;
 }
 
-pub fn schedule(func: ?fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
+pub fn schedule(func: ?*const fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
     _ = c.gdk_threads_add_idle(func, param);
 }
 
@@ -175,15 +175,15 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 
     c.gtk_grid_attach_next_to(@as(*c.GtkGrid, @ptrCast(container)), column.columnbox, null, c.GTK_POS_RIGHT, 1, 1);
 
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @as(?fn () callconv(.C) void, @ptrCast(column_top_label_title)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @as(?fn () callconv(.C) void, @ptrCast(column_config_btn)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.reload", @as(?fn () callconv(.C) void, @ptrCast(column_reload)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.imgonly", @as(?fn () callconv(.C) void, @ptrCast(column_imgonly)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.filter_done", @as(?fn () callconv(.C) void, @ptrCast(column_filter_done)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.done", @as(?fn () callconv(.C) void, @ptrCast(column_config_done)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.remove", @as(?fn () callconv(.C) void, @ptrCast(column_remove_btn)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_btn", @as(?fn () callconv(.C) void, @ptrCast(column_config_oauth_btn)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_auth_enter", @as(?fn () callconv(.C) void, @ptrCast(column_config_oauth_activate)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @as(?fn () callconv(.C) void, @ptrCast(&column_top_label_title)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @as(?fn () callconv(.C) void, @ptrCast(&column_config_btn)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.reload", @as(?fn () callconv(.C) void, @ptrCast(&column_reload)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.imgonly", @as(?fn () callconv(.C) void, @ptrCast(&column_imgonly)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.filter_done", @as(?fn () callconv(.C) void, @ptrCast(&column_filter_done)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.done", @as(?fn () callconv(.C) void, @ptrCast(&column_config_done)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.remove", @as(?fn () callconv(.C) void, @ptrCast(&column_remove_btn)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_btn", @as(?fn () callconv(.C) void, @ptrCast(&column_config_oauth_btn)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_auth_enter", @as(?fn () callconv(.C) void, @ptrCast(&column_config_oauth_activate)));
     _ = c.gtk_builder_add_callback_symbol(column.builder, "zoot_drag", zoot_drag);
     _ = c.gtk_builder_connect_signals(column.builder, null);
     c.gtk_widget_show_all(container);
@@ -375,13 +375,13 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
     //const tootbox = builder_get_widget(builder, "tootbox");
 
-    //const id = toot.get("id").?.String;
-    const account = toot.get("account").?.Object;
-    const author_acct = account.get("acct").?.String;
+    //const id = toot.get("id").?.string;
+    const account = toot.get("account").?.object;
+    const author_acct = account.get("acct").?.string;
 
-    const author_name = account.get("display_name").?.String;
-    const author_url = account.get("url").?.String;
-    const created_at = toot.get("created_at").?.String;
+    const author_name = account.get("display_name").?.string;
+    const author_url = account.get("url").?.string;
+    const created_at = toot.get("created_at").?.string;
 
     const name_label = builder_get_widget(builder, "toot_author_name");
     labelBufPrint(name_label, "{s}", .{author_name});
@@ -407,7 +407,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     const tagBox = builder_get_widget(builder, "tag_flowbox");
     //var tagidx: usize = 0;
     for (toot.tagList.items) |tag| {
-        const cTag = util.sliceToCstr(allocator, tag[0..std.math.min(tag.len, 40)]);
+        const cTag = util.sliceToCstr(allocator, tag[0..@min(tag.len, 40)]);
         const tagLabel = c.gtk_label_new(cTag);
         const labelContext = c.gtk_widget_get_style_context(tagLabel);
         c.gtk_style_context_add_class(labelContext, "toot_tag");
@@ -606,7 +606,8 @@ fn actionbar_add() callconv(.C) void {
     warn("actionbar_add()\n", .{});
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.idle = undefined;
-    thread.signal(myActor, &thread.Command{ .actor = myActor, .id = 3, .verb = verb });
+    var command = thread.Command{ .actor = myActor, .id = 3, .verb = verb };
+    thread.signal(myActor, &command);
 }
 
 fn zoot_drag() callconv(.C) void {
@@ -830,7 +831,7 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
     // connect_flags: GConnectFlags) gulong;
     // connect_flags: GConnectFlags) gulong;
     // typedef void* gpointer;
-    var signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
+    var signal_name_null: []u8 = allocator.dupeZ(u8, signal_name) catch unreachable;
     var data_ptr: ?*anyopaque = undefined;
     if (@sizeOf(@TypeOf(data)) != 0) {
         data_ptr = @as(?*anyopaque, @ptrCast(data));
@@ -838,7 +839,7 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
         data_ptr = null;
     }
     var thing = @as(c.gpointer, @ptrCast(instance));
-    return c.g_signal_connect_data(thing, signal_name_null.ptr, @as(c.GCallback, @ptrCast(callback)), data_ptr, null, c.G_CONNECT_AFTER);
+    return c.g_signal_connect_data(thing, signal_name_null.ptr, @as(c.GCallback, @ptrCast(&callback)), data_ptr, null, c.G_CONNECT_AFTER);
 }
 
 pub fn mainloop() bool {
