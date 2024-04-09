@@ -12,6 +12,7 @@ pub fn build(b: *Builder) void {
         .target = target,
     });
     exe.linkLibC();
+    exe.addIncludePath(.{ .path = "." });
     const cflags = [_][]const u8{};
     exe.addCSourceFile(.{ .file = .{ .path = "ragel/lang.c" }, .flags = &cflags });
 
