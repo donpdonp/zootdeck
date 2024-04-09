@@ -830,7 +830,7 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
     // connect_flags: GConnectFlags) gulong;
     // connect_flags: GConnectFlags) gulong;
     // typedef void* gpointer;
-    var signal_name_null: []u8 = std.cstr.addNullByte(allocator, signal_name) catch unreachable;
+    var signal_name_null: []const u8 = util.sliceAddNull(allocator, signal_name);
     var data_ptr: ?*anyopaque = undefined;
     if (@sizeOf(@TypeOf(data)) != 0) {
         data_ptr = @as(?*anyopaque, @ptrCast(data));

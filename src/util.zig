@@ -9,7 +9,7 @@ const alloc = GPAllocator.allocator();
 const Buffers = @import("./simple_buffer.zig");
 
 pub fn sliceAddNull(allocator: Allocator, str: []const u8) []const u8 {
-    return std.cstr.addNullByte(allocator, str) catch unreachable;
+    return allocator.dupeZ(u8, str) catch unreachable;
 }
 
 pub fn sliceToCstr(allocator: Allocator, str: []const u8) [*]u8 {
