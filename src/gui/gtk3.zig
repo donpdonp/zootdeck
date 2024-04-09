@@ -89,8 +89,8 @@ fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) *c.GtkWidget {
     return gwidget;
 }
 
-pub fn schedule(func: ?fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
-    _ = c.gdk_threads_add_idle(func, param);
+pub fn schedule(func: c.GSourceFunc, param: ?*anyopaque) void {
+    _ = c.gtk_threads_idle_add(func, param);
 }
 
 fn hide_column_config(column: *Column) void {
@@ -376,12 +376,12 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     //const tootbox = builder_get_widget(builder, "tootbox");
 
     //const id = toot.get("id").?.String;
-    const account = toot.get("account").?.Object;
-    const author_acct = account.get("acct").?.String;
+    const account = toot.get("account").?.object;
+    const author_acct = account.get("acct").?.string;
 
-    const author_name = account.get("display_name").?.String;
-    const author_url = account.get("url").?.String;
-    const created_at = toot.get("created_at").?.String;
+    const author_name = account.get("display_name").?.string;
+    const author_url = account.get("url").?.string;
+    const created_at = toot.get("created_at").?.string;
 
     const name_label = builder_get_widget(builder, "toot_author_name");
     labelBufPrint(name_label, "{s}", .{author_name});
@@ -831,14 +831,9 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
     // connect_flags: GConnectFlags) gulong;
     // typedef void* gpointer;
     var signal_name_null: []const u8 = util.sliceAddNull(allocator, signal_name);
-    var data_ptr: ?*anyopaque = undefined;
-    if (@sizeOf(@TypeOf(data)) != 0) {
-        data_ptr = @as(?*anyopaque, @ptrCast(data));
-    } else {
-        data_ptr = null;
-    }
+    var data_ptr: ?*anyopaque = data;
     var thing = @as(c.gpointer, @ptrCast(instance));
-    return c.g_signal_connect_data(thing, signal_name_null.ptr, @as(c.GCallback, @ptrCast(callback)), data_ptr, null, c.G_CONNECT_AFTER);
+    return c.g_signal_connect_data(thing, signal_name_null.ptr, @as(c.GCallback, callback), data_ptr, null, c.G_CONNECT_AFTER);
 }
 
 pub fn mainloop() bool {

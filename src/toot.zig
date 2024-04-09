@@ -38,7 +38,7 @@ pub fn Toot() type {
 
         pub fn id(self: *const Self) []const u8 {
             if (self.hashmap.get("id")) |kv| {
-                return kv.String;
+                return kv.string;
             } else {
                 unreachable;
             }
@@ -58,7 +58,7 @@ pub fn Toot() type {
         }
 
         pub fn content(self: *const Self) []const u8 {
-            return self.hashmap.get("content").?.String;
+            return self.hashmap.get("content").?.string;
         }
 
         pub fn parseTags(self: *Self, allocator: Allocator) void {

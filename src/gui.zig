@@ -46,7 +46,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     }
     return null;
 }
-pub fn schedule(func: *const fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
+pub fn schedule(func: ?*const fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
     guilib.schedule(func, param);
 }
 

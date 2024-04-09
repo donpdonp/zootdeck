@@ -179,8 +179,8 @@ fn oauthtokenback(command: *thread.Command) void {
         const tree = command.verb.http.tree;
         //const rootJsonType = @TypeOf(tree.root);
         if (true) { // todo: rootJsonType == std.json.ObjectMap) {
-            if (tree.root.Object.get("access_token")) |cid| {
-                column.config.token = cid.String;
+            if (tree.object.get("access_token")) |cid| {
+                column.config.token = cid.string;
                 config.writefile(settings, "config.json");
                 column.last_check = 0;
                 profileget(column, alloc);
@@ -200,7 +200,7 @@ fn oauthback(command: *thread.Command) void {
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree;
-        const rootJsonType = @TypeOf(tree.root);
+        const rootJsonType = @TypeOf(tree);
         if (true) { //todo: rootJsonType == std.json.Value) {
             if (tree.root.Object.get("client_id")) |cid| {
                 column.oauthClientId = cid.String;
@@ -228,7 +228,7 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                if (tree.root == .Array) {
+                if (tree == .Array) {
                     column.inError = false;
                     warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
                     for (tree.root.Array.items) |jsonValue| {
@@ -303,7 +303,7 @@ fn profileback(command: *thread.Command) void {
     thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
     if (reqres.response_code >= 200 and reqres.response_code < 300) {
-        reqres.column.account = reqres.tree.root.Object;
+        reqres.column.account = reqres.tree.object;
         gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(reqres.column)));
     } else {
         warn("profile fail http status {}\n", .{reqres.response_code});

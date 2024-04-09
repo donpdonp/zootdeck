@@ -55,7 +55,7 @@ pub const ColumnInfo = struct {
         if (column.config.token) |_| {
             var addon: []const u8 = undefined;
             if (column.account) |account| {
-                addon = account.get("acct").?.String;
+                addon = account.get("acct").?.string;
             } else {
                 addon = "_";
             }
