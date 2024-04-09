@@ -202,11 +202,11 @@ fn oauthback(command: *thread.Command) void {
         const tree = command.verb.http.tree;
         const rootJsonType = @TypeOf(tree);
         if (true) { //todo: rootJsonType == std.json.Value) {
-            if (tree.root.Object.get("client_id")) |cid| {
-                column.oauthClientId = cid.String;
+            if (tree.object.get("client_id")) |cid| {
+                column.oauthClientId = cid.string;
             }
-            if (tree.root.Object.get("client_secret")) |cid| {
-                column.oauthClientSecret = cid.String;
+            if (tree.object.get("client_secret")) |cid| {
+                column.oauthClientSecret = cid.string;
             }
             warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
@@ -228,10 +228,10 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree;
-                if (tree == .Array) {
+                if (@TypeOf(tree) == std.json.Array) {
                     column.inError = false;
-                    warn("netback payload is array len {}\n", .{tree.root.Array.items.len});
-                    for (tree.root.Array.items) |jsonValue| {
+                    warn("netback payload is array len {}\n", .{tree.array.items.len});
+                    for (tree.array.items) |jsonValue| {
                         const item = jsonValue.Object;
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, alloc);
@@ -260,12 +260,12 @@ fn netback(command: *thread.Command) void {
                             }
                         }
                     }
-                } else if (tree.root == .Object) {
-                    if (tree.root.Object.get("error")) |err| {
+                } else if (@TypeOf(tree) == std.json.ObjectMap) {
+                    if (tree.object.get("error")) |err| {
                         warn("netback json err {s} \n", .{err.String});
                     }
                 } else {
-                    warn("!netback json unknown root tagtype {}\n", .{tree.root});
+                    warn("!netback json unknown root tagtype {}\n", .{tree});
                 }
             } else { // empty body
                 column.inError = true;

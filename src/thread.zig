@@ -61,7 +61,7 @@ pub fn create(
     return error.BadValue;
 }
 
-pub fn signal(actor: *Actor, command: *const Command) void {
+pub fn signal(actor: *Actor, command: *Command) void {
     command.actor = actor; // fill in the command
     //const command_address_bytes: *const [8]u8 = @ptrCast([*]const u8, command)[0..8]; // not OK
     const command_address_bytes: *align(8) const [8]u8 = std.mem.asBytes(&command); // OK

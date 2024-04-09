@@ -33,9 +33,9 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
         {
             //warn("{}\n", body); // json dump
-            var json_parser = std.json.Parser.init(allocator, false);
-            if (json_parser.parse(body)) |value_tree| {
-                actor.payload.http.tree = value_tree;
+            if (std.json.parseFromSlice(std.json.Value, allocator, body, .{})) |value_tree| {
+                defer value_tree.deinit();
+                actor.payload.http.tree = value_tree.value;
             } else |err| {
                 warn("net json err {}\n", .{err});
                 actor.payload.http.response_code = 1000;
@@ -52,7 +52,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
     _ = c.curl_global_init(0);
     var curl = c.curl_easy_init();
     if (curl != null) {
-        var cstr = util.sliceAddNull(allocator, req.url) catch unreachable;
+        var cstr = util.sliceAddNull(allocator, req.url);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_URL, cstr.ptr);
 
         var zero: c_long = 0;
