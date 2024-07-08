@@ -16,7 +16,7 @@ pub fn has(namespace: []const u8, key: []const u8, allocator: Allocator) bool {
     _ = namespace;
     _ = key;
     _ = allocator;
-    var keypath = "Z"; //std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ cache_dir, namespace, key }) catch unreachable;
+    const keypath = "Z"; //std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ cache_dir, namespace, key }) catch unreachable;
     var found = false;
     if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
         found = true;
@@ -30,7 +30,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     _ = cache_dir;
     _ = namespace;
     _ = allocator;
-    var dirpath = "Z"; //try std.fmt.allocPrint(allocator, "{s}/{s}", .{ cache_dir, namespace });
+    const dirpath = "Z"; //try std.fmt.allocPrint(allocator, "{s}/{s}", .{ cache_dir, namespace });
     warn("MKDIR {s}\n", .{dirpath});
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
     defer dir.close();

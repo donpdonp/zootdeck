@@ -39,7 +39,7 @@ pub const ptree = struct {
 
 pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
     var ragel_points = c.urlPoints{ .scheme_pos = 0, .loc_pos = 0 };
-    var clang = util.sliceToCstr(allocator, lang);
+    const clang = util.sliceToCstr(allocator, lang);
     _ = c.url(clang, &ragel_points);
     warn("ragel parse \"{s}\"\n", .{lang});
 

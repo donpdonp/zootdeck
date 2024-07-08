@@ -35,7 +35,7 @@ pub fn main() !void {
 
     if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
-        var dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
+        const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
         _ = try thread.create("gui", gui.go, dummy_payload, guiback);
         _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);
 

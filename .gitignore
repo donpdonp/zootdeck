@@ -1,6 +1,6 @@
 /config.json
 /db/
-/zig-cache/
+/.zig-cache/
 /zig-out/
 /cache/
 /ragel/*.c

@@ -71,19 +71,19 @@ pub fn wait() *Client {
             warn("epoll_wait ignoring errno {}\n", .{errno});
         }
     }
-    var client = @as(*Client, @ptrCast(@alignCast(events_waiting[0].data.ptr)));
+    const client = @as(*Client, @ptrCast(@alignCast(events_waiting[0].data.ptr)));
     return client;
 }
 
 pub fn read(client: *Client, buf: []u8) []u8 {
     const pkt_fixed_portion = 1;
-    var readCountOrErr = c.read(client.readSocket, buf.ptr, pkt_fixed_portion);
+    const readCountOrErr = c.read(client.readSocket, buf.ptr, pkt_fixed_portion);
     if (readCountOrErr >= pkt_fixed_portion) {
         const msglen: usize = buf[0];
         var msgrecv = @as(usize, @intCast(readCountOrErr - pkt_fixed_portion));
         if (msgrecv < msglen) {
-            var msgleft = msglen - msgrecv;
-            var r2ce = c.read(client.readSocket, buf.ptr, msgleft);
+            const msgleft = msglen - msgrecv;
+            const r2ce = c.read(client.readSocket, buf.ptr, msgleft);
             if (r2ce >= 0) {
                 msgrecv += @as(usize, @intCast(r2ce));
             } else {

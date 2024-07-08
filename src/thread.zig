@@ -51,7 +51,7 @@ pub fn create(
     actor.name = actor_name;
     //ipc.register(actor.client, recvback);
     const null_pattr = @as([*c]const c.union_pthread_attr_t, @ptrFromInt(0));
-    var pt_err = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
+    const pt_err = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
     try actors.putNoClobber(actor.thread_id, actor);
     if (pt_err == 0) {
         return actor;
@@ -81,7 +81,7 @@ pub fn self() c.pthread_t {
 }
 
 pub fn wait() void {
-    var client = ipc.wait();
+    const client = ipc.wait();
 
     var bufArray = [_]u8{0} ** 16; // arbitrary receive buffer
     const buf: []u8 = ipc.read(client, bufArray[0..]);
@@ -90,7 +90,7 @@ pub fn wait() void {
         warn("thread.wait ipc.read no socket payload! DEFLECTED!\n", .{});
     } else {
         const b8: *[@sizeOf(usize)]u8 = @as(*[@sizeOf(usize)]u8, @ptrCast(buf.ptr));
-        var command: *Command = std.mem.bytesAsValue(*Command, b8).*;
+        const command: *Command = std.mem.bytesAsValue(*Command, b8).*;
         var iter = actors.iterator();
         while (iter.next()) |entry| {
             const actor = entry.value_ptr.*;

@@ -20,8 +20,8 @@ pub fn sliceToCstr(allocator: Allocator, str: []const u8) [*]u8 {
 }
 
 pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
-    var i: usize = std.mem.len(cstr);
-    var ram = allocator.alloc(u8, i) catch unreachable;
+    const i: usize = std.mem.len(cstr);
+    const ram = allocator.alloc(u8, i) catch unreachable;
     std.mem.copy(u8, ram, cstr[0..i]);
     return ram;
 }
@@ -132,6 +132,6 @@ pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
 
 test "htmlEntityParse" {
     const allocator = std.debug.global_allocator;
-    var stripped = htmlEntityDecode("amp&amp;pam", allocator) catch unreachable;
+    const stripped = htmlEntityDecode("amp&amp;pam", allocator) catch unreachable;
     std.testing.expect(std.mem.eql(u8, stripped, "amp&pam"));
 }

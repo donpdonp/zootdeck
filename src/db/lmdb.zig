@@ -39,21 +39,21 @@ pub fn stats() void {
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
-    var txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
-    var ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));
+    const txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
+    const ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));
     var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
     if (ret == 0) {
         //    warn("lmdb write {} {}={}\n", namespace, key, value);
-        var dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
+        const dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
         ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
         if (ret == 0) {
             // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
-            var fullkey = "Z";
+            const fullkey = "Z";
             _ = key;
             _ = namespace;
             //std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
-            var mdb_key = mdbVal(fullkey, allocator);
-            var mdb_value = mdbVal(value, allocator);
+            const mdb_key = mdbVal(fullkey, allocator);
+            const mdb_value = mdbVal(value, allocator);
             ret = c.mdb_put(txnptr.*, dbiptr.*, mdb_key, mdb_value, 0);
             if (ret == 0) {
                 ret = c.mdb_txn_commit(txnptr.*);
@@ -78,7 +78,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
 }
 
 fn mdbVal(data: []const u8, allocator: Allocator) *c.MDB_val {
-    var dataptr = @as(?*anyopaque, @ptrFromInt(@intFromPtr(data.ptr)));
+    const dataptr = @as(?*anyopaque, @ptrFromInt(@intFromPtr(data.ptr)));
     var mdb_val = allocator.create(c.MDB_val) catch unreachable;
     mdb_val.mv_size = data.len;
     mdb_val.mv_data = dataptr;

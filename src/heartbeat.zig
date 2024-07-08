@@ -14,7 +14,7 @@ pub fn init(myAllocator: Allocator) !void {
 }
 
 pub fn go(actor_ptr: ?*anyopaque) callconv(.C) ?*anyopaque {
-    var actor = @as(*thread.Actor, @ptrCast(@alignCast(actor_ptr)));
+    const actor = @as(*thread.Actor, @ptrCast(@alignCast(actor_ptr)));
     util.log("heartbeat mainloop started", .{});
     const sleep_seconds = 60;
     while (true) {

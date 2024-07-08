@@ -21,8 +21,8 @@ pub fn parse(html: []const u8) *Node {
         .fragment_context = c.GUMBO_TAG_BODY,
         .fragment_namespace = c.GUMBO_NAMESPACE_HTML,
     };
-    var doc = c.gumbo_parse_with_options(&options, html.ptr, html.len);
-    var root = doc.*.root;
+    const doc = c.gumbo_parse_with_options(&options, html.ptr, html.len);
+    const root = doc.*.root;
     //var tagType = root.*.type;
     //var tagName = root.*.v.element.tag;
     return root;
@@ -33,7 +33,7 @@ pub fn search(node: *Node) void {
         if (node.v.element.tag == c.GUMBO_TAG_A) {
             //warn("A TAG found\n");
         }
-        var children = node.v.element.children;
+        const children = node.v.element.children;
         var idx = @as(u32, @intCast(0));
         while (idx < children.length) : (idx += 1) {
             const cnode = children.data[idx];

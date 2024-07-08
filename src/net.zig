@@ -50,13 +50,13 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
 
 pub fn httpget(req: *config.HttpInfo) ![]const u8 {
     _ = c.curl_global_init(0);
-    var curl = c.curl_easy_init();
+    const curl = c.curl_easy_init();
     if (curl != null) {
-        var cstr = util.sliceAddNull(allocator, req.url);
+        const cstr = util.sliceAddNull(allocator, req.url);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_URL, cstr.ptr);
 
-        var zero: c_long = 0;
-        var seconds: c_long = 30;
+        const zero: c_long = 0;
+        const seconds: c_long = 30;
         _ = c.curl_easy_setopt(curl, c.CURLOPT_CONNECTTIMEOUT, seconds);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_SSL_VERIFYPEER, zero);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_SSL_VERIFYHOST, zero);
@@ -82,7 +82,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
             },
         }
 
-        var res = c.curl_easy_perform(curl);
+        const res = c.curl_easy_perform(curl);
         defer c.curl_easy_cleanup(curl);
         if (res == c.CURLE_OK) {
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_RESPONSE_CODE, &req.response_code);
@@ -114,7 +114,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
 
 pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) usize {
     var buf = @as(*std.ArrayList(u8), @ptrCast(@alignCast(userdata)));
-    var body_part: []const u8 = ptr[0..nmemb];
+    const body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch |err| {
         warn("curl_write append fail {}\n", .{err});
     };

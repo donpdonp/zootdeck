@@ -125,12 +125,12 @@ pub fn readfile(filename: []const u8) !Settings {
         },
         else => return err,
     };
-    var json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
+    const json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
     return read(json);
 }
 
 pub fn read(json: []const u8) !Settings {
-    var value_tree = try std.json.parseFromSlice(std.json.Value, allocator, json, .{});
+    const value_tree = try std.json.parseFromSlice(std.json.Value, allocator, json, .{});
     var root = value_tree.value.object;
     var settings = allocator.create(Settings) catch unreachable;
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
@@ -153,14 +153,14 @@ pub fn read(json: []const u8) !Settings {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
             colInfo.toots = toot_list.TootList.init();
-            var colconfig = allocator.create(ColumnConfig) catch unreachable;
+            const colconfig = allocator.create(ColumnConfig) catch unreachable;
             colInfo.config = colconfig;
-            var title = value.object.get("title").?.string;
+            const title = value.object.get("title").?.string;
             colInfo.config.title = title;
-            var filter = value.object.get("filter").?.string;
+            const filter = value.object.get("filter").?.string;
             colInfo.config.filter = filter;
             colInfo.filter = filter_lib.parse(allocator, filter);
-            var tokenTag = value.object.get("token");
+            const tokenTag = value.object.get("token");
             if (tokenTag) |tokenKV| {
                 if (@TypeOf(tokenKV) == []const u8) {
                     colInfo.config.token = tokenKV.value.string;
@@ -170,7 +170,7 @@ pub fn read(json: []const u8) !Settings {
             } else {
                 colInfo.config.token = null;
             }
-            var img_only = value.object.get("img_only").?.bool;
+            const img_only = value.object.get("img_only").?.bool;
             colInfo.config.img_only = img_only;
             settings.columns.append(colInfo) catch unreachable;
         }
@@ -205,7 +205,7 @@ pub fn now() Time {
 
 const assert = @import("std").debug.assert;
 test "read" {
-    var ret = read("{\"url\":\"abc\"}");
+    const ret = read("{\"url\":\"abc\"}");
     if (ret) {
         assert(true);
     } else |err| {
