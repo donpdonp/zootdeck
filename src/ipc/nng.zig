@@ -53,8 +53,6 @@ pub fn dial(socket: *sock, url: []u8) void {
 pub fn newClient(allocator: *Allocator) *Client {
     const client = allocator.create(Client) catch unreachable;
     var url_buf: [256]u8 = undefined;
-    const myUrl = std.fmt.bufPrint(url_buf[0..], "{}{*}", Url, client) catch unreachable;
-    warn("newClient {}\n", myUrl);
     const socket = allocator.create(sock) catch unreachable;
     client.srv = socket;
     var nng_ret = c.nng_pair0_open(client.srv);

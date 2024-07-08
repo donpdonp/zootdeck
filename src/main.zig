@@ -235,16 +235,16 @@ fn netback(command: *thread.Command) void {
                         const item = jsonValue.Object;
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, alloc);
-                        var id = toot.id();
+                        const id = toot.id();
                         warn("netback json create toot #{s} {*}\n", .{ id, toot });
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
-                            var images = toot.get("media_attachments").?.Array;
+                            const images = toot.get("media_attachments").?.Array;
                             column.toots.sortedInsert(toot, alloc);
-                            var html = toot.get("content").?.String;
+                            const html = toot.get("content").?.String;
                             //var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
-                            var root = html_lib.parse(html);
+                            const root = html_lib.parse(html);
                             html_lib.search(root);
                             cache_update(toot, alloc);
 
@@ -341,7 +341,7 @@ fn guiback(command: *thread.Command) void {
         colInfo.toots = toot_list.TootList.init();
         colInfo.last_check = 0;
         settings.columns.append(colInfo) catch unreachable;
-        var colConfig = alloc.create(config.ColumnConfig) catch unreachable;
+        const colConfig = alloc.create(config.ColumnConfig) catch unreachable;
         colInfo.config = colConfig;
         colInfo.config.title = ""[0..];
         colInfo.config.filter = "mastodon.example.com"[0..];
@@ -415,7 +415,7 @@ fn heartback(command: *thread.Command) void {
 
 fn columns_net_freshen(allocator: std.mem.Allocator) void {
     for (settings.columns.items) |column| {
-        var now = config.now();
+        const now = config.now();
         const refresh = 60;
         const since = now - column.last_check;
         if (since > refresh) {

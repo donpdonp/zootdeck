@@ -1,73 +1,66 @@
 const std = @import("std");
-const builtin = @import("builtin");
-const Builder = std.build.Builder;
 
-pub fn build(b: *Builder) void {
-    const gtk4_enabled = b.option(bool, "gtk4", "use GTK4 [default: false]") orelse false;
-
+// Although this function looks imperative, note that its job is to
+// declaratively construct a build graph that will be executed by an external
+// runner.
+pub fn build(b: *std.Build) void {
+    // Standard target options allows the person running `zig build` to choose
+    // what target to build for. Here we do not override the defaults, which
+    // means any target is allowed, and the default is native. Other options
+    // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
-    const exe = b.addExecutable(.{
-        .name = "init-exe",
-        .root_source_file = .{ .path = "src/main.zig" },
-        .target = target,
-    });
-    exe.linkLibC();
-    exe.addIncludePath(.{ .path = "." });
-    const cflags = [_][]const u8{};
-    exe.addCSourceFile(.{ .file = .{ .path = "ragel/lang.c" }, .flags = &cflags });
 
-    if (gtk4_enabled) {
-        // gtk4
-        // exe.addIncludeDir("/usr/include/gtk-4.0");
-        // exe.addIncludeDir("/usr/include/graphene-1.0");
-        // exe.addIncludeDir("/usr/lib/x86_64-linux-gnu/graphene-1.0/include");
-        exe.linkSystemLibrary("gtk-4");
-        // exe.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
-        exe.linkSystemLibrary("gdk"); // does not add extra include path (see below)
-    } else {
-        // gtk3
-        exe.linkSystemLibrary("gtk-3");
-        exe.linkSystemLibrary("gdk-3.0"); // add include path /usr/include/gtk-3.0
+    // Standard optimization options allow the person running `zig build` to select
+    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
+    // set a preferred release mode, allowing the user to decide how to optimize.
+    const optimize = b.standardOptimizeOption(.{});
+
+    const lib = b.addStaticLibrary(.{
+        .name = "zootdeck",
+        // In this case the main source file is merely a path, however, in more
+        // complicated build scripts, this could be a generated file.
+        .root_source_file = .{ .src_path = .{ .sub_path = "src/root.zig", .owner = b } },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // This declares intent for the library to be installed into the standard
+    // location when the user invokes the "install" step (the default step when
+    // running `zig build`).
+    b.installArtifact(lib);
+
+    const exe = b.addExecutable(.{
+        .name = "zootdeck",
+        .root_source_file = .{ .src_path = .{ .sub_path = "src/main.zig", .owner = b } },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // This declares intent for the executable to be installed into the
+    // standard location when the user invokes the "install" step (the default
+    // step when running `zig build`).
+    b.installArtifact(exe);
+
+    // This *creates* a Run step in the build graph, to be executed when another
+    // step is evaluated that depends on it. The next line below will establish
+    // such a dependency.
+    const run_cmd = b.addRunArtifact(exe);
+
+    // By making the run step depend on the install step, it will be run from the
+    // installation directory rather than directly from within the cache directory.
+    // This is not necessary, however, if the application depends on other installed
+    // files, this ensures they will be present and in the expected location.
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    // This allows the user to pass arguments to the application in the build
+    // command itself, like this: `zig build run -- arg1 arg2 etc`
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
     }
 
-    // gtk
-    exe.linkSystemLibrary("glib-2.0");
-    exe.linkSystemLibrary("gdk_pixbuf-2.0");
-    exe.linkSystemLibrary("gobject-2.0");
-    exe.linkSystemLibrary("gmodule-2.0");
-    exe.linkSystemLibrary("pango-1.0");
-    exe.linkSystemLibrary("atk-1.0");
-    exe.linkSystemLibrary("gio-2.0");
-
-    // html
-    exe.linkSystemLibrary("gumbo");
-
-    // qt5
-    //exe.addIncludeDir("/usr/include/x86_64-linux-gnu/qt5");
-
-    // libui (local)
-    // exe.addIncludeDir("../libui");
-    // exe.linkSystemLibrary("ui");
-    // exe.addLibPath("../libui/build/out");
-
-    // glfw (local)
-    // exe.addIncludeDir("../glfw/include");
-    // exe.addIncludeDir("../glfw/deps");
-    // exe.addIncludeDir("../nanovg/src");
-    exe.linkSystemLibrary("glfw3");
-    exe.addLibraryPath(.{ .path = "../glfw/build/src" });
-
-    // opengl
-    //exe.addObjectFile("ext/glad.o"); // build glad.c by hand for now
-    exe.linkSystemLibrary("dl");
-    exe.linkSystemLibrary("X11");
-    exe.linkSystemLibrary("pthread");
-
-    // net
-    exe.linkSystemLibrary("curl");
-
-    // lmdb
-    exe.linkSystemLibrary("lmdb");
-
-    b.installArtifact(exe);
+    // This creates a build step. It will be visible in the `zig build --help` menu,
+    // and can be selected like this: `zig build run`
+    // This will evaluate the `run` step rather than the default, which is "install".
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
 }

@@ -316,9 +316,6 @@ pub fn update_column_toots(column: *Column) void {
     }
     const column_footer_count_label = builder_get_widget(column.builder, "column_footer_count");
     const tootword = if (column.main.config.img_only) "images" else "toots";
-    const countStr = std.fmt.allocPrint(allocator, "{} {s}", .{ column.main.toots.count(), tootword }) catch unreachable;
-    const cCountStr = util.sliceToCstr(allocator, countStr);
-    c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_count_label)), cCountStr);
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
@@ -440,9 +437,6 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
 
 fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
     const avatar = builder_get_widget(builder, "toot_author_avatar");
-    const avatar_path = std.fmt.allocPrint(allocator, "./cache/{s}/photo", .{acct}) catch unreachable;
-    var pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path), 50, -1, 1, null);
-    c.gtk_image_set_from_pixbuf(@as(*c.GtkImage, @ptrCast(avatar)), pixbuf);
 }
 
 fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
@@ -521,9 +515,6 @@ fn escapeGtkString(str: []const u8) []const u8 {
 
 pub fn labelBufPrint(label: *c.GtkWidget, comptime fmt: []const u8, args: anytype) void {
     const buf = allocator.alloc(u8, 256) catch unreachable;
-    const str = std.fmt.bufPrint(buf, fmt, args) catch unreachable;
-    const cStr = util.sliceToCstr(allocator, str);
-    c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(label)), cStr);
 }
 
 fn column_config_btn(columnptr: ?*anyopaque) callconv(.C) void {
@@ -709,9 +700,6 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
     oauth_url_buf.append("&amp;response_type=code") catch unreachable;
     oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
     var markupBuf = allocator.alloc(u8, 512) catch unreachable;
-    var markup = std.fmt.bufPrint(markupBuf, "<a href=\"{s}\">{s} oauth</a>", .{ oauth_url_buf.toSliceConst(), column.main.filter.host() }) catch unreachable;
-    var cLabel = util.sliceToCstr(allocator, markup);
-    c.gtk_label_set_markup(@as(*c.GtkLabel, @ptrCast(oauth_label)), cLabel);
 }
 
 fn column_config_oauth_activate(selfptr: *anyopaque) callconv(.C) void {

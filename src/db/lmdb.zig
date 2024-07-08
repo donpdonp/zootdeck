@@ -48,7 +48,10 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
         ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
         if (ret == 0) {
             // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
-            var fullkey = std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
+            var fullkey = "Z";
+            _ = key;
+            _ = namespace;
+            //std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
             var mdb_key = mdbVal(fullkey, allocator);
             var mdb_value = mdbVal(value, allocator);
             ret = c.mdb_put(txnptr.*, dbiptr.*, mdb_key, mdb_value, 0);

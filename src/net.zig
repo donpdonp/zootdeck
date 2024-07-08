@@ -69,10 +69,6 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         slist = c.curl_slist_append(slist, "Accept: application/json");
         if (req.token) |token| {
             warn("Authorization: {s}\n", .{token});
-            var authbuf = allocator.alloc(u8, 256) catch unreachable;
-            var authstr = std.fmt.bufPrint(authbuf, "Authorization: bearer {s}", .{token}) catch unreachable;
-            var cauthstr = util.sliceToCstr(allocator, authstr);
-            slist = c.curl_slist_append(slist, cauthstr);
         }
         _ = c.curl_easy_setopt(curl, c.CURLOPT_HTTPHEADER, slist);
 
