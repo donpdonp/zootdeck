@@ -14,7 +14,7 @@ pub fn sliceAddNull(allocator: Allocator, str: []const u8) []const u8 {
 
 pub fn sliceToCstr(allocator: Allocator, str: []const u8) [*]u8 {
     var str_null: []u8 = allocator.alloc(u8, str.len + 1) catch unreachable;
-    std.mem.copy(u8, str_null[0..], str);
+    std.mem.copyForwards(u8, str_null[0..], str);
     str_null[str.len] = 0;
     return str_null.ptr;
 }
@@ -30,8 +30,8 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
     const tid_name = thread.name(tid);
     //const tz = std.os.timezone.tz_minuteswest;
-    var tz = std.os.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
-    std.os.gettimeofday(null, &tz); // does not set tz
+    var tz = std.posix.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
+    std.posix.gettimeofday(null, &tz); // does not set tz
     const time_str = "Z"; //std.fmt.allocPrint(alloc, "{d}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2}", .{ yday.year, mday.month.numeric(), mday.day_index + 1, dsec.getHoursIntoDay(), dsec.getMinutesIntoHour(), dsec.getSecondsIntoMinute() }) catch unreachable;
     _ = time_str;
     _ = tid_name;

@@ -23,7 +23,7 @@ pub fn init(allocator: Allocator) !void {
         warn("mdb_env_set_mapsize failed {}\n", .{mdb_ret});
         return error.BadValue;
     }
-    std.os.mkdir(dbpath, 0o0755) catch {};
+    std.posix.mkdir(dbpath, 0o0755) catch {};
     mdb_ret = c.mdb_env_open(env, util.sliceToCstr(allocator, dbpath), 0, 0o644);
     if (mdb_ret != 0) {
         warn("mdb_env_open failed {}\n", .{mdb_ret});

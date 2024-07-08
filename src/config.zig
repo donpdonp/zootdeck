@@ -107,7 +107,7 @@ pub fn init(alloc: Allocator) !void {
 }
 
 pub fn config_file_path() []const u8 {
-    const home_path = std.os.getenv("HOME").?;
+    const home_path = std.posix.getenv("HOME").?;
     const home_dir = std.fs.openDirAbsolute(home_path, .{}) catch unreachable;
     const config_path = std.fs.path.join(allocator, &.{ home_path, ".config", "zootdeck" }) catch unreachable;
     home_dir.makePath(config_path) catch unreachable;
@@ -121,7 +121,7 @@ pub fn readfile(filename: []const u8) !Settings {
     cwd.access(filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
             warn("Warning: creating new {s}\n", .{filename});
-            try cwd.writeFile(filename, "{}\n");
+            try cwd.writeFile(.{ .sub_path = filename, .data = "{}\n" });
         },
         else => return err,
     };

@@ -6,7 +6,7 @@ const Allocator = std.mem.Allocator;
 const cache_dir = "./cache";
 
 pub fn init() !void {
-    std.os.mkdir(cache_dir, 0o644) catch |err| {
+    std.posix.mkdir(cache_dir, 0o644) catch |err| {
         if (err != error.PathAlreadyExists) return err;
     };
 }
