@@ -404,7 +404,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 11) { // Quit
         warn("byebye...\n", .{});
-        std.os.exit(0);
+        std.posix.exit(0);
     }
 }
 

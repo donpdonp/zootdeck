@@ -24,7 +24,7 @@ pub const SimpleU8 = struct {
     pub fn append(self: *SimpleU8, m: []const u8) !void {
         const old_len = self.len();
         try self.resize(old_len + m.len);
-        std.mem.copy(u8, self.list.items[old_len..], m);
+        std.mem.copyForwards(u8, self.list.items[old_len..], m);
     }
 
     pub fn appendByte(self: *SimpleU8, byte: u8) !void {
