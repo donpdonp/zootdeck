@@ -21,7 +21,7 @@ pub fn has(namespace: []const u8, key: []const u8, allocator: Allocator) bool {
     if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
         found = true;
     } else |err| {
-        warn("dbfile did not find {s} {}\n", .{ keypath, err });
+        warn("dbfile did not find {s} {!}\n", .{ keypath, err });
     }
     return found;
 }
@@ -38,6 +38,6 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
         _ = try file.write(value);
         file.close();
     } else |err| {
-        warn("open write err {s} {s} {}\n", .{ dirpath, key, err });
+        warn("open write err {s} {s} {!}\n", .{ dirpath, key, err });
     }
 }

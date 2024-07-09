@@ -193,7 +193,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
         warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() });
         file.close();
     } else |err| {
-        warn("config save fail. {}\n", .{err});
+        warn("config save fail. {!}\n", .{err});
     } // existing file is OK
 }
 
@@ -209,7 +209,7 @@ test "read" {
     if (ret) {
         assert(true);
     } else |err| {
-        warn("warn: {}\n", .{err});
+        warn("warn: {!}\n", .{err});
         assert(false);
     }
 }

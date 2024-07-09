@@ -22,7 +22,7 @@ pub fn sliceToCstr(allocator: Allocator, str: []const u8) [*]u8 {
 pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
     const i: usize = std.mem.len(cstr);
     const ram = allocator.alloc(u8, i) catch unreachable;
-    std.mem.copy(u8, ram, cstr[0..i]);
+    std.mem.copyForwards(u8, ram, cstr[0..i]);
     return ram;
 }
 

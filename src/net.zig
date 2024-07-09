@@ -37,12 +37,12 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
                 defer value_tree.deinit();
                 actor.payload.http.tree = value_tree.value;
             } else |err| {
-                warn("net json err {}\n", .{err});
+                warn("net json err {!}\n", .{err});
                 actor.payload.http.response_code = 1000;
             }
         }
     } else |err| {
-        warn("net thread http err {}\n", .{err});
+        warn("net thread http err {!}\n", .{err});
     }
     thread.signal(actor, command);
     return null;
@@ -97,7 +97,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
             return NetError.Curl;
         } else {
             const err_cstr = c.curl_easy_strerror(res);
-            warn("curl ERR {} {s}\n", .{ res, util.cstrToSliceCopy(allocator, err_cstr) });
+            warn("curl ERR {!} {s}\n", .{ res, util.cstrToSliceCopy(allocator, err_cstr) });
             if (res == c.CURLE_COULDNT_RESOLVE_HOST) {
                 req.response_code = 2100;
                 return NetError.DNS;
@@ -112,11 +112,11 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
     }
 }
 
-pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) usize {
+pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) callconv(.C) usize {
     var buf = @as(*std.ArrayList(u8), @ptrCast(@alignCast(userdata)));
     const body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch |err| {
-        warn("curl_write append fail {}\n", .{err});
+        warn("curl_write append fail {!}\n", .{err});
     };
     return nmemb;
 }

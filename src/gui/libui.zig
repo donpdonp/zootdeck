@@ -40,7 +40,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     if (err == 0) {
         build();
     } else {
-        warn("libui init failed {}\n", err);
+        warn("libui init failed {!}\n", err);
         return GUIError.Init;
     }
 }

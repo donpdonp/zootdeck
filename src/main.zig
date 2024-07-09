@@ -45,7 +45,7 @@ pub fn main() !void {
             thread.wait(); // main ipc listener
         }
     } else |err| {
-        log.err("config error: {}\n", .{err});
+        log.err("config error: {!}\n", .{err});
     }
 }
 
@@ -99,8 +99,8 @@ fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     httpInfo.response_code = 0;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
-    if (thread.create("net", net.go, verb, netback)) {} else |err| {
-        warn("columnget {}", .{err});
+    if (thread.create("net", net.go, verb, netback)) |_| {} else |err| {
+        warn("columnget {!}", .{err});
     }
 }
 

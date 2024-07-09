@@ -56,7 +56,7 @@ pub fn create(
     if (pt_err == 0) {
         return actor;
     } else {
-        warn("ERROR thread pthread_create err: {} {}\n", .{ pt_err, actor });
+        warn("ERROR thread pthread_create err: {!} {*}\n", .{ pt_err, actor });
     }
     return error.BadValue;
 }
