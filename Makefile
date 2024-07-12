@@ -3,7 +3,7 @@ TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-linux-`uname -i`-${TODAY}
 
 build: ragel/lang.c
-	zig build
+	zig build -freference-trace
 
 ragel/lang.c: ragel/lang.c.rl
 	ragel -o ragel/lang.c ragel/lang.c.rl

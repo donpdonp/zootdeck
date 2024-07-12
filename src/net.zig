@@ -36,13 +36,13 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
             if (std.json.parseFromSlice(std.json.Value, allocator, body, .{})) |value_tree| {
                 defer value_tree.deinit();
                 actor.payload.http.tree = value_tree.value;
-            } else |err| {
-                warn("net json err {!}\n", .{err});
+            } else |_| {
+                //warn("net json err {!}\n", .{err});
                 actor.payload.http.response_code = 1000;
             }
         }
-    } else |err| {
-        warn("net thread http err {!}\n", .{err});
+    } else |_| {
+        //warn("net thread http err {!}\n", .{err});
     }
     thread.signal(actor, command);
     return null;
@@ -67,8 +67,8 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
         //var slist: ?[*c]c.curl_slist = null;
         var slist = @as([*c]c.curl_slist, @ptrFromInt(0)); // 0= new list
         slist = c.curl_slist_append(slist, "Accept: application/json");
-        if (req.token) |token| {
-            warn("Authorization: {s}\n", .{token});
+        if (req.token) |_| {
+            //warn("Authorization: {s}\n", .{token});
         }
         _ = c.curl_easy_setopt(curl, c.CURLOPT_HTTPHEADER, slist);
 
@@ -78,7 +78,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
                 _ = c.curl_easy_setopt(curl, c.CURLOPT_POST, @as(c_long, 1));
                 const post_body_c: [*c]const u8 = util.sliceToCstr(allocator, req.post_body);
                 _ = c.curl_easy_setopt(curl, c.CURLOPT_POSTFIELDS, post_body_c);
-                warn("post body: {s}\n", .{req.post_body});
+                //warn("post body: {s}\n", .{req.post_body});
             },
         }
 
@@ -89,15 +89,15 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
             var ccontent_type: [*c]const u8 = undefined;
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_CONTENT_TYPE, &ccontent_type);
             req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
-            warn("http {} {s} {} {s} {} bytes\n", .{ req.verb, req.url, req.response_code, req.content_type, body_buffer.items.len });
+            std.log.debug("http {any} {s} {any} {s} {any} bytes\n", .{ req.verb, req.url, req.response_code, req.content_type, body_buffer.items.len });
 
             return body_buffer.toOwnedSliceSentinel(0);
         } else if (res == c.CURLE_OPERATION_TIMEDOUT) {
             req.response_code = 2200;
             return NetError.Curl;
         } else {
-            const err_cstr = c.curl_easy_strerror(res);
-            warn("curl ERR {!} {s}\n", .{ res, util.cstrToSliceCopy(allocator, err_cstr) });
+            //const err_cstr = c.curl_easy_strerror(res);
+            //warn("curl ERR {!} {s}\n", .{ res, util.cstrToSliceCopy(allocator, err_cstr) });
             if (res == c.CURLE_COULDNT_RESOLVE_HOST) {
                 req.response_code = 2100;
                 return NetError.DNS;
@@ -107,7 +107,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
             }
         }
     } else {
-        warn("net curl easy init fail\n", .{});
+        //warn("net curl easy init fail\n", .{});
         return NetError.CurlInit;
     }
 }
@@ -115,8 +115,6 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
 pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) callconv(.C) usize {
     var buf = @as(*std.ArrayList(u8), @ptrCast(@alignCast(userdata)));
     const body_part: []const u8 = ptr[0..nmemb];
-    buf.appendSlice(body_part) catch |err| {
-        warn("curl_write append fail {!}\n", .{err});
-    };
+    buf.appendSlice(body_part) catch {};
     return nmemb;
 }

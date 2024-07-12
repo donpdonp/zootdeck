@@ -28,16 +28,16 @@ const filter_lib = @import("./filter.zig");
 
 var settings: config.Settings = undefined;
 
-pub fn main() !void {
+pub fn main() u8 {
     hello();
-    try initialize(alloc);
-    try thread.register_main_tid(thread.self());
+    initialize(alloc) catch unreachable;
+    thread.register_main_tid(thread.self()) catch unreachable;
 
     if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
         const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        _ = try thread.create("gui", gui.go, dummy_payload, guiback);
-        _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);
+        _ = thread.create("gui", gui.go, dummy_payload, guiback) catch unreachable;
+        _ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
 
         while (true) {
             statewalk(alloc);
@@ -47,6 +47,7 @@ pub fn main() !void {
     } else |err| {
         log.err("config error: {!}\n", .{err});
     }
+    return 0;
 }
 
 fn initialize(allocator: std.mem.Allocator) !void {
@@ -99,8 +100,8 @@ fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     httpInfo.response_code = 0;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
-    if (thread.create("net", net.go, verb, netback)) |_| {} else |err| {
-        warn("columnget {!}", .{err});
+    if (thread.create("net", net.go, verb, netback)) |_| {} else |_| {
+        //warn("columnget {!}", .{err});
     }
 }
 
@@ -172,7 +173,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.me
 }
 
 fn oauthtokenback(command: *thread.Command) void {
-    warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
+    //warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -190,12 +191,12 @@ fn oauthtokenback(command: *thread.Command) void {
             warn("*oauthtokenback json err body {}\n", .{http.body});
         }
     } else {
-        warn("*oauthtokenback net err {}\n", .{http.response_code});
+        //warn("*oauthtokenback net err {}\n", .{http.response_code});
     }
 }
 
 fn oauthback(command: *thread.Command) void {
-    warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
+    //warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -208,18 +209,18 @@ fn oauthback(command: *thread.Command) void {
             if (tree.object.get("client_secret")) |cid| {
                 column.oauthClientSecret = cid.string;
             }
-            warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
+            //warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
         } else {
             warn("*oauthback json type err {}\n{s}\n", .{ rootJsonType, http.body });
         }
     } else {
-        warn("*oauthback net err {}\n", .{http.response_code});
+        //warn("*oauthback net err {}\n", .{http.response_code});
     }
 }
 
 fn netback(command: *thread.Command) void {
-    warn("*netback tid {x} {}\n", .{ thread.self(), command });
+    //warn("*netback tid {x} {}\n", .{ thread.self(), command });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
@@ -265,7 +266,7 @@ fn netback(command: *thread.Command) void {
                         warn("netback json err {s} \n", .{err.String});
                     }
                 } else {
-                    warn("!netback json unknown root tagtype {}\n", .{tree});
+                    //warn("!netback json unknown root tagtype {!}\n", .{tree});
                 }
             } else { // empty body
                 column.inError = true;
@@ -306,7 +307,7 @@ fn profileback(command: *thread.Command) void {
         reqres.column.account = reqres.tree.object;
         gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(reqres.column)));
     } else {
-        warn("profile fail http status {}\n", .{reqres.response_code});
+        //warn("profile fail http status {!}\n", .{reqres.response_code});
     }
 }
 

@@ -62,7 +62,7 @@ pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: Allocator) []c
         }
         return url.toSliceConst();
     } else {
-        warn("mastodonExpandUrl given empty host!\n", .{});
+        //warn("mastodonExpandUrl given empty host", .{});
         return "";
     }
 }
