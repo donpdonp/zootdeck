@@ -28,16 +28,16 @@ const filter_lib = @import("./filter.zig");
 
 var settings: config.Settings = undefined;
 
-pub fn main() u8 {
+pub fn main() !void {
     hello();
     initialize(alloc) catch unreachable;
     thread.register_main_tid(thread.self()) catch unreachable;
 
-    if (config.readfile(config.config_file_path())) |_| {
-        // settings = config_data;
-        // const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        // _ = thread.create("gui", gui.go, dummy_payload, guiback) catch unreachable;
-        // _ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
+    if (config.readfile(config.config_file_path())) |config_data| {
+        settings = config_data;
+        const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
+        _ = try thread.create("gui", gui.go, dummy_payload, guiback);
+        //_ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
 
         // while (true) {
         //     statewalk(alloc);
@@ -47,7 +47,6 @@ pub fn main() u8 {
     } else |_| {
         //log.err("config error: {!}\n", .{err});
     }
-    return 0;
 }
 
 fn initialize(allocator: std.mem.Allocator) !void {
