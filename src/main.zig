@@ -39,6 +39,7 @@ pub fn main() !void {
         _ = thread.create("gui", gui.go, dummy_payload, guiback) catch unreachable;
         _ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
         while (true) {
+            util.log("while", .{});
             statewalk(alloc);
             util.log("thread.wait()/epoll", .{});
             thread.wait(); // main ipc listener

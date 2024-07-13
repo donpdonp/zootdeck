@@ -35,7 +35,7 @@ pub fn init(allocator: Allocator) !void {
 pub fn stats() void {
     var mdbStat: c.MDB_stat = undefined;
     _ = c.mdb_env_stat(env, &mdbStat);
-    warn("lmdb cache {} entries\n", .{mdbStat.ms_entries});
+    util.log("lmdb cache {} entries\n", .{mdbStat.ms_entries});
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
