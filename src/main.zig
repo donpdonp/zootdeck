@@ -36,16 +36,15 @@ pub fn main() !void {
     if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
         const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        _ = try thread.create("gui", gui.go, dummy_payload, guiback);
-        //_ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
-
-        // while (true) {
-        //     statewalk(alloc);
-        //     util.log("thread.wait()/epoll", .{});
-        //     thread.wait(); // main ipc listener
-        // }
-    } else |_| {
-        //log.err("config error: {!}\n", .{err});
+        _ = thread.create("gui", gui.go, dummy_payload, guiback) catch unreachable;
+        _ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
+        while (true) {
+            statewalk(alloc);
+            util.log("thread.wait()/epoll", .{});
+            thread.wait(); // main ipc listener
+        }
+    } else |err| {
+        log.err("config error: {!}\n", .{err});
     }
 }
 
