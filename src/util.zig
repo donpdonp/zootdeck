@@ -32,7 +32,14 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     //const tz = std.os.timezone.tz_minuteswest;
     var tz = std.posix.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
     std.posix.gettimeofday(null, &tz); // does not set tz
-    const time_str = "Z"; //std.fmt.allocPrint(alloc, "{d}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2}", .{ yday.year, mday.month.numeric(), mday.day_index + 1, dsec.getHoursIntoDay(), dsec.getMinutesIntoHour(), dsec.getSecondsIntoMinute() }) catch unreachable;
+    const now_ms = std.time.milliTimestamp() + tz.tz_minuteswest * std.time.ms_per_hour;
+    const esec = std.time.epoch.EpochSeconds{ .secs = @as(u64, @intCast(@divTrunc(now_ms, std.time.ms_per_s))) };
+    const eday = esec.getEpochDay();
+    const yday = eday.calculateYearDay();
+    const mday = yday.calculateMonthDay();
+    const dsec = esec.getDaySeconds();
+
+    const time_str = std.fmt.allocPrint(alloc, "{d}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2}", .{ yday.year, mday.month.numeric(), mday.day_index + 1, dsec.getHoursIntoDay(), dsec.getMinutesIntoHour(), dsec.getSecondsIntoMinute() }) catch unreachable;
     std.debug.print("{s}[tid#{d}/{s:9}] " ++ msg ++ "\n", .{ time_str, tid, tid_name } ++ args);
 }
 
