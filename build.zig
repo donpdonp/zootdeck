@@ -22,14 +22,14 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "zootdeck",
-        .root_source_file = .{ .src_path = .{ .sub_path = "src/main.zig", .owner = b } },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
     exe.linkLibC();
-    exe.addIncludePath(.{ .cwd_relative = "." });
+    exe.addIncludePath(b.path("."));
     exe.linkSystemLibrary("lmdb");
-    exe.addCSourceFile(.{ .file = .{ .cwd_relative = "ragel/lang.c" } });
+    exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
