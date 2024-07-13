@@ -15,18 +15,18 @@ pub fn init(allocator: Allocator) !void {
     var mdb_ret: c_int = 0;
     mdb_ret = c.mdb_env_create(@as([*c]?*c.MDB_env, @ptrCast(&env)));
     if (mdb_ret != 0) {
-        warn("mdb_env_create failed {}\n", .{mdb_ret});
+        warn("mdb_env_create failed {!}\n", .{mdb_ret});
         return error.BadValue;
     }
     mdb_ret = c.mdb_env_set_mapsize(env, 250 * 1024 * 1024);
     if (mdb_ret != 0) {
-        warn("mdb_env_set_mapsize failed {}\n", .{mdb_ret});
+        warn("mdb_env_set_mapsize failed {!}\n", .{mdb_ret});
         return error.BadValue;
     }
     std.posix.mkdir(dbpath, 0o0755) catch {};
     mdb_ret = c.mdb_env_open(env, util.sliceToCstr(allocator, dbpath), 0, 0o644);
     if (mdb_ret != 0) {
-        warn("mdb_env_open failed {}\n", .{mdb_ret});
+        warn("mdb_env_open failed {!}\n", .{mdb_ret});
         return error.BadValue;
     }
     stats();
@@ -35,7 +35,7 @@ pub fn init(allocator: Allocator) !void {
 pub fn stats() void {
     var mdbStat: c.MDB_stat = undefined;
     _ = c.mdb_env_stat(env, &mdbStat);
-    warn("lmdb cache {} entries\n", .{mdbStat.ms_entries});
+    warn("lmdb cache {!} entries\n", .{mdbStat.ms_entries});
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
@@ -43,7 +43,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     const ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));
     var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
     if (ret == 0) {
-        //    warn("lmdb write {} {}={}\n", namespace, key, value);
+        //    warn("lmdb write {} {}={!}\n", namespace, key, value);
         const dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
         ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
         if (ret == 0) {
@@ -60,19 +60,19 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
                 if (ret == 0) {
                     _ = c.mdb_dbi_close(env, dbiptr.*);
                 } else {
-                    warn("mdb_txn_commit ERR {}\n", .{ret});
+                    warn("mdb_txn_commit ERR {!}\n", .{ret});
                     return error.mdb_txn_commit;
                 }
             } else {
-                warn("mdb_put ERR {}\n", .{ret});
+                warn("mdb_put ERR {!}\n", .{ret});
                 return error.mdb_put;
             }
         } else {
-            warn("mdb_dbi_open ERR {}\n", .{ret});
+            warn("mdb_dbi_open ERR {!}\n", .{ret});
             return error.mdb_dbi_open;
         }
     } else {
-        warn("mdb_txn_begin ERR {}\n", .{ret});
+        warn("mdb_txn_begin ERR {!}\n", .{ret});
         return error.mdb_txn_begin;
     }
 }

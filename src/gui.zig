@@ -25,7 +25,7 @@ var myActor: *thread.Actor = undefined;
 var stop = false;
 
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
-    warn("GUI {s} mainloop thread.self()={}\n", .{ "none", thread.self() });
+    warn("GUI {s} mainloop thread.self()={!}\n", .{ "none", thread.self() });
     myActor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     return null;
 }

@@ -56,7 +56,7 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
         }
         if (idx > 1) {
             newTree.tags.append(part) catch unreachable;
-            warn("filter set tag #{} {s}\n", .{ newTree.tags.items.len, part });
+            warn("filter set tag #{!} {s}\n", .{ newTree.tags.items.len, part });
         }
     }
     return newTree;

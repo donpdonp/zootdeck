@@ -121,7 +121,7 @@ pub fn readfile(filename: []const u8) !Settings {
     cwd.access(filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
             warn("Warning: creating new {s}\n", .{filename});
-            try cwd.writeFile(.{ .sub_path = filename, .data = "{}\n" });
+            try cwd.writeFile(.{ .sub_path = filename, .data = "{!}\n" });
         },
         else => return err,
     };
@@ -148,7 +148,7 @@ pub fn read(json: []const u8) !Settings {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        warn("config: columns {}\n", .{columns.array.items.len});
+        warn("config: columns {!}\n", .{columns.array.items.len});
         for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             colInfo.reset();
@@ -190,7 +190,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         warn("config.write toJson\n", .{});
         //std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
-        warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() });
+        warn("config saved. {s} {!} bytes\n", .{ filename, file.getPos() });
         file.close();
     } else |err| {
         warn("config save fail. {!}\n", .{err});

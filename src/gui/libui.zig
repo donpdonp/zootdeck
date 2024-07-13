@@ -81,7 +81,7 @@ export fn onClosing(w: *c.uiWindow, data: *anyopaque) c_int {
 
 pub fn schedule(funcMaybe: ?fn (*anyopaque) callconv(.C) c_int, param: *anyopaque) void {
     if (funcMaybe) |func| {
-        warn("schedule FUNC {}\n", func);
+        warn("schedule FUNC {!}\n", func);
         _ = func(@as(*anyopaque, @ptrCast(&"w")));
     }
 }

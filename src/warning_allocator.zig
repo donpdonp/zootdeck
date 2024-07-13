@@ -32,9 +32,9 @@ pub const WarningAllocator = struct {
         const self = @fieldParentPtr(Self, "allocator", allocator);
         if (enabled) {
             if (old_mem.len == 0) {
-                warn("allocation of {} ", new_size);
+                warn("allocation of {!} ", new_size);
             } else {
-                warn("resize from {} to {} ", old_mem.len, new_size);
+                warn("resize from {} to {!} ", old_mem.len, new_size);
             }
         }
         const result = self.parent_allocator.reallocFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
@@ -55,9 +55,9 @@ pub const WarningAllocator = struct {
         //self.total -= mem_size_diff;
         const result = self.parent_allocator.shrinkFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
         if (new_size == 0) {
-            warn("free of {} bytes success! total {}\n", old_mem.len, mem_size_diff);
+            warn("free of {} bytes success! total {!}\n", old_mem.len, mem_size_diff);
         } else {
-            warn("shrink from {} bytes to {} bytes success! total {}\n", old_mem.len, new_size, mem_size_diff);
+            warn("shrink from {} bytes to {} bytes success! total {!}\n", old_mem.len, new_size, mem_size_diff);
         }
         return result;
     }

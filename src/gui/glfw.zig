@@ -35,7 +35,7 @@ pub fn init(alloca: *Allocator, set: *config.Settings) !void {
 
 pub fn gui_setup(actor: *thread.Actor) !void {
     var ver_cstr = c.glfwGetVersionString();
-    warn("GLFW init {} {}\n", std.cstr.toSliceConst(ver_cstr), if (c.glfwVulkanSupported() == c.GLFW_TRUE) "vulkan" else "novulkan");
+    warn("GLFW init {} {!}\n", std.cstr.toSliceConst(ver_cstr), if (c.glfwVulkanSupported() == c.GLFW_TRUE) "vulkan" else "novulkan");
 
     _ = c.glfwSetErrorCallback(glfw_error);
     if (c.glfwInit() == c.GLFW_TRUE) {
@@ -47,7 +47,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
             var width: c_int = 0;
             var height: c_int = 0;
             c.glfwGetFramebufferSize(window, &width, &height);
-            warn("framebuf w {} h {}\n", width, height);
+            warn("framebuf w {} h {!}\n", width, height);
         } else {
             warn("GLFW create window fail\n");
             return GUIError.Setup;
@@ -65,23 +65,23 @@ pub fn vulkanInit(window: *c.struct_GLFWwindow) void {
     if (count == 0) {
         var errcode = c.glfwGetError(null);
         if (errcode == c.GLFW_NOT_INITIALIZED) {
-            warn("vulkan ERR! GLFW NOT INITIALIZED {}\n", errcode);
+            warn("vulkan ERR! GLFW NOT INITIALIZED {!}\n", errcode);
         }
         if (errcode == c.GLFW_PLATFORM_ERROR) {
-            warn("vulkan ERR! GLFW PLATFORM ERROR {}\n", errcode);
+            warn("vulkan ERR! GLFW PLATFORM ERROR {!}\n", errcode);
         }
         var description: [*c]const u8 = undefined;
         _ = c.glfwGetError(&description);
-        warn("*_ err {}\n", description);
+        warn("*_ err {!}\n", description);
     } else {
-        warn("PRE EXT count {}\n", count);
-        warn("vulkan extensions {}\n", extensions);
+        warn("PRE EXT count {!}\n", count);
+        warn("vulkan extensions {!}\n", extensions);
         warn("POST EXT\n");
     }
 }
 
 fn glfw_error(code: c_int, description: [*c]const u8) callconv(.C) void {
-    warn("**GLFW ErrorBack! {}\n", description);
+    warn("**GLFW ErrorBack! {!}\n", description);
 }
 
 pub fn mainloop() void {
@@ -97,7 +97,7 @@ pub fn gui_end() void {
 
 pub fn schedule(funcMaybe: ?fn (*anyopaque) callconv(.C) c_int, param: *anyopaque) void {
     if (funcMaybe) |func| {
-        warn("schedule FUNC {}\n", func);
+        warn("schedule FUNC {!}\n", func);
         _ = func(@as(*anyopaque, @ptrCast(&"w")));
     }
 }
