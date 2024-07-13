@@ -2,11 +2,8 @@ GITEPOCH=$(shell git log -1 --format="%at")
 TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-linux-`uname -i`-${TODAY}
 
-build: ragel/lang.c
+build:
 	zig build -freference-trace
-
-ragel/lang.c: ragel/lang.c.rl
-	ragel -o ragel/lang.c ragel/lang.c.rl
 
 format:
 	zig fmt src

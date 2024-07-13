@@ -190,7 +190,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         warn("config.write toJson\n", .{});
         //std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
-        warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() });
+        warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() catch unreachable });
         file.close();
     } else |err| {
         warn("config save fail. {!}\n", .{err});
