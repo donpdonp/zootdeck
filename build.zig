@@ -30,6 +30,14 @@ pub fn build(b: *std.Build) void {
     });
     exe.linkLibC();
     exe.addIncludePath(b.path("."));
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gtk-3.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/glib-2.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/pango-1.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gdk-pixbuf-2.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/atk-1.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
     exe.linkSystemLibrary("curl");
     exe.linkSystemLibrary("lmdb");
     exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
