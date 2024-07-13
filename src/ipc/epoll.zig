@@ -68,7 +68,7 @@ pub fn wait() *Client {
         if (nfds < 0) {
             const errnoPtr: [*c]c_int = c.__errno_location();
             const errno = errnoPtr.*;
-            warn("epoll_wait ignoring errno {!}\n", .{errno});
+            warn("epoll_wait ignoring errno {}\n", .{errno});
         }
     }
     const client = @as(*Client, @ptrCast(@alignCast(events_waiting[0].data.ptr)));
@@ -96,7 +96,7 @@ pub fn read(client: *Client, buf: []u8) []u8 {
             return buf[0..0];
         }
     } else {
-        warn("epoll client read starved. tried {} got {!} bytes\n", .{ pkt_fixed_portion, readCountOrErr });
+        warn("epoll client read starved. tried {} got {} bytes\n", .{ pkt_fixed_portion, readCountOrErr });
         return buf[0..0];
     }
 }

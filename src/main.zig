@@ -83,7 +83,7 @@ fn statewalk(allocator: std.mem.Allocator) void {
 }
 
 fn hello() void {
-    util.log("zootdeck {s} {s} tid {!}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
+    util.log("zootdeck {s} {s} tid {}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
 }
 
 fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
@@ -172,7 +172,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.me
 }
 
 fn oauthtokenback(command: *thread.Command) void {
-    //warn("*oauthtokenback tid {x} {!}\n", .{ thread.self(), command });
+    //warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -187,15 +187,15 @@ fn oauthtokenback(command: *thread.Command) void {
                 gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
             }
         } else {
-            warn("*oauthtokenback json err body {!}\n", .{http.body});
+            warn("*oauthtokenback json err body {}\n", .{http.body});
         }
     } else {
-        //warn("*oauthtokenback net err {!}\n", .{http.response_code});
+        //warn("*oauthtokenback net err {}\n", .{http.response_code});
     }
 }
 
 fn oauthback(command: *thread.Command) void {
-    //warn("*oauthback tid {x} {!}\n", .{ thread.self(), command });
+    //warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -211,15 +211,15 @@ fn oauthback(command: *thread.Command) void {
             //warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
         } else {
-            warn("*oauthback json type err {!}\n{s}\n", .{ rootJsonType, http.body });
+            warn("*oauthback json type err {}\n{s}\n", .{ rootJsonType, http.body });
         }
     } else {
-        //warn("*oauthback net err {!}\n", .{http.response_code});
+        //warn("*oauthback net err {}\n", .{http.response_code});
     }
 }
 
 fn netback(command: *thread.Command) void {
-    //warn("*netback tid {x} {!}\n", .{ thread.self(), command });
+    //warn("*netback tid {x} {}\n", .{ thread.self(), command });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
@@ -230,7 +230,7 @@ fn netback(command: *thread.Command) void {
                 const tree = command.verb.http.tree;
                 if (@TypeOf(tree) == std.json.Array) {
                     column.inError = false;
-                    warn("netback payload is array len {!}\n", .{tree.array.items.len});
+                    warn("netback payload is array len {}\n", .{tree.array.items.len});
                     for (tree.array.items) |jsonValue| {
                         const item = jsonValue.Object;
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
@@ -255,7 +255,7 @@ fn netback(command: *thread.Command) void {
                                     warn("toot #{s} has img {s}\n", .{ toot.id(), img_url });
                                     mediaget(toot, img_url, alloc);
                                 } else {
-                                    warn("WARNING: image json 'preview_url' is not String: {!}", .{img_url_raw});
+                                    warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
                                 }
                             }
                         }
@@ -293,7 +293,7 @@ fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.Object;
     const acct = account.get("acct").?.String;
-    warn("photoback! acct {s} type {s} size {!}\n", .{ acct, reqres.content_type, reqres.body.len });
+    warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
@@ -323,7 +323,7 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
 }
 
 fn guiback(command: *thread.Command) void {
-    warn("guiback() tid {} command {!} {!} \n", .{ thread.self(), &command, command });
+    warn("guiback() tid {} command {} {} \n", .{ thread.self(), &command, command });
     if (command.id == 1) {
         var ram = alloc.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
@@ -409,7 +409,7 @@ fn guiback(command: *thread.Command) void {
 }
 
 fn heartback(command: *thread.Command) void {
-    warn("heartback() on tid {!} received {!}\n", .{ thread.self(), command.verb });
+    warn("heartback() on tid {} received {}\n", .{ thread.self(), command.verb });
     columns_net_freshen(alloc);
 }
 
@@ -421,7 +421,7 @@ fn columns_net_freshen(allocator: std.mem.Allocator) void {
         if (since > refresh) {
             column_refresh(column, allocator);
         } else {
-            //warn("col {!} is fresh for {!} sec\n", column.makeTitle(), refresh-since);
+            //warn("col {} is fresh for {} sec\n", column.makeTitle(), refresh-since);
         }
     }
 }

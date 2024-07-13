@@ -208,7 +208,7 @@ pub fn columns_resize() void {
         const container = builder_get_widget(myBuilder, "ZootColumns");
         var app_width = c.gtk_widget_get_allocated_width(container);
         var avg_col_width = @divTrunc(app_width, @as(c_int, @intCast(columns.items.len)));
-        warn("columns_resize app_width {} col_width {} columns {!}\n", .{ app_width, avg_col_width, columns.items.len });
+        warn("columns_resize app_width {} col_width {} columns {}\n", .{ app_width, avg_col_width, columns.items.len });
         for (columns.items) |col| {
             c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
         }
@@ -237,7 +237,7 @@ pub fn column_remove(colInfo: *config.ColumnInfo) void {
 
 //pub const GCallback = ?extern fn() void;
 fn column_top_label_title(p: *anyopaque) callconv(.C) void {
-    warn("column_top_label_title {!}\n", .{p});
+    warn("column_top_label_title {}\n", .{p});
 }
 
 pub fn update_column_toots_schedule(in: ?*anyopaque) callconv(.C) c_int {
@@ -276,7 +276,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column {s} {!} toots {s}\n", .{
+    warn("update_column {s} {} toots {s}\n", .{
         column.main.config.title,
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
@@ -319,7 +319,7 @@ pub fn update_column_toots(column: *Column) void {
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
-    warn("update_netstatus_column {s} {!}\n", .{ http.url, http.response_code });
+    warn("update_netstatus_column {s} {}\n", .{ http.url, http.response_code });
     const column_footer_netstatus = builder_get_widget(column.builder, "column_footer_netstatus");
     var gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
     //var netmsg: *const u8 = undefined;
@@ -368,7 +368,7 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
 }
 
 pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
-    warn("maketootbox toot #{s} {*} gui building {!} images\n", .{ toot.id(), toot, toot.imgList.items.len });
+    warn("maketootbox toot #{s} {*} gui building {} images\n", .{ toot.id(), toot, toot.imgList.items.len });
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
     //const tootbox = builder_get_widget(builder, "tootbox");
 
@@ -456,7 +456,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
         //const account = toot.get("account").?.Object;
         //const acct = account.get("acct").?.String;
         var pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-        warn("toot_media #{s} {*} {*} {} images. win {}x{} col {}x{}px pixbuf {!}px\n", .{
+        warn("toot_media #{s} {*} {*} {} images. win {}x{} col {}x{}px pixbuf {}px\n", .{
             toot.id(),
             toot,
             tootBox,
@@ -476,7 +476,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
             warn("toot_media img from pixbuf FAILED\n", .{});
         }
     } else {
-        warn("pixbuf load FAILED of {!} bytes\n", .{pic.len});
+        warn("pixbuf load FAILED of {} bytes\n", .{pic.len});
     }
 }
 
@@ -490,7 +490,7 @@ fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_heig
         const scale_factor = @as(f32, @floatFromInt(colWidth)) / @as(f32, @floatFromInt(img_width));
         scaleHeight = @as(c_int, @intFromFloat(@as(f32, @floatFromInt(img_height)) * scale_factor));
     }
-    warn("toot_media pixloaderSizePrepared col {}px img {}x{} scale {}x{!}\n", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
+    warn("toot_media pixloaderSizePrepared col {}px img {}x{} scale {}x{}\n", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
     c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
 }
 
@@ -571,7 +571,7 @@ fn main_check_resize(selfptr: *anyopaque) callconv(.C) void {
     var w: c.gint = undefined;
     c.gtk_window_get_size(@as(*c.GtkWindow, @ptrCast(self)), &w, &h);
     if (w != settings.win_x) {
-        warn("main_check_resize() win_x {} != gtk_width {!}\n", .{ settings.win_x, w });
+        warn("main_check_resize() win_x {} != gtk_width {}\n", .{ settings.win_x, w });
         settings.win_x = w;
         var verb = allocator.create(thread.CommandVerb) catch unreachable;
         verb.idle = undefined;
@@ -582,7 +582,7 @@ fn main_check_resize(selfptr: *anyopaque) callconv(.C) void {
         thread.signal(myActor, command);
     }
     if (h != settings.win_y) {
-        warn("main_check_resize, win_y {} != gtk_height {!}\n", .{ settings.win_x, w });
+        warn("main_check_resize, win_y {} != gtk_height {}\n", .{ settings.win_x, w });
         settings.win_y = h;
         var verb = allocator.create(thread.CommandVerb) catch unreachable;
         verb.idle = undefined;
@@ -616,7 +616,7 @@ const EventKey = packed struct {
 
 fn zoot_keypress(widgetptr: *anyopaque, evtptr: *EventKey) callconv(.C) void {
     _ = widgetptr;
-    warn("zoot_keypress {!}\n", .{evtptr});
+    warn("zoot_keypress {}\n", .{evtptr});
 }
 
 fn column_reload(columnptr: *anyopaque) callconv(.C) void {
@@ -749,7 +749,7 @@ pub fn columnReadFilter(column: *Column) []const u8 {
     var filter_entry = builder_get_widget(column.builder, "column_filter");
     var cFilter = c.gtk_entry_get_text(@as(*c.GtkEntry, @ptrCast(filter_entry)));
     const filter = util.cstrToSliceCopy(allocator, cFilter); // edit in guithread--
-    warn("columnReadFilter: {s} {!}\n", .{ filter, filter.len });
+    warn("columnReadFilter: {s} {}\n", .{ filter, filter.len });
     return filter;
 }
 
@@ -826,10 +826,10 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
 
 pub fn mainloop() bool {
     var stop = false;
-    //warn("gtk pending {!}\n", .{c.gtk_events_pending()});
-    //warn("gtk main level {!}\n", .{c.gtk_main_level()});
+    //warn("gtk pending {}\n", .{c.gtk_events_pending()});
+    //warn("gtk main level {}\n", .{c.gtk_main_level()});
     var exitcode = c.gtk_main_iteration();
-    //warn("gtk main interaction return {!}\n", .{exitcode});
+    //warn("gtk main interaction return {}\n", .{exitcode});
     //if(c.gtk_events_pending() != 0) {
     if (exitcode == 0) {
         stop = true;
