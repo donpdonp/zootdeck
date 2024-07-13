@@ -30,6 +30,7 @@ pub fn build(b: *std.Build) void {
     });
     exe.linkLibC();
     exe.addIncludePath(b.path("."));
+    exe.linkSystemLibrary("curl");
     exe.linkSystemLibrary("lmdb");
     exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
     exe.step.dependOn(&gen_ragel.step);
