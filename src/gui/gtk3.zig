@@ -598,8 +598,10 @@ fn actionbar_add() callconv(.C) void {
     warn("actionbar_add()\n", .{});
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.idle = undefined;
-    var command = thread.Command{ .actor = myActor, .id = 3, .verb = verb };
-    thread.signal(myActor, &command);
+    var command = allocator.create(thread.Command) catch unreachable;
+    command.id = 3;
+    command.verb = verb;
+    thread.signal(myActor, command);
 }
 
 fn zoot_drag() callconv(.C) void {
