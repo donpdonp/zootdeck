@@ -71,7 +71,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     // captures all keys oh no
     // _ = c.gtk_builder_add_callback_symbol(myBuilder, "zoot.keypress",
     //                                       @ptrCast(?extern fn() void, zoot_keypress));
-    _ = c.gtk_builder_add_callback_symbol(myBuilder, "main_check_resize", c.G_CALLBACK(main_check_resize));
+    _ = c.gtk_builder_add_callback_symbol(myBuilder, "main_check_resize", @ptrCast(&main_check_resize));
     _ = c.gtk_builder_connect_signals(myBuilder, null);
 
     // set main size before resize callback happens
@@ -90,7 +90,7 @@ fn builder_get_widget(builder: *c.GtkBuilder, name: [*]const u8) *c.GtkWidget {
 }
 
 pub fn schedule(func: c.GSourceFunc, param: ?*anyopaque) void {
-    _ = c.gtk_threads_idle_add(func, param);
+    _ = c.gdk_threads_add_idle(func, param);
 }
 
 fn hide_column_config(column: *Column) void {
@@ -175,15 +175,15 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
 
     c.gtk_grid_attach_next_to(@as(*c.GtkGrid, @ptrCast(container)), column.columnbox, null, c.GTK_POS_RIGHT, 1, 1);
 
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @as(?fn () callconv(.C) void, @ptrCast(column_top_label_title)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @as(?fn () callconv(.C) void, @ptrCast(column_config_btn)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.reload", @as(?fn () callconv(.C) void, @ptrCast(column_reload)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.imgonly", @as(?fn () callconv(.C) void, @ptrCast(column_imgonly)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.filter_done", @as(?fn () callconv(.C) void, @ptrCast(column_filter_done)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.done", @as(?fn () callconv(.C) void, @ptrCast(column_config_done)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.remove", @as(?fn () callconv(.C) void, @ptrCast(column_remove_btn)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_btn", @as(?fn () callconv(.C) void, @ptrCast(column_config_oauth_btn)));
-    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_auth_enter", @as(?fn () callconv(.C) void, @ptrCast(column_config_oauth_activate)));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.title", @ptrCast(&column_top_label_title));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.config", @ptrCast(&column_config_btn));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.reload", @ptrCast(&column_reload));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.imgonly", @ptrCast(&column_imgonly));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column.filter_done", @ptrCast(&column_filter_done));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.done", @ptrCast(&column_config_done));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.remove", @ptrCast(&column_remove_btn));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_btn", @ptrCast(&column_config_oauth_btn));
+    _ = c.gtk_builder_add_callback_symbol(column.builder, "column_config.oauth_auth_enter", @ptrCast(&column_config_oauth_activate));
     _ = c.gtk_builder_add_callback_symbol(column.builder, "zoot_drag", zoot_drag);
     _ = c.gtk_builder_connect_signals(column.builder, null);
     c.gtk_widget_show_all(container);
@@ -823,7 +823,7 @@ fn g_signal_connect(instance: anytype, signal_name: []const u8, callback: anytyp
     const signal_name_null: []const u8 = util.sliceAddNull(allocator, signal_name);
     const data_ptr: ?*anyopaque = data;
     const thing = @as(c.gpointer, @ptrCast(instance));
-    return c.g_signal_connect_data(thing, signal_name_null.ptr, @as(c.GCallback, callback), data_ptr, null, c.G_CONNECT_AFTER);
+    return c.g_signal_connect_data(thing, signal_name_null.ptr, @ptrCast(&callback), data_ptr, null, c.G_CONNECT_AFTER);
 }
 
 pub fn mainloop() bool {

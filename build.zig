@@ -38,6 +38,8 @@ pub fn build(b: *std.Build) void {
     exe.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
     exe.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
     exe.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
+    exe.linkSystemLibrary("gtk-3");
+    exe.linkSystemLibrary("gdk-3");
     exe.linkSystemLibrary("curl");
     exe.linkSystemLibrary("lmdb");
     exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
