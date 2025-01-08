@@ -42,6 +42,7 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("gdk-3");
     exe.linkSystemLibrary("curl");
     exe.linkSystemLibrary("lmdb");
+    exe.linkSystemLibrary("gumbo");
     exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
     exe.step.dependOn(&gen_ragel.step);
 

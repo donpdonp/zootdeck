@@ -218,7 +218,7 @@ fn oauthback(command: *thread.Command) void {
 }
 
 fn netback(command: *thread.Command) void {
-    //warn("*netback tid {x} {}\n", .{ thread.self(), command });
+    warn("*netback tid {x} {}\n", .{ thread.self(), command });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
@@ -226,12 +226,13 @@ fn netback(command: *thread.Command) void {
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
-                const tree = command.verb.http.tree;
+                const tree = command.verb.http.tree.array;
+                warn("netback tree is {!}", .{tree});
                 if (@TypeOf(tree) == std.json.Array) {
                     column.inError = false;
-                    warn("netback payload is array len {}\n", .{tree.array.items.len});
-                    for (tree.array.items) |jsonValue| {
-                        const item = jsonValue.Object;
+                    warn("netback payload is array len {}\n", .{tree.items.len});
+                    for (tree.items) |jsonValue| {
+                        const item = jsonValue.object;
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, alloc);
                         const id = toot.id();
@@ -239,18 +240,18 @@ fn netback(command: *thread.Command) void {
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
-                            const images = toot.get("media_attachments").?.Array;
+                            const images = toot.get("media_attachments").?.array;
                             column.toots.sortedInsert(toot, alloc);
-                            const html = toot.get("content").?.String;
+                            const html = toot.get("content").?.string;
                             //var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
                             const root = html_lib.parse(html);
                             html_lib.search(root);
                             cache_update(toot, alloc);
 
                             for (images.items) |image| {
-                                const img_url_raw = image.Object.get("preview_url").?;
-                                if (img_url_raw == .String) {
-                                    const img_url = img_url_raw.String;
+                                const img_url_raw = image.object.get("preview_url").?;
+                                if (img_url_raw == .string) {
+                                    const img_url = img_url_raw.string;
                                     warn("toot #{s} has img {s}\n", .{ toot.id(), img_url });
                                     mediaget(toot, img_url, alloc);
                                 } else {
@@ -260,6 +261,7 @@ fn netback(command: *thread.Command) void {
                         }
                     }
                 } else if (@TypeOf(tree) == std.json.ObjectMap) {
+                    warn("netback json is object");
                     if (tree.object.get("error")) |err| {
                         warn("netback json err {s} \n", .{err.String});
                     }
@@ -290,8 +292,8 @@ fn mediaback(command: *thread.Command) void {
 fn photoback(command: *thread.Command) void {
     thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
-    var account = reqres.toot.get("account").?.Object;
-    const acct = account.get("acct").?.String;
+    var account = reqres.toot.get("account").?.object;
+    const acct = account.get("acct").?.string;
     warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
@@ -310,11 +312,11 @@ fn profileback(command: *thread.Command) void {
 }
 
 fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
-    var account = toot.get("account").?.Object;
-    const acct: []const u8 = account.get("acct").?.String;
-    const avatar_url: []const u8 = account.get("avatar").?.String;
+    var account = toot.get("account").?.object;
+    const acct: []const u8 = account.get("acct").?.string;
+    const avatar_url: []const u8 = account.get("avatar").?.string;
     db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
-    const name: []const u8 = account.get("display_name").?.String;
+    const name: []const u8 = account.get("display_name").?.string;
     db.write(acct, "name", name, allocator) catch unreachable;
     if (dbfile.has(acct, "photo", allocator)) {} else {
         photoget(toot, avatar_url, allocator);
@@ -336,7 +338,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 3) { // add column
         var colInfo = alloc.create(config.ColumnInfo) catch unreachable;
-        colInfo.reset();
+        _ = colInfo.reset();
         colInfo.toots = toot_list.TootList.init();
         colInfo.last_check = 0;
         settings.columns.append(colInfo) catch unreachable;

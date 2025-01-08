@@ -42,8 +42,9 @@ pub const ColumnInfo = struct {
 
     const Self = @This();
 
-    pub fn reset(self: *const Self) void {
-        _ = self;
+    pub fn reset(self: *Self) *Self {
+        self.account = null;
+        return self;
     }
 
     pub fn parseFilter(self: *const Self, filter: []const u8) void {
@@ -158,7 +159,7 @@ pub fn read(json: []const u8) !Settings {
         warn("config: columns {}\n", .{columns.array.items.len});
         for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
-            colInfo.reset();
+            _ = colInfo.reset();
             colInfo.toots = toot_list.TootList.init();
             const colconfig = allocator.create(ColumnConfig) catch unreachable;
             colInfo.config = colconfig;

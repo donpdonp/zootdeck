@@ -54,12 +54,12 @@ pub fn SomeList(comptime T: type) type {
         }
 
         pub fn sortedInsert(self: *Self, item: T, allocator: Allocator) void {
-            const itemDate = item.get("created_at").?.String;
+            const itemDate = item.get("created_at").?.string;
             const node = allocator.create(ListType.Node) catch unreachable;
             node.data = item;
             var current = self.list.first;
             while (current) |listItem| {
-                const listItemDate = listItem.data.get("created_at").?.String;
+                const listItemDate = listItem.data.get("created_at").?.string;
                 if (std.mem.order(u8, itemDate, listItemDate) == std.math.Order.gt) {
                     self.list.insertBefore(listItem, node);
                     return;

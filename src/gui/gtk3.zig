@@ -368,7 +368,7 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
 }
 
 pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
-    warn("maketootbox toot #{s} {*} gui building {} images\n", .{ toot.id(), toot, toot.imgList.items.len });
+    warn("maketootbox toot #{s} {*} gui building {} images", .{ toot.id(), toot, toot.imgList.items.len });
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
     //const tootbox = builder_get_widget(builder, "tootbox");
 

@@ -46,8 +46,8 @@ pub fn Toot() type {
 
         pub fn author(self: *const Self, acct: []const u8) bool {
             if (self.hashmap.get("account")) |kv| {
-                if (kv.Object.get("acct")) |akv| {
-                    const existing_acct = akv.String;
+                if (kv.object.get("acct")) |akv| {
+                    const existing_acct = akv.string;
                     return std.mem.order(u8, acct, existing_acct) == std.math.Order.eq;
                 } else {
                     return false;
