@@ -72,6 +72,13 @@ pub const ColumnConfig = struct {
     img_only: bool,
 
     const Self = @This();
+
+    pub fn reset(self: *Self) *Self {
+        self.title = "";
+        self.filter = "mastodon.example.com";
+        self.token = null;
+        return self;
+    }
 };
 
 pub const LoginInfo = struct {
@@ -189,7 +196,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     configFile.columns = column_infos.items;
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         warn("config.write toJson\n", .{});
-        //std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
+        std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
         warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() catch unreachable });
         file.close();
     } else |err| {

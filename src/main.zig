@@ -35,6 +35,7 @@ pub fn main() !void {
 
     if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
+        try gui.init(alloc, &settings);
         const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
         _ = thread.create("gui", gui.go, dummy_payload, guiback) catch unreachable;
         _ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
@@ -55,7 +56,6 @@ fn initialize(allocator: std.mem.Allocator) !void {
     try db.init(allocator);
     try dbfile.init();
     try thread.init(allocator);
-    try gui.init(allocator, &settings);
 }
 
 fn statewalk(allocator: std.mem.Allocator) void {
@@ -341,9 +341,7 @@ fn guiback(command: *thread.Command) void {
         colInfo.last_check = 0;
         settings.columns.append(colInfo) catch unreachable;
         const colConfig = alloc.create(config.ColumnConfig) catch unreachable;
-        colInfo.config = colConfig;
-        colInfo.config.title = ""[0..];
-        colInfo.config.filter = "mastodon.example.com"[0..];
+        colInfo.config = colConfig.reset();
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
         gui.schedule(gui.add_column_schedule, @as(*anyopaque, @ptrCast(colInfo)));
         config.writefile(settings, "config.json");
