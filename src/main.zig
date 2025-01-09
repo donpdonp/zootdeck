@@ -1,8 +1,7 @@
 // main.zig
 const std = @import("std");
 const builtin = @import("builtin");
-const warn = std.debug.print;
-const log = std.log;
+const warn = util.log;
 const CAllocator = std.heap.c_allocator;
 const stdout = std.io.getStdOut();
 var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
@@ -29,9 +28,9 @@ const filter_lib = @import("./filter.zig");
 var settings: config.Settings = undefined;
 
 pub fn main() !void {
+    try thread.init(alloc);
     hello();
     initialize(alloc) catch unreachable;
-    thread.register_main_tid(thread.self()) catch unreachable;
 
     if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
@@ -45,7 +44,7 @@ pub fn main() !void {
             thread.wait(); // main ipc listener
         }
     } else |err| {
-        log.err("config error: {!}\n", .{err});
+        warn("config error: {!}\n", .{err});
     }
 }
 
@@ -55,7 +54,6 @@ fn initialize(allocator: std.mem.Allocator) !void {
     try statemachine.init(allocator);
     try db.init(allocator);
     try dbfile.init();
-    try thread.init(allocator);
 }
 
 fn statewalk(allocator: std.mem.Allocator) void {

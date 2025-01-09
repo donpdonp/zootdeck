@@ -24,6 +24,7 @@ var actors: ActorList = undefined;
 pub fn init(myAllocator: Allocator) !void {
     allocator = myAllocator;
     actors = ActorList.init(allocator);
+    register_main_tid(self()) catch unreachable;
     try ipc.init();
 }
 

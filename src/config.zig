@@ -1,6 +1,6 @@
 // config.zig
 const std = @import("std");
-const warn = std.debug.print;
+const warn = util.log;
 const Allocator = std.mem.Allocator;
 const util = @import("./util.zig");
 const filter_lib = @import("./filter.zig");
@@ -128,7 +128,7 @@ pub fn readfile(filename: []const u8) !Settings {
     const cwd = std.fs.cwd();
     cwd.access(filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
-            warn("Warning: creating new {s}\n", .{filename});
+            warn("Warning: creating new {s}", .{filename});
             try cwd.writeFile(.{ .sub_path = filename, .data = "{}\n" });
         },
         else => return err,
@@ -144,19 +144,19 @@ pub fn read(json: []const u8) !Settings {
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
     if (root.get("win_x")) |w| {
-        warn("config: win_x\n", .{});
+        warn("config: win_x", .{});
         settings.win_x = w.integer;
     } else {
         settings.win_x = 800;
     }
     if (root.get("win_y")) |h| {
-        warn("config: win_y\n", .{});
+        warn("config: win_y", .{});
         settings.win_y = h.integer;
     } else {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        warn("config: columns {}\n", .{columns.array.items.len});
+        warn("config: columns {}", .{columns.array.items.len});
         for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             _ = colInfo.reset();
@@ -196,12 +196,11 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     }
     configFile.columns = column_infos.items;
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
-        warn("config.write toJson\n", .{});
         std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
-        warn("config saved. {s} {} bytes\n", .{ filename, file.getPos() catch unreachable });
+        warn("config saved. {s} {} bytes", .{ filename, file.getPos() catch unreachable });
         file.close();
     } else |err| {
-        warn("config save fail. {!}\n", .{err});
+        warn("config save fail. {!}", .{err});
     } // existing file is OK
 }
 
@@ -217,7 +216,7 @@ test "read" {
     if (ret) {
         assert(true);
     } else |err| {
-        warn("warn: {!}\n", .{err});
+        warn("warn: {!}", .{err});
         assert(false);
     }
 }
