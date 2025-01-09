@@ -184,7 +184,7 @@ fn oauthtokenback(command: *thread.Command) void {
                 gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
             }
         } else {
-            warn("*oauthtokenback json err body {}\n", .{http.body});
+            warn("*oauthtokenback json err body {}", .{http.body});
         }
     } else {
         //warn("*oauthtokenback net err {}\n", .{http.response_code});
@@ -208,7 +208,7 @@ fn oauthback(command: *thread.Command) void {
             //warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
         } else {
-            warn("*oauthback json type err {}\n{s}\n", .{ rootJsonType, http.body });
+            warn("*oauthback json type err {} {s}", .{ rootJsonType, http.body });
         }
     } else {
         //warn("*oauthback net err {}\n", .{http.response_code});
@@ -228,13 +228,13 @@ fn netback(command: *thread.Command) void {
                 warn("netback tree is {!}", .{tree});
                 if (@TypeOf(tree) == std.json.Array) {
                     column.inError = false;
-                    warn("netback payload is array len {}\n", .{tree.items.len});
+                    warn("netback payload is array len {}", .{tree.items.len});
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
                         const toot = alloc.create(toot_lib.Type) catch unreachable;
                         toot.* = toot_lib.Type.init(item, alloc);
                         const id = toot.id();
-                        warn("netback json create toot #{s} {*}\n", .{ id, toot });
+                        warn("netback json create toot #{s} {*}", .{ id, toot });
                         if (column.toots.contains(toot)) {
                             // dupe
                         } else {
@@ -250,7 +250,7 @@ fn netback(command: *thread.Command) void {
                                 const img_url_raw = image.object.get("preview_url").?;
                                 if (img_url_raw == .string) {
                                     const img_url = img_url_raw.string;
-                                    warn("toot #{s} has img {s}\n", .{ toot.id(), img_url });
+                                    warn("toot #{s} has img {s}", .{ toot.id(), img_url });
                                     mediaget(toot, img_url, alloc);
                                 } else {
                                     warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
@@ -261,7 +261,7 @@ fn netback(command: *thread.Command) void {
                 } else if (@TypeOf(tree) == std.json.ObjectMap) {
                     warn("netback json is object");
                     if (tree.object.get("error")) |err| {
-                        warn("netback json err {s} \n", .{err.String});
+                        warn("netback json err {s}", .{err.String});
                     }
                 } else {
                     //warn("!netback json unknown root tagtype {!}\n", .{tree});
@@ -348,14 +348,14 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
-        warn("gui col config {s}\n", .{column.config.title});
+        warn("gui col config {s}", .{column.config.title});
         column.inError = false;
         column.refreshing = false;
         config.writefile(settings, "config.json");
     }
     if (command.id == 5) { // column remove
         const column = command.verb.column;
-        warn("gui col remove {s}\n", .{column.config.title});
+        warn("gui col remove {s}", .{column.config.title});
         //var colpos: usize = undefined;
         for (settings.columns.items, 0..) |col, idx| {
             if (col == column) {
@@ -377,7 +377,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 7) { //oauth activate
         const myAuth = command.verb.auth.*;
-        warn("oauth authorization {s}\n", .{myAuth.code});
+        warn("oauth authorization {s}", .{myAuth.code});
         oauthtokenget(myAuth.column, myAuth.code, alloc);
     }
     if (command.id == 8) { //column config changed
@@ -400,7 +400,7 @@ fn guiback(command: *thread.Command) void {
         config.writefile(settings, "config.json");
     }
     if (command.id == 11) { // Quit
-        warn("byebye...\n", .{});
+        warn("byebye...", .{});
         std.posix.exit(0);
     }
 }

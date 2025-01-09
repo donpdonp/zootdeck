@@ -163,7 +163,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
     column.guitoots = std.StringHashMap(*c.GtkBuilder).init(allocator);
     columns.append(column) catch unreachable;
     columns_resize();
-    warn("column added {s}\n", .{column.main.makeTitle()});
+    warn("column added {s}", .{column.main.makeTitle()});
     const filter = builder_get_widget(column.builder, "column_filter");
     const cFilter = util.sliceToCstr(allocator, column.main.config.filter);
     c.gtk_entry_set_text(@as(*c.GtkEntry, @ptrCast(filter)), cFilter);
@@ -208,7 +208,7 @@ pub fn columns_resize() void {
         const container = builder_get_widget(myBuilder, "ZootColumns");
         const app_width = c.gtk_widget_get_allocated_width(container);
         const avg_col_width = @divTrunc(app_width, @as(c_int, @intCast(columns.items.len)));
-        warn("columns_resize app_width {} col_width {} columns {}\n", .{ app_width, avg_col_width, columns.items.len });
+        warn("columns_resize app_width {} col_width {} columns {}", .{ app_width, avg_col_width, columns.items.len });
         for (columns.items) |col| {
             c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
         }
@@ -276,7 +276,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column {s} {} toots {s}\n", .{
+    warn("update_column {s} {} toots {s}", .{
         column.main.config.title,
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
@@ -292,7 +292,7 @@ pub fn update_column_toots(column: *Column) void {
                 if (tootbuilderMaybe) |kv| {
                     const builder = kv;
                     destroyTootBox(builder);
-                    warn("update_column_toots destroyTootBox toot #{s} {*} {*}\n", .{ toot.id(), toot, builder });
+                    warn("update_column_toots destroyTootBox toot #{s} {*} {*}", .{ toot.id(), toot, builder });
                 }
                 const tootbuilder = makeTootBox(toot, column);
                 const tootbox = builder_get_widget(tootbuilder, "tootbox");
@@ -304,7 +304,7 @@ pub fn update_column_toots(column: *Column) void {
                     const builder = kv;
                     const tootbox = builder_get_widget(builder, "tootbox");
                     c.gtk_widget_hide(tootbox);
-                    warn("update_column_toots hide toot #{s} {*} {*}\n", .{ toot.id(), toot, builder });
+                    warn("update_column_toots hide toot #{s} {*} {*}", .{ toot.id(), toot, builder });
                 }
             }
 
@@ -319,7 +319,7 @@ pub fn update_column_toots(column: *Column) void {
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
-    warn("update_netstatus_column {s} {}\n", .{ http.url, http.response_code });
+    warn("update_netstatus_column {s} {}", .{ http.url, http.response_code });
     const column_footer_netstatus = builder_get_widget(column.builder, "column_footer_netstatus");
     const gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
     //var netmsg: *const u8 = undefined;
@@ -429,7 +429,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     }
 
     for (toot.imgList.items) |imgdata| {
-        warn("toot #{s} rebuilding with img\n", .{toot.id()});
+        warn("toot #{s} rebuilding with img", .{toot.id()});
         toot_media(column, builder, toot, imgdata);
     }
 
@@ -595,7 +595,7 @@ fn main_check_resize(selfptr: *anyopaque) callconv(.C) void {
 }
 
 fn actionbar_add() callconv(.C) void {
-    warn("actionbar_add()\n", .{});
+    warn("actionbar_add()", .{});
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.idle = undefined;
     var command = allocator.create(thread.Command) catch unreachable;
