@@ -1,10 +1,9 @@
 // toot.zig
 const std = @import("std");
-const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
-
 const util = @import("util.zig");
+const warn = util.log;
 
 pub const Type = Toot();
 
@@ -74,7 +73,7 @@ pub fn Toot() type {
         }
 
         pub fn addImg(self: *Self, imgdata: ImgType) void {
-            warn("addImg toot {*}\n", .{self});
+            warn("addImg toot {any}", .{self});
             self.imgList.append(imgdata) catch unreachable;
         }
 

@@ -276,7 +276,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column {s} {} toots {s}", .{
+    warn("update_column {any} {} toots {s}", .{
         column.main.config.title,
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
@@ -370,9 +370,8 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
 pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     warn("maketootbox toot #{s} {*} gui building {} images", .{ toot.id(), toot, toot.imgList.items.len });
     const builder = c.gtk_builder_new_from_file("glade/toot.glade");
-    //const tootbox = builder_get_widget(builder, "tootbox");
 
-    //const id = toot.get("id").?.String;
+    //const id = toot.get("id").?.string;
     const account = toot.get("account").?.object;
     const author_acct = account.get("acct").?.string;
 

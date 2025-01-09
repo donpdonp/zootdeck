@@ -225,33 +225,32 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree.array;
-                warn("netback tree is {!}", .{tree});
+                //warn("netback tree is {!}", .{tree});
                 if (@TypeOf(tree) == std.json.Array) {
                     column.inError = false;
                     warn("netback payload is array len {}", .{tree.items.len});
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
-                        const toot = alloc.create(toot_lib.Type) catch unreachable;
-                        toot.* = toot_lib.Type.init(item, alloc);
+                        var toot = toot_lib.Type.init(item, alloc);
                         const id = toot.id();
-                        warn("netback json create toot #{s} {*}", .{ id, toot });
-                        if (column.toots.contains(toot)) {
+                        warn("netback json create toot #{s} {any}", .{ id, toot });
+                        if (column.toots.contains(&toot)) {
                             // dupe
                         } else {
                             const images = toot.get("media_attachments").?.array;
-                            column.toots.sortedInsert(toot, alloc);
+                            column.toots.sortedInsert(&toot, alloc);
                             const html = toot.get("content").?.string;
                             //var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
                             const root = html_lib.parse(html);
                             html_lib.search(root);
-                            cache_update(toot, alloc);
+                            cache_update(&toot, alloc);
 
                             for (images.items) |image| {
                                 const img_url_raw = image.object.get("preview_url").?;
                                 if (img_url_raw == .string) {
                                     const img_url = img_url_raw.string;
                                     warn("toot #{s} has img {s}", .{ toot.id(), img_url });
-                                    mediaget(toot, img_url, alloc);
+                                    mediaget(&toot, img_url, alloc);
                                 } else {
                                     warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
                                 }
@@ -292,7 +291,7 @@ fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.object;
     const acct = account.get("acct").?.string;
-    warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
+    //warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));

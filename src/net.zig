@@ -32,7 +32,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
         {
-            //warn("{s}\n", .{body}); // json dump
+            warn("{s}\n", .{body}); // json dump
             if (std.json.parseFromSlice(std.json.Value, allocator, body, .{})) |value_tree| {
                 defer value_tree.deinit();
                 actor.payload.http.tree = value_tree.value;
