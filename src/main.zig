@@ -53,7 +53,7 @@ fn initialize(allocator: std.mem.Allocator) !void {
     try heartbeat.init(allocator);
     try statemachine.init(allocator);
     try db.init(allocator);
-    try dbfile.init();
+    try dbfile.init(allocator);
 }
 
 fn statewalk(allocator: std.mem.Allocator) void {

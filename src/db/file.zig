@@ -1,22 +1,21 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const warn = std.debug.print;
+const util = @import("../util.zig");
+const warn = util.log;
 const Allocator = std.mem.Allocator;
 
 const cache_dir = "./cache";
 
-pub fn init() !void {
+pub fn init(alloc: Allocator) !void {
+    const realpath = std.fs.Dir.realpathAlloc(std.fs.cwd(), alloc, cache_dir) catch unreachable;
     std.posix.mkdir(cache_dir, 0o644) catch |err| {
         if (err != error.PathAlreadyExists) return err;
+        warn("cache dir {s}", .{realpath});
     };
 }
 
 pub fn has(namespace: []const u8, key: []const u8, allocator: Allocator) bool {
-    _ = cache_dir;
-    _ = namespace;
-    _ = key;
-    _ = allocator;
-    const keypath = "Z"; //std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ cache_dir, namespace, key }) catch unreachable;
+    const keypath = std.fmt.allocPrint(allocator, "{s}/{s}/{s}", .{ cache_dir, namespace, key }) catch unreachable;
     var found = false;
     if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
         found = true;
