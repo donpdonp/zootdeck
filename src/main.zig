@@ -44,7 +44,7 @@ pub fn main() !void {
             thread.wait(); // main ipc listener
         }
     } else |err| {
-        warn("config error: {!}\n", .{err});
+        warn("config error: {!}", .{err});
     }
 }
 
@@ -80,7 +80,7 @@ fn statewalk(allocator: std.mem.Allocator) void {
 }
 
 fn hello() void {
-    util.log("zootdeck {s} {s} tid {}\n", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
+    util.log("zootdeck {s} {s} tid {}", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
 }
 
 fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
@@ -137,7 +137,7 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     verb.http.token = null;
     verb.http.response_code = 0;
     verb.http.toot = toot;
-    warn("mediaget toot #{s} toot {*} verb.http.toot {*}\n", .{ toot.id(), toot, verb.http.toot });
+    warn("mediaget toot #{s} toot {*} verb.http.toot {*}", .{ toot.id(), toot, verb.http.toot });
     _ = thread.create("net", net.go, verb, mediaback) catch unreachable;
 }
 
@@ -322,7 +322,7 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
 }
 
 fn guiback(command: *thread.Command) void {
-    warn("guiback() tid {} command {} {} \n", .{ thread.self(), &command, command });
+    warn("guiback() tid {} command {} {}", .{ thread.self(), &command, command });
     if (command.id == 1) {
         var ram = alloc.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
@@ -406,7 +406,7 @@ fn guiback(command: *thread.Command) void {
 }
 
 fn heartback(command: *thread.Command) void {
-    warn("heartback() on tid {} received {}\n", .{ thread.self(), command.verb });
+    warn("heartback() on tid {} received {}", .{ thread.self(), command.verb });
     columns_net_freshen(alloc);
 }
 
@@ -425,9 +425,9 @@ fn columns_net_freshen(allocator: std.mem.Allocator) void {
 
 fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     if (column.refreshing) {
-        warn("column {s} in {s} Ignoring request.\n", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
+        warn("column {s} in {s} Ignoring request.", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        warn("column http get {s}\n", .{column.makeTitle()});
+        warn("column http get {s}", .{column.makeTitle()});
         column.refreshing = true;
         columnget(column, allocator);
     }

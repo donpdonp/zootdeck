@@ -28,7 +28,7 @@ var myActor: *thread.Actor = undefined;
 var stop = false;
 
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
-    warn("GUI {s} mainloop thread.self()={}\n", .{ guilib.libname(), thread.self() });
+    warn("GUI {s} mainloop thread.self()={}", .{ guilib.libname(), thread.self() });
     myActor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     if (guilib.gui_setup(myActor)) {
         // mainloop
@@ -36,13 +36,13 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         while (!stop) {
             stop = guilib.mainloop();
             //var now = std.time.milliTimestamp();
-            //warn("{}ms pause gui mainloop\n", .{now - then});
+            //warn("{}ms pause gui mainloop", .{now - then});
             //then = now;
         }
-        warn("final mainloop {}\n", .{guilib.mainloop()});
+        warn("final mainloop {}", .{guilib.mainloop()});
         guilib.gui_end();
     } else |err| {
-        warn("gui error {}\n", .{err});
+        warn("gui error {}", .{err});
     }
     return null;
 }
