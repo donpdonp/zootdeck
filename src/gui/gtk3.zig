@@ -276,7 +276,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column title: ({d}){any} toot count: {} {s}", .{
+    warn("update_column_toots title: ({d}){any} toot count: {} {s}", .{
         column.main.config.title.len,
         column.main.config.title,
         column.main.toots.count(),
@@ -753,7 +753,7 @@ pub fn columnReadFilter(column: *Column) []const u8 {
     const filter_entry = builder_get_widget(column.builder, "column_filter");
     const cFilter = c.gtk_entry_get_text(@as(*c.GtkEntry, @ptrCast(filter_entry)));
     const filter = util.cstrToSliceCopy(allocator, cFilter); // edit in guithread--
-    warn("columnReadFilter: {s} {}\n", .{ filter, filter.len });
+    warn("columnReadFilter: ({}){s} ({}){s}\n", .{ column.main.config.title.len, column.main.config.title, filter.len, filter });
     return filter;
 }
 

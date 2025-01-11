@@ -60,7 +60,7 @@ pub const ColumnInfo = struct {
             } else {
                 addon = "_";
             }
-            out = "Z"; //std.fmt.allocPrint(allocator, "{s}@{s}", .{ addon, column.filter.host() }) catch unreachable;
+            out = std.fmt.allocPrint(allocator, "{s}@{s}", .{ addon, column.filter.host() }) catch unreachable;
         }
         return out;
     }
@@ -119,21 +119,24 @@ pub fn config_file_path() []const u8 {
     const home_dir = std.fs.openDirAbsolute(home_path, .{}) catch unreachable;
     const config_path = std.fs.path.join(allocator, &.{ home_path, ".config", "zootdeck" }) catch unreachable;
     home_dir.makePath(config_path) catch unreachable;
-    const config_file = std.fs.path.join(allocator, &.{ config_path, "config.json" }) catch unreachable;
-    return config_file;
+    return config_path;
 }
 
-pub fn readfile(filename: []const u8) !Settings {
-    util.log("config file {s}", .{filename});
-    const cwd = std.fs.cwd();
-    cwd.access(filename, .{}) catch |err| switch (err) {
+pub fn readfile(dirname: []const u8, filename: []const u8) !Settings {
+    util.log("config file {s} {s}", .{ dirname, filename });
+    const dir = std.fs.openDirAbsolute(dirname, .{}) catch unreachable;
+    dir.access(filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
             warn("Warning: creating new {s}", .{filename});
-            try cwd.writeFile(.{ .sub_path = filename, .data = "{}\n" });
+            try dir.writeFile(.{ .sub_path = filename, .data = "{}\n" });
         },
-        else => return err,
+        else => {
+            warn("readfile err {any}", .{err});
+            return err;
+        },
     };
-    const json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
+    const json = try dir.readFileAlloc(allocator, filename, std.math.maxInt(usize));
+    util.log("config json: ({d}){s}", .{ json.len, json });
     return read(json);
 }
 

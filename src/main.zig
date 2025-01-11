@@ -32,7 +32,8 @@ pub fn main() !void {
     hello();
     initialize(alloc) catch unreachable;
 
-    if (config.readfile(config.config_file_path())) |config_data| {
+    if (config.readfile(config.config_file_path(), "config.json")) |config_data| {
+        warn("main() settings {any}", .{config_data});
         settings = config_data;
         try gui.init(alloc, &settings);
         const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
@@ -220,6 +221,7 @@ fn netback(command: *thread.Command) void {
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
+        warn("netback toots add to column {s}", .{column.config.title});
         column.refreshing = false;
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
@@ -231,21 +233,19 @@ fn netback(command: *thread.Command) void {
                     warn("netback payload is array len {}", .{tree.items.len});
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
-                        const toot_obj_json = std.json.stringifyAlloc(alloc, item.keys(), .{}) catch unreachable;
-                        warn("toot init hash {s}", .{toot_obj_json});
                         var toot = toot_lib.Type.init(item, alloc);
                         const id = toot.id();
                         warn("netback json create toot #{s} {any}", .{ id, toot });
                         if (column.toots.contains(&toot)) {
                             // dupe
                         } else {
-                            const images = toot.get("media_attachments").?.array;
                             column.toots.sortedInsert(&toot, alloc);
                             const html = toot.get("content").?.string;
                             const root = html_lib.parse(html);
                             html_lib.search(root);
                             cache_update(&toot, alloc);
 
+                            const images = toot.get("media_attachments").?.array;
                             for (images.items) |image| {
                                 const img_url_raw = image.object.get("preview_url").?;
                                 if (img_url_raw == .string) {
@@ -348,7 +348,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
-        warn("gui col config {s}", .{column.config.title});
+        warn("guiback save config column title: ({d}){s}", .{ column.config.title.len, column.config.title });
         column.inError = false;
         column.refreshing = false;
         config.writefile(settings, "config.json");
@@ -382,6 +382,7 @@ fn guiback(command: *thread.Command) void {
     }
     if (command.id == 8) { //column config changed
         const column = command.verb.column;
+        warn("guiback: column config changed for column title ({d}){s}", .{ column.config.title.len, column.config.title });
         // partial reset
         column.oauthClientId = null;
         column.oauthClientSecret = null;
@@ -427,7 +428,8 @@ fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     if (column.refreshing) {
         warn("column {s} in {s} Ignoring request.", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        warn("column http get {s}", .{column.makeTitle()});
+        const column_title = column.makeTitle();
+        warn("column http get for title: ({d}){s}", .{ column_title.len, column_title });
         column.refreshing = true;
         columnget(column, allocator);
     }
