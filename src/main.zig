@@ -231,6 +231,8 @@ fn netback(command: *thread.Command) void {
                     warn("netback payload is array len {}", .{tree.items.len});
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
+                        const toot_obj_json = std.json.stringifyAlloc(alloc, item.keys(), .{}) catch unreachable;
+                        warn("toot init hash {s}", .{toot_obj_json});
                         var toot = toot_lib.Type.init(item, alloc);
                         const id = toot.id();
                         warn("netback json create toot #{s} {any}", .{ id, toot });
@@ -240,7 +242,6 @@ fn netback(command: *thread.Command) void {
                             const images = toot.get("media_attachments").?.array;
                             column.toots.sortedInsert(&toot, alloc);
                             const html = toot.get("content").?.string;
-                            //var html = json_lib.jsonStrDecode(jstr, allocator) catch unreachable;
                             const root = html_lib.parse(html);
                             html_lib.search(root);
                             cache_update(&toot, alloc);

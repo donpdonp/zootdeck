@@ -276,7 +276,8 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column {any} {} toots {s}", .{
+    warn("update_column title: ({d}){any} toot count: {} {s}", .{
+        column.main.config.title.len,
         column.main.config.title,
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
