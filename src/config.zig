@@ -136,8 +136,9 @@ pub fn readfile(dirname: []const u8, filename: []const u8) !Settings {
         },
     };
     const json = try dir.readFileAlloc(allocator, filename, std.math.maxInt(usize));
-    util.log("config json: ({d}){s}", .{ json.len, json });
-    return read(json);
+    var settings = try read(json);
+    settings.config_path = dirname;
+    return settings;
 }
 
 pub fn read(json: []const u8) !Settings {
