@@ -163,7 +163,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
     column.guitoots = std.StringHashMap(*c.GtkBuilder).init(allocator);
     columns.append(column) catch unreachable;
     columns_resize();
-    warn("column added {s}", .{column.main.makeTitle()});
+    warn("column added {s}", .{util.json(column.main.makeTitle())});
     const filter = builder_get_widget(column.builder, "column_filter");
     const cFilter = util.sliceToCstr(allocator, column.main.config.filter);
     c.gtk_entry_set_text(@as(*c.GtkEntry, @ptrCast(filter)), cFilter);

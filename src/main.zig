@@ -233,7 +233,7 @@ fn netback(command: *thread.Command) void {
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
                         var toot = toot_lib.Type.init(item, alloc);
-                        warn("netback pre-toot item {} keys has id {any} {*}", .{ item.keys().len, item.contains("id"), &toot });
+                        warn("netback pre-toot item {*} keys has id {any} {*}", .{ &toot.hashmap, item.contains("id"), &toot });
                         const id = toot.id();
                         if (column.toots.contains(&toot)) {
                             warn("netback dupe toot skipped {*}", .{&toot});

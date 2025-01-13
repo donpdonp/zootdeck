@@ -26,6 +26,10 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
     return ram;
 }
 
+pub fn json(value: anytype) []u8 {
+    return std.json.stringifyAlloc(alloc, value, .{}) catch unreachable;
+}
+
 pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
     const tid_name = thread.name(tid);
