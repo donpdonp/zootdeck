@@ -492,7 +492,7 @@ fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_heig
         const scale_factor = @as(f32, @floatFromInt(colWidth)) / @as(f32, @floatFromInt(img_width));
         scaleHeight = @as(c_int, @intFromFloat(@as(f32, @floatFromInt(img_height)) * scale_factor));
     }
-    warn("toot_media pixloaderSizePrepared col {}px img {}x{} scale {}x{}\n", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
+    warn("toot_media pixloaderSizePrepared col {}px img {}x{} scale {}x{}", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
     c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
 }
 

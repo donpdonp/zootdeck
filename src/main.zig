@@ -216,11 +216,11 @@ fn oauthback(command: *thread.Command) void {
 }
 
 fn netback(command: *thread.Command) void {
-    warn("*netback tid {x} {}", .{ thread.self(), command });
+    warn("*netback {*} {} {*}", .{ command, command.id, command.verb });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
-        warn("netback toots adding to column {}{s}", .{ column.config.title.len, column.config.title });
+        warn("netback adding toots to column ({}){s}", .{ column.config.title.len, column.config.title });
         column.refreshing = false;
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
@@ -233,7 +233,7 @@ fn netback(command: *thread.Command) void {
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
                         var toot = toot_lib.Type.init(item, alloc);
-                        warn("netback pre-toot item {} keys has id {any} toot alloc {*}", .{ item.keys().len, item.contains("id"), &toot });
+                        warn("netback pre-toot item {} keys has id {any} {*}", .{ item.keys().len, item.contains("id"), &toot });
                         const id = toot.id();
                         if (column.toots.contains(&toot)) {
                             warn("netback dupe toot skipped {*}", .{&toot});
