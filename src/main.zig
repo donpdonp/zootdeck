@@ -33,7 +33,6 @@ pub fn main() !void {
     initialize(alloc) catch unreachable;
 
     if (config.readfile(config.config_file_path(), "config.json")) |config_data| {
-        warn("main() settings {any}", .{config_data});
         settings = config_data;
         try gui.init(alloc, &settings);
         const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
@@ -221,7 +220,7 @@ fn netback(command: *thread.Command) void {
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
-        warn("netback toots add to column {s}", .{column.config.title});
+        warn("netback toots adding to column {}{s}", .{ column.config.title.len, column.config.title });
         column.refreshing = false;
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
@@ -234,9 +233,10 @@ fn netback(command: *thread.Command) void {
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
                         var toot = toot_lib.Type.init(item, alloc);
+                        warn("netback pre-toot item {} keys has id {any} toot alloc {*}", .{ item.keys().len, item.contains("id"), &toot });
                         const id = toot.id();
                         if (column.toots.contains(&toot)) {
-                            // dupe
+                            warn("netback dupe toot skipped {*}", .{&toot});
                         } else {
                             column.toots.sortedInsert(&toot, alloc);
                             warn("netback inserted toot #{s}", .{id});
@@ -264,7 +264,7 @@ fn netback(command: *thread.Command) void {
                         warn("netback json err {s}", .{err.String});
                     }
                 } else {
-                    //warn("!netback json unknown root tagtype {!}\n", .{tree});
+                    warn("!netback json unknown root tagtype {!}", .{tree});
                 }
             } else { // empty body
                 column.inError = true;
@@ -426,10 +426,9 @@ fn columns_net_freshen(allocator: std.mem.Allocator) void {
 
 fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     if (column.refreshing) {
-        warn("column {s} in {s} Ignoring request.", .{ column.makeTitle(), if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
+        warn("column {s} in {s} Ignoring request.", .{ column.config.title, if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        const column_title = column.makeTitle();
-        warn("column http get for title: ({d}){s}", .{ column_title.len, column_title });
+        warn("column http get for title: ({d}){s}", .{ column.config.title.len, column.config.title });
         column.refreshing = true;
         columnget(column, allocator);
     }
