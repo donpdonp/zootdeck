@@ -276,9 +276,8 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column_toots title: ({d}){any} toot count: {} {s}", .{
-        column.main.config.title.len,
-        column.main.config.title,
+    warn("update_column_toots title: {s} toot count: {} {s}", .{
+        util.json(column.main.config.title),
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
     });
@@ -321,7 +320,7 @@ pub fn update_column_toots(column: *Column) void {
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
-    warn("update_netstatus_column {s} {}", .{ http.url, http.response_code });
+    warn("update_netstatus_column {s} status: {}", .{ http.url, http.response_code });
     const column_footer_netstatus = builder_get_widget(column.builder, "column_footer_netstatus");
     const gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
     //var netmsg: *const u8 = undefined;

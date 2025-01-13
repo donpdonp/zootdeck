@@ -220,7 +220,7 @@ fn netback(command: *thread.Command) void {
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
-        warn("netback adding toots to column ({}){s}", .{ column.config.title.len, column.config.title });
+        warn("netback adding toots to column {s}", .{util.json(column.config.title)});
         column.refreshing = false;
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
@@ -233,10 +233,10 @@ fn netback(command: *thread.Command) void {
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
                         var toot = toot_lib.Type.init(item, alloc);
-                        warn("netback pre-toot item {*} keys has id {any} {*}", .{ &toot.hashmap, item.contains("id"), &toot });
+                        warn("netback {*} {*} hashmap.keys has id {any}", .{ &toot, &toot.hashmap, item.contains("id") });
                         const id = toot.id();
                         if (column.toots.contains(&toot)) {
-                            warn("netback dupe toot skipped {*}", .{&toot});
+                            warn("netback dupe toot skipped {*} already in column", .{&toot});
                         } else {
                             column.toots.sortedInsert(&toot, alloc);
                             warn("netback inserted toot #{s}", .{id});
@@ -428,7 +428,7 @@ fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     if (column.refreshing) {
         warn("column {s} in {s} Ignoring request.", .{ column.config.title, if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        warn("column http get for title: ({d}){s}", .{ column.config.title.len, column.config.title });
+        warn("column_refresh http get for title: {s}", .{util.json(column.config.title)});
         column.refreshing = true;
         columnget(column, allocator);
     }

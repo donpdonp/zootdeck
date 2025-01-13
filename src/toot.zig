@@ -22,13 +22,13 @@ pub fn Toot() type {
         const V = std.json.Value;
         const Toothashmap = std.ArrayHashMap(K, V, std.array_hash_map.StringContext, true); //std.json.Object
         pub fn init(hash: Toothashmap, allocator: Allocator) Self {
-            warn("toot init get(id) {s}", .{hash.get("id").?.string});
             var newToot = Self{
                 .hashmap = hash,
                 .tagList = TagList.init(allocator),
                 .imgList = ImgList.init(allocator),
             };
             newToot.parseTags(allocator);
+            warn("toot init {*} {*} has id {}", .{ &newToot, &newToot.hashmap, hash.contains("id") });
             return newToot;
         }
 
