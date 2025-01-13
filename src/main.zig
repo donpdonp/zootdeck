@@ -217,7 +217,7 @@ fn oauthback(command: *thread.Command) void {
 }
 
 fn netback(command: *thread.Command) void {
-    warn("*netback tid {x} {}\n", .{ thread.self(), command });
+    warn("*netback tid {x} {}", .{ thread.self(), command });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
@@ -235,11 +235,11 @@ fn netback(command: *thread.Command) void {
                         const item = jsonValue.object;
                         var toot = toot_lib.Type.init(item, alloc);
                         const id = toot.id();
-                        warn("netback json create toot #{s} {any}", .{ id, toot });
                         if (column.toots.contains(&toot)) {
                             // dupe
                         } else {
                             column.toots.sortedInsert(&toot, alloc);
+                            warn("netback inserted toot #{s}", .{id});
                             const html = toot.get("content").?.string;
                             const root = html_lib.parse(html);
                             html_lib.search(root);

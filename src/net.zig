@@ -90,7 +90,7 @@ pub fn httpget(req: *config.HttpInfo) ![]const u8 {
             var ccontent_type: [*c]const u8 = undefined;
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_CONTENT_TYPE, &ccontent_type);
             req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
-            std.log.debug("http {any} {s} {any} {s} {any} bytes\n", .{ req.verb, req.url, req.response_code, req.content_type, body_buffer.items.len });
+            std.log.debug("http {s} {s} status: {any} {} bytes content-type: {s}", .{ @tagName(req.verb), req.url, req.response_code, body_buffer.items.len, req.content_type });
 
             return body_buffer.toOwnedSliceSentinel(0);
         } else if (res == c.CURLE_OPERATION_TIMEDOUT) {
