@@ -233,10 +233,10 @@ fn netback(command: *thread.Command) void {
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
                         var toot = toot_lib.Type.init(item, alloc);
-                        warn("netback {*} {*} hashmap.keys has id {any}", .{ &toot, &toot.hashmap, item.contains("id") });
+                        warn("netback {*} {*} hashmap.keys has id #{s}", .{ &toot, &toot.hashmap, if (item.contains("id")) item.get("id").?.string else "MISSING" });
                         const id = toot.id();
                         if (column.toots.contains(&toot)) {
-                            warn("netback dupe toot skipped {*} already in column", .{&toot});
+                            warn("netback dupe toot skipped {*} #{s} already in column", .{ &toot, id });
                         } else {
                             column.toots.sortedInsert(&toot, alloc);
                             warn("netback inserted toot #{s}", .{id});

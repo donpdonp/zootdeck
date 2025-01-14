@@ -28,7 +28,7 @@ var myActor: *thread.Actor = undefined;
 var stop = false;
 
 pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
-    warn("GUI {s} mainloop thread.self()={}", .{ guilib.libname(), thread.self() });
+    warn("GUI {s} mainloop", .{guilib.libname()});
     myActor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     if (guilib.gui_setup(myActor)) {
         // mainloop

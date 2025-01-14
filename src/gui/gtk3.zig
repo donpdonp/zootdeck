@@ -286,8 +286,8 @@ pub fn update_column_toots(column: *Column) void {
     var idx: c_int = 0;
     if (current != null) {
         while (current) |node| {
-            const toot = node.data;
-            warn("update_column_toots looking at {p}", .{&toot});
+            const toot: *toot_lib.Toot() = node.data;
+            warn("update_column_toots looking at {*}", .{toot});
             const tootbuilderMaybe = column.guitoots.get(toot.id());
             if (column.main.filter.match(toot)) {
                 if (tootbuilderMaybe) |kv| {
