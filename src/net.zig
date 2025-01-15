@@ -34,7 +34,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         {
             //warn("{s}\n", .{body}); // json dump
             if (std.json.parseFromSlice(std.json.Value, allocator, body, .{})) |value_tree| {
-                //defer value_tree.deinit();
+                defer value_tree.deinit();
                 actor.payload.http.tree = value_tree.value;
             } else |err| {
                 warn("net json err {!}\n", .{err});

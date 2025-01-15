@@ -287,7 +287,7 @@ pub fn update_column_toots(column: *Column) void {
     if (current != null) {
         while (current) |node| {
             const toot: *toot_lib.Toot() = node.data;
-            warn("update_column_toots looking at {*} {*}", .{ toot, &toot.hashmap });
+            warn("update_column_toots looking at {*} {*}", .{ toot, toot.hashmap });
             warn("update_column_toots looking at #{s}", .{if (toot.hashmap.contains("id")) toot.id() else "NO-ID"});
             const tootbuilderMaybe = column.guitoots.get(toot.id());
             if (column.main.filter.match(toot)) {
@@ -458,7 +458,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
         //const account = toot.get("account").?.Object;
         //const acct = account.get("acct").?.String;
         const pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-        warn("toot_media #{s} {*} {*} {} images. win {}x{} col {}x{}px pixbuf {}px\n", .{
+        warn("toot_media #{s} {*} {*} {} images. win {}x{} col {}x{}px pixbuf {}px", .{
             toot.id(),
             toot,
             tootBox,
@@ -475,10 +475,10 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
             c.gtk_box_pack_start(@as(*c.GtkBox, @ptrCast(imageBox)), new_img, c.gtk_false(), c.gtk_false(), 0);
             c.gtk_widget_show(new_img);
         } else {
-            warn("toot_media img from pixbuf FAILED\n", .{});
+            warn("toot_media img from pixbuf FAILED", .{});
         }
     } else {
-        warn("pixbuf load FAILED of {} bytes\n", .{pic.len});
+        warn("pixbuf load FAILED of {} bytes", .{pic.len});
     }
 }
 

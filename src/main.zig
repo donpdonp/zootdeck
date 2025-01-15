@@ -273,7 +273,7 @@ fn netback(command: *thread.Command) void {
         } else {
             column.inError = true;
         }
-        gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
+        gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
     }
 }
 
