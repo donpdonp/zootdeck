@@ -232,8 +232,9 @@ fn netback(command: *thread.Command) void {
                     warn("netback payload is array len {}", .{tree.items.len});
                     for (tree.items) |jsonValue| {
                         const item = jsonValue.object;
-                        var toot = toot_lib.Type.init(item, alloc);
-                        warn("netback {*} {*} hashmap.keys has id #{s}", .{ &toot, &toot.hashmap, if (item.contains("id")) item.get("id").?.string else "MISSING" });
+                        warn("netback item {*} item.keys has id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
+                        var toot = toot_lib.Type.init(&item, alloc);
+                        warn("netback toot {*} {*} hashmap.keys has id #{s}", .{ &toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
                         const id = toot.id();
                         if (column.toots.contains(&toot)) {
                             warn("netback dupe toot skipped {*} #{s} already in column", .{ &toot, id });
