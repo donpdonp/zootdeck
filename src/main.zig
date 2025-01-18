@@ -247,16 +247,7 @@ fn netback(command: *thread.Command) void {
                             cache_update(&toot, alloc);
 
                             const images = toot.get("media_attachments").?.array;
-                            for (images.items) |image| {
-                                const img_url_raw = image.object.get("preview_url").?;
-                                if (img_url_raw == .string) {
-                                    const img_url = img_url_raw.string;
-                                    warn("toot #{s} has img {s}", .{ toot.id(), img_url });
-                                    mediaget(&toot, img_url, alloc);
-                                } else {
-                                    warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
-                                }
-                            }
+                            media_attachments(&toot, images);
                         }
                     }
                 } else if (@TypeOf(tree) == std.json.ObjectMap) {
@@ -274,6 +265,18 @@ fn netback(command: *thread.Command) void {
             column.inError = true;
         }
         gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
+    }
+}
+fn media_attachments(toot: *toot_lib.Type, images: std.json.Array) void {
+    for (images.items) |image| {
+        const img_url_raw = image.object.get("preview_url").?;
+        if (img_url_raw == .string) {
+            const img_url = img_url_raw.string;
+            warn("toot #{s} has img {s}", .{ toot.id(), img_url });
+            mediaget(toot, img_url, alloc);
+        } else {
+            warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
+        }
     }
 }
 
