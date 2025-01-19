@@ -5,8 +5,8 @@ const warn = util.log;
 const CAllocator = std.heap.c_allocator;
 const stdout = std.io.getStdOut();
 var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
-var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
-const alloc = GPAllocator.allocator(); // take the ptr in a separate step
+var GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{}){};
+const alloc = GeneralPurposeAllocator.allocator(); // take the ptr in a separate step
 
 const simple_buffer = @import("./simple_buffer.zig");
 const auth = @import("./auth.zig");
@@ -29,15 +29,15 @@ var settings: config.Settings = undefined;
 
 pub fn main() !void {
     try thread.init(alloc);
-    hello();
-    initialize(alloc) catch unreachable;
+    hello(); // wait for thread.init so log entry for main thread will have a name
+    try initialize(alloc);
 
     if (config.readfile(config.config_file_path(), "config.json")) |config_data| {
         settings = config_data;
         try gui.init(alloc, &settings);
-        const dummy_payload = alloc.create(thread.CommandVerb) catch unreachable;
-        _ = thread.create("gui", gui.go, dummy_payload, guiback) catch unreachable;
-        _ = thread.create("heartbeat", heartbeat.go, dummy_payload, heartback) catch unreachable;
+        const dummy_payload = try alloc.create(thread.CommandVerb);
+        _ = try thread.create("gui", gui.go, dummy_payload, guiback);
+        _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);
         while (true) {
             statewalk(alloc);
             util.log("thread.wait()/epoll", .{});
