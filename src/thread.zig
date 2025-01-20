@@ -12,7 +12,7 @@ const c = @cImport({
     @cInclude("sys/epoll.h");
 });
 
-pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: *const fn (*Command) void, name: []const u8 };
+pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload: *CommandVerb, recvback: *const fn (*Command) void, name: []const u8, allocator: std.mem.Allocator };
 
 pub const Command = packed struct { id: u16, verb: *const CommandVerb, actor: *Actor };
 
@@ -50,6 +50,7 @@ pub fn create(
     ipc.dial(actor.client, "");
     actor.recvback = recvback;
     actor.name = actor_name;
+    actor.allocator = allocator;
     //ipc.register(actor.client, recvback);
     const null_pattr = @as([*c]const c.union_pthread_attr_t, @ptrFromInt(0));
     const pt_err = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);

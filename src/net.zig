@@ -1,7 +1,6 @@
 // net.zig
 const std = @import("std");
 const thread = @import("./thread.zig");
-const allocator = std.heap.c_allocator;
 
 const config = @import("./config.zig");
 const util = @import("./util.zig");
@@ -21,12 +20,12 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     //warn("net thread start {*} {}\n", actor, actor);
 
     // setup for the callback
-    var command = allocator.create(thread.Command) catch unreachable;
+    var command = actor.allocator.create(thread.Command) catch unreachable;
     command.id = 1;
     //var verb = allocator.create(thread.CommandVerb) catch unreachable;
     command.verb = actor.payload;
 
-    if (httpget(actor.payload.http)) |body| {
+    if (httpget(actor.allocator, actor.payload.http)) |body| {
         //const maxlen = if (body.len > 400) 400 else body.len;
         actor.payload.http.body = body;
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
@@ -34,7 +33,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         {
             warn("http body {} bytes dumped to body.json\n", .{body.len}); // json dump
             std.fs.cwd().writeFile(.{ .sub_path = "body.json", .data = body }) catch unreachable;
-            if (std.json.parseFromSlice(std.json.Value, allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
+            if (std.json.parseFromSlice(std.json.Value, actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
                 //defer json_parsed.deinit();
                 warn("json parsed {*} {}", .{ &json_parsed.value, json_parsed.value });
                 warn("json parsed item0 {}", .{json_parsed.value.array.items[0]});
@@ -51,7 +50,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     return null;
 }
 
-pub fn httpget(req: *config.HttpInfo) ![]const u8 {
+pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 {
     _ = c.curl_global_init(0);
     const curl = c.curl_easy_init();
     if (curl != null) {
