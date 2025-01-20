@@ -226,11 +226,14 @@ fn netback(command: *thread.Command) void {
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
                 const tree = command.verb.http.tree; //.array;
+                warn("netback received tree {*}", .{tree});
                 switch (tree.*) {
-                    .array => column_load(column, tree.array),
+                    .array => column_load(column, &tree.array),
                     .object => {
                         if (tree.object.get("error")) |err| {
                             warn("netback json err {s}", .{err.string});
+                        } else {
+                            warn("netback json object {}", .{tree.object});
                         }
                     },
                     else => warn("!netback json unknown root tagtype {!}", .{tree}),
@@ -245,7 +248,7 @@ fn netback(command: *thread.Command) void {
     }
 }
 
-fn column_load(column: *config.ColumnInfo, tree: std.json.Array) void {
+fn column_load(column: *config.ColumnInfo, tree: *const std.json.Array) void {
     column.inError = false;
     warn("netback payload is array len {}", .{tree.items.len});
     for (tree.items) |jsonValue| {
