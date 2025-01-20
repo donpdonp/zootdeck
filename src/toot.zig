@@ -21,15 +21,14 @@ pub fn Toot() type {
         const K = []const u8;
         const V = std.json.Value;
         const Toothashmap = std.ArrayHashMap(K, V, std.array_hash_map.StringContext, true); //std.json.Object
-        pub fn init(hash: *const Toothashmap, allocator: Allocator) Self {
-            var newToot = Self{
-                .hashmap = hash,
-                .tagList = TagList.init(allocator),
-                .imgList = ImgList.init(allocator),
-            };
-            newToot.parseTags(allocator);
-            warn("toot init {*} {*} has id #{s}", .{ &newToot, newToot.hashmap, if (newToot.hashmap.contains("id")) newToot.id() else "NO-ID" });
-            return newToot;
+        pub fn init(hash: *const Toothashmap, allocator: Allocator) *Self {
+            var toot = allocator.create(Self) catch unreachable;
+            toot.hashmap = hash;
+            toot.tagList = TagList.init(allocator);
+            toot.imgList = ImgList.init(allocator);
+            toot.parseTags(allocator);
+            warn("toot init {*} {*} has id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.id() else "NO-ID" });
+            return toot;
         }
 
         pub fn get(self: *const Self, key: K) ?V {

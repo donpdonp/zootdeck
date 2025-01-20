@@ -225,38 +225,15 @@ fn netback(command: *thread.Command) void {
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
-                const tree = command.verb.http.tree.array;
-                //warn("netback tree is {!}", .{tree});
-                if (@TypeOf(tree) == std.json.Array) {
-                    column.inError = false;
-                    warn("netback payload is array len {}", .{tree.items.len});
-                    for (tree.items) |jsonValue| {
-                        const item = jsonValue.object;
-                        warn("netback item {*} item.keys has id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
-                        var toot = toot_lib.Type.init(&item, alloc);
-                        warn("netback toot {*} {*} hashmap.keys has id #{s}", .{ &toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
-                        const id = toot.id();
-                        if (column.toots.contains(&toot)) {
-                            warn("netback dupe toot skipped {*} #{s} already in column", .{ &toot, id });
-                        } else {
-                            column.toots.sortedInsert(&toot, alloc);
-                            warn("netback inserted toot #{s}", .{id});
-                            const html = toot.get("content").?.string;
-                            const root = html_lib.parse(html);
-                            html_lib.search(root);
-                            cache_update(&toot, alloc);
-
-                            const images = toot.get("media_attachments").?.array;
-                            media_attachments(&toot, images);
+                const tree = command.verb.http.tree; //.array;
+                switch (tree.*) {
+                    .array => column_load(column, tree.array),
+                    .object => {
+                        if (tree.object.get("error")) |err| {
+                            warn("netback json err {s}", .{err.string});
                         }
-                    }
-                } else if (@TypeOf(tree) == std.json.ObjectMap) {
-                    warn("netback json is object");
-                    if (tree.object.get("error")) |err| {
-                        warn("netback json err {s}", .{err.String});
-                    }
-                } else {
-                    warn("!netback json unknown root tagtype {!}", .{tree});
+                    },
+                    else => warn("!netback json unknown root tagtype {!}", .{tree}),
                 }
             } else { // empty body
                 column.inError = true;
@@ -267,6 +244,32 @@ fn netback(command: *thread.Command) void {
         gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
     }
 }
+
+fn column_load(column: *config.ColumnInfo, tree: std.json.Array) void {
+    column.inError = false;
+    warn("netback payload is array len {}", .{tree.items.len});
+    for (tree.items) |jsonValue| {
+        const item = jsonValue.object;
+        warn("netback item {*} item.keys has id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
+        var toot = toot_lib.Type.init(&item, alloc);
+        warn("netback toot {*} {*} hashmap.keys has id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
+        const id = toot.id();
+        if (column.toots.contains(toot)) {
+            warn("netback dupe toot skipped {*} #{s} already in column", .{ toot, id });
+        } else {
+            column.toots.sortedInsert(toot, alloc);
+            warn("netback inserted toot #{s}", .{id});
+            const html = toot.get("content").?.string;
+            const root = html_lib.parse(html);
+            html_lib.search(root);
+            cache_update(toot, alloc);
+
+            const images = toot.get("media_attachments").?.array;
+            media_attachments(toot, images);
+        }
+    }
+}
+
 fn media_attachments(toot: *toot_lib.Type, images: std.json.Array) void {
     for (images.items) |image| {
         const img_url_raw = image.object.get("preview_url").?;

@@ -6,7 +6,7 @@ const allocator = std.heap.c_allocator;
 const config = @import("./config.zig");
 const util = @import("./util.zig");
 
-const warn = std.debug.print;
+const warn = util.log;
 
 const c = @cImport({
     @cInclude("unistd.h");
@@ -33,11 +33,12 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
         {
             //warn("{s}\n", .{body}); // json dump
-            if (std.json.parseFromSlice(std.json.Value, allocator, body, .{})) |value_tree| {
-                defer value_tree.deinit();
-                actor.payload.http.tree = value_tree.value;
+            std.fs.cwd().writeFile(.{ .sub_path = "body.json", .data = body }) catch unreachable;
+            if (std.json.parseFromSlice(std.json.Value, allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
+                //defer json_parsed.deinit();
+                actor.payload.http.tree = &json_parsed.value;
             } else |err| {
-                warn("net json err {!}\n", .{err});
+                warn("net json err {!}", .{err});
                 actor.payload.http.response_code = 1000;
             }
         }
