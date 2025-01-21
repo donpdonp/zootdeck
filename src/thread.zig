@@ -52,13 +52,12 @@ pub fn create(
     actor.name = actor_name;
     actor.allocator = allocator;
     //ipc.register(actor.client, recvback);
-    const null_pattr = @as([*c]const c.union_pthread_attr_t, @ptrFromInt(0));
-    const pt_err = c.pthread_create(&actor.thread_id, null_pattr, startFn, actor);
+    const pt_err = c.pthread_create(&actor.thread_id, null, startFn, actor);
     try actors.putNoClobber(actor.thread_id, actor);
     if (pt_err == 0) {
         return actor;
     } else {
-        warn("ERROR thread pthread_create err: {!} {*}\n", .{ pt_err, actor });
+        warn("ERROR thread pthread_create err: {!} {*}", .{ pt_err, actor });
     }
     return error.BadValue;
 }

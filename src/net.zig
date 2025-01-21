@@ -43,8 +43,8 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
                 actor.payload.http.response_code = 1000;
             }
         }
-    } else |_| {
-        //warn("net thread http err {!}\n", .{err});
+    } else |err| {
+        warn("net thread http err {!}\n", .{err});
     }
     thread.signal(actor, command);
     return null;
