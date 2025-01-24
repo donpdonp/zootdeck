@@ -141,80 +141,6 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     _ = thread.create("net", net.go, verb, mediaback) catch unreachable;
 }
 
-fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
-    var verb = allocator.create(thread.CommandVerb) catch unreachable;
-    var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    auth.oauthClientRegister(allocator, httpInfo, column.filter.host());
-    httpInfo.token = null;
-    httpInfo.column = column;
-    httpInfo.response_code = 0;
-    httpInfo.verb = .post;
-    verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
-    _ = thread.create("net", net.go, verb, oauthback) catch unreachable;
-    //  defer thread.destroy(allocator, netthread);
-}
-
-fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.mem.Allocator) void {
-    var verb = allocator.create(thread.CommandVerb) catch unreachable;
-    var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    auth.oauthTokenUpgrade(allocator, httpInfo, column.filter.host(), code, column.oauthClientId.?, column.oauthClientSecret.?);
-    httpInfo.token = null;
-    httpInfo.column = column;
-    httpInfo.response_code = 0;
-    httpInfo.verb = .post;
-    verb.http = httpInfo;
-    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
-    _ = thread.create("net", net.go, verb, oauthtokenback) catch unreachable;
-}
-
-fn oauthtokenback(command: *thread.Command) void {
-    //warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
-    const column = command.verb.http.column;
-    const http = command.verb.http;
-    if (http.response_code >= 200 and http.response_code < 300) {
-        const tree = command.verb.http.tree;
-        //const rootJsonType = @TypeOf(tree.root);
-        if (true) { // todo: rootJsonType == std.json.ObjectMap) {
-            if (tree.object.get("access_token")) |cid| {
-                column.config.token = cid.string;
-                config.writefile(settings, "config.json");
-                column.last_check = 0;
-                profileget(column, alloc);
-                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
-            }
-        } else {
-            warn("*oauthtokenback json err body {}", .{http.body});
-        }
-    } else {
-        //warn("*oauthtokenback net err {}\n", .{http.response_code});
-    }
-}
-
-fn oauthback(command: *thread.Command) void {
-    //warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
-    const column = command.verb.http.column;
-    const http = command.verb.http;
-    if (http.response_code >= 200 and http.response_code < 300) {
-        const tree = command.verb.http.tree;
-        const rootJsonType = @TypeOf(tree);
-        if (true) { //todo: rootJsonType == std.json.Value) {
-            if (tree.object.get("client_id")) |cid| {
-                column.oauthClientId = cid.string;
-            }
-            if (tree.object.get("client_secret")) |cid| {
-                column.oauthClientSecret = cid.string;
-            }
-            //warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
-            gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
-        } else {
-            warn("*oauthback json type err {} {s}", .{ rootJsonType, http.body });
-        }
-    } else {
-        //warn("*oauthback net err {}\n", .{http.response_code});
-    }
-}
-
 fn netback(command: *thread.Command) void {
     warn("*netback {*} {} {*}", .{ command, command.id, command.verb });
     if (command.id == 1) {
@@ -441,5 +367,79 @@ fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
         warn("column_refresh http get for title: {s}", .{util.json(column.config.title)});
         column.refreshing = true;
         columnget(column, allocator);
+    }
+}
+
+fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
+    var verb = allocator.create(thread.CommandVerb) catch unreachable;
+    var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+    auth.oauthClientRegister(allocator, httpInfo, column.filter.host());
+    httpInfo.token = null;
+    httpInfo.column = column;
+    httpInfo.response_code = 0;
+    httpInfo.verb = .post;
+    verb.http = httpInfo;
+    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
+    _ = thread.create("net", net.go, verb, oauthback) catch unreachable;
+    //  defer thread.destroy(allocator, netthread);
+}
+
+fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.mem.Allocator) void {
+    var verb = allocator.create(thread.CommandVerb) catch unreachable;
+    var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
+    auth.oauthTokenUpgrade(allocator, httpInfo, column.filter.host(), code, column.oauthClientId.?, column.oauthClientSecret.?);
+    httpInfo.token = null;
+    httpInfo.column = column;
+    httpInfo.response_code = 0;
+    httpInfo.verb = .post;
+    verb.http = httpInfo;
+    gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
+    _ = thread.create("net", net.go, verb, oauthtokenback) catch unreachable;
+}
+
+fn oauthtokenback(command: *thread.Command) void {
+    //warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
+    const column = command.verb.http.column;
+    const http = command.verb.http;
+    if (http.response_code >= 200 and http.response_code < 300) {
+        const tree = command.verb.http.tree;
+        //const rootJsonType = @TypeOf(tree.root);
+        if (true) { // todo: rootJsonType == std.json.ObjectMap) {
+            if (tree.object.get("access_token")) |cid| {
+                column.config.token = cid.string;
+                config.writefile(settings, "config.json");
+                column.last_check = 0;
+                profileget(column, alloc);
+                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
+            }
+        } else {
+            warn("*oauthtokenback json err body {}", .{http.body});
+        }
+    } else {
+        //warn("*oauthtokenback net err {}\n", .{http.response_code});
+    }
+}
+
+fn oauthback(command: *thread.Command) void {
+    //warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
+    const column = command.verb.http.column;
+    const http = command.verb.http;
+    if (http.response_code >= 200 and http.response_code < 300) {
+        const tree = command.verb.http.tree;
+        const rootJsonType = @TypeOf(tree);
+        if (true) { //todo: rootJsonType == std.json.Value) {
+            if (tree.object.get("client_id")) |cid| {
+                column.oauthClientId = cid.string;
+            }
+            if (tree.object.get("client_secret")) |cid| {
+                column.oauthClientSecret = cid.string;
+            }
+            //warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
+            gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
+        } else {
+            warn("*oauthback json type err {} {s}", .{ rootJsonType, http.body });
+        }
+    } else {
+        //warn("*oauthback net err {}\n", .{http.response_code});
     }
 }

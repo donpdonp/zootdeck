@@ -22,7 +22,6 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     // setup for the callback
     var command = actor.allocator.create(thread.Command) catch unreachable;
     command.id = 1;
-    //var verb = allocator.create(thread.CommandVerb) catch unreachable;
     command.verb = actor.payload;
 
     if (httpget(actor.allocator, actor.payload.http)) |body| {
@@ -44,9 +43,10 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
             }
         }
     } else |err| {
-        warn("net thread http err {!}\n", .{err});
+        warn("net thread http err {!}", .{err});
     }
     thread.signal(actor, command);
+    warn("json parsedtree {*} {}", .{ actor.payload.http.tree, actor.payload.http.tree });
     return null;
 }
 
