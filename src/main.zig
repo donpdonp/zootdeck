@@ -2,9 +2,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const warn = util.log;
-const CAllocator = std.heap.c_allocator;
-const stdout = std.io.getStdOut();
-var LogAllocator = std.heap.loggingAllocator(CAllocator, stdout.outStream());
+var LogAllocator = std.heap.loggingAllocator(std.heap.c_allocator);
 var GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{}){};
 const alloc = GeneralPurposeAllocator.allocator(); // take the ptr in a separate step
 
@@ -48,6 +46,10 @@ pub fn main() !void {
     }
 }
 
+fn hello() void {
+    util.log("zootdeck {s} {s} tid {}", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
+}
+
 fn initialize(allocator: std.mem.Allocator) !void {
     try config.init(allocator);
     try heartbeat.init(allocator);
@@ -77,10 +79,6 @@ fn statewalk(allocator: std.mem.Allocator) void {
         statemachine.setState(statemachine.States.Running); // transition
         columns_net_freshen(allocator);
     }
-}
-
-fn hello() void {
-    util.log("zootdeck {s} {s} tid {}", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
 }
 
 fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
@@ -176,25 +174,26 @@ fn netback(command: *thread.Command) void {
 
 fn column_load(column: *config.ColumnInfo, tree: *const std.json.Array) void {
     column.inError = false;
-    warn("netback payload is array len {}", .{tree.items.len});
+    warn("column_load {s} loading payload len {}", .{ column.config.title, tree.items.len });
     for (tree.items) |jsonValue| {
         const item = jsonValue.object;
-        warn("netback item {*} item.keys has id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
+        warn("column_load item {*} item.id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
         var toot = toot_lib.Type.init(&item, alloc);
-        warn("netback toot {*} {*} hashmap.keys has id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
+        warn("column_load {*} {*} toot.id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
         const id = toot.id();
         if (column.toots.contains(toot)) {
-            warn("netback dupe toot skipped {*} #{s} already in column", .{ toot, id });
+            warn("column_load toot skipped {*} #{s} already in column", .{ toot, id });
         } else {
             column.toots.sortedInsert(toot, alloc);
-            warn("netback inserted toot #{s}", .{id});
+            warn("column_load inserted toot #{s}", .{id});
             const html = toot.get("content").?.string;
             const root = html_lib.parse(html);
             html_lib.search(root);
             cache_update(toot, alloc);
 
-            const images = toot.get("media_attachments").?.array;
-            media_attachments(toot, images);
+            if (toot.get("media_attachments")) |images| {
+                media_attachments(toot, images.array);
+            }
         }
     }
 }

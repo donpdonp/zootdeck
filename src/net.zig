@@ -30,8 +30,8 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
         {
-            warn("http body {} bytes dumped to body.json\n", .{body.len}); // json dump
-            std.fs.cwd().writeFile(.{ .sub_path = "body.json", .data = body }) catch unreachable;
+            warn("http body {} bytes dumped to tmp/body.json\n", .{body.len}); // json dump
+            std.fs.cwd().writeFile(.{ .sub_path = "tmp/body.json", .data = body }) catch unreachable;
             if (std.json.parseFromSlice(std.json.Value, actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
                 //defer json_parsed.deinit();
                 warn("json parsed {*} {}", .{ &json_parsed.value, json_parsed.value });
