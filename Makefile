@@ -1,12 +1,14 @@
 GITEPOCH=$(shell git log -1 --format="%at")
 TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-linux-`uname -i`-${TODAY}
+ZIG=/opt/zig/0.13.0/zig
+#ZIG=/opt/zig/0.14.0-dev/zig
 
 build:
-	zig build -freference-trace
+	${ZIG} build -freference-trace
 
 format:
-	zig fmt src
+	${ZIG} fmt src
 
 run: build
 	./zig-out/bin/zootdeck

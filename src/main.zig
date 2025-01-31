@@ -149,9 +149,9 @@ fn netback(command: *thread.Command) void {
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
-                const tree = command.verb.http.tree; //.array;
-                warn("netback received tree {*}", .{tree});
-                switch (tree.*) {
+                const tree = command.verb.http.tree.value; //.array;
+                warn("netback received tree {*}", .{&tree});
+                switch (tree) {
                     .array => column_load(column, &tree.array),
                     .object => {
                         if (tree.object.get("error")) |err| {
@@ -237,7 +237,7 @@ fn profileback(command: *thread.Command) void {
     thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
     if (reqres.response_code >= 200 and reqres.response_code < 300) {
-        reqres.column.account = reqres.tree.object;
+        reqres.column.account = reqres.tree.value.object;
         gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(reqres.column)));
     } else {
         //warn("profile fail http status {!}\n", .{reqres.response_code});
@@ -401,7 +401,7 @@ fn oauthtokenback(command: *thread.Command) void {
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
-        const tree = command.verb.http.tree;
+        const tree = command.verb.http.tree.value;
         //const rootJsonType = @TypeOf(tree.root);
         if (true) { // todo: rootJsonType == std.json.ObjectMap) {
             if (tree.object.get("access_token")) |cid| {
@@ -424,7 +424,7 @@ fn oauthback(command: *thread.Command) void {
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
-        const tree = command.verb.http.tree;
+        const tree = command.verb.http.tree.value;
         const rootJsonType = @TypeOf(tree);
         if (true) { //todo: rootJsonType == std.json.Value) {
             if (tree.object.get("client_id")) |cid| {

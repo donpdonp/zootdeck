@@ -36,7 +36,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
                 //defer json_parsed.deinit();
                 warn("json parsed {*} {}", .{ &json_parsed.value, json_parsed.value });
                 warn("json parsed item0 {}", .{json_parsed.value.array.items[0]});
-                actor.payload.http.tree = &json_parsed.value;
+                actor.payload.http.tree = json_parsed;
             } else |err| {
                 warn("net json err {!}", .{err});
                 actor.payload.http.response_code = 1000;
@@ -46,7 +46,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         warn("net thread http err {!}", .{err});
     }
     thread.signal(actor, command);
-    warn("json parsedtree {*} {}", .{ actor.payload.http.tree, actor.payload.http.tree });
+    warn("json parsedtree {*} {}", .{ &actor.payload.http.tree.value, actor.payload.http.tree.value });
     return null;
 }
 

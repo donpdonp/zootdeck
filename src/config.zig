@@ -100,7 +100,7 @@ pub const HttpInfo = struct {
     body: []const u8,
     content_type: []const u8,
     response_code: c_long,
-    tree: *const std.json.Value,
+    tree: std.json.Parsed(std.json.Value),
     column: *ColumnInfo,
     toot: *toot_lib.Type,
 };
