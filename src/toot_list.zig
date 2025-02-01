@@ -13,7 +13,7 @@ pub fn SomeList(comptime T: type) type {
         list: ListType,
 
         const Self = @This();
-        const ListType = std.TailQueue(T);
+        const ListType = std.DoublyLinkedList(T);
 
         pub fn init() Self {
             return Self{
