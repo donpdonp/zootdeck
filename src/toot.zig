@@ -68,7 +68,7 @@ pub fn Toot() type {
             const hDecode = util.htmlEntityDecode(self.content(), allocator) catch unreachable;
             const html_trim = util.htmlTagStrip(hDecode, allocator) catch unreachable;
 
-            var wordParts = std.mem.tokenize(u8, html_trim, " ");
+            var wordParts = std.mem.tokenizeSequence(u8, html_trim, " ");
             while (wordParts.next()) |word| {
                 if (std.mem.startsWith(u8, word, "#")) {
                     self.tagList.append(word) catch unreachable;

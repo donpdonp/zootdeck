@@ -53,9 +53,9 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
     const tid_name = thread.name(tid);
     //const tz = std.os.timezone.tz_minuteswest;
-    var tz = std.posix.timezone{ .tz_minuteswest = 0, .tz_dsttime = 0 };
+    var tz = std.posix.timezone{ .minuteswest = 0, .dsttime = 0 };
     std.posix.gettimeofday(null, &tz); // does not set tz
-    const now_ms = std.time.milliTimestamp() + tz.tz_minuteswest * std.time.ms_per_hour;
+    const now_ms = std.time.milliTimestamp() + tz.minuteswest * std.time.ms_per_hour;
     const ms_leftover = @abs(now_ms) % std.time.ms_per_s;
     const esec = std.time.epoch.EpochSeconds{ .secs = @as(u64, @intCast(@divTrunc(now_ms, std.time.ms_per_s))) };
     const eday = esec.getEpochDay();
