@@ -102,7 +102,10 @@ pub fn read(client: *Client, buf: []u8) []u8 {
 }
 
 pub fn send(client: *Client, buf: []const u8) void {
-    var len8: u8 = @as(u8, @intCast(buf.len));
+    var len8: u8 = @intCast(buf.len);
     var writecount = c.write(client.writeSocket, &len8, 1); // send the fixed-size portion
     writecount = writecount + c.write(client.writeSocket, buf.ptr, buf.len);
+    if (writecount != buf.len + 1) {
+        warn("epoll client send underrun. buf+1= {} sent= {}\n", .{ buf.len + 1, writecount });
+    }
 }

@@ -149,18 +149,18 @@ fn netback(command: *thread.Command) void {
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
-                const tree = command.verb.http.tree.value; //.array;
+                const tree = command.verb.http.tree; //.array;
                 warn("netback received tree {*}", .{&tree});
-                switch (tree) {
-                    .array => column_load(column, &tree.array),
+                switch (tree.value) {
+                    .array => column_load(column, &tree),
                     .object => {
-                        if (tree.object.get("error")) |err| {
+                        if (tree.value.object.get("error")) |err| {
                             warn("netback json err {s}", .{err.string});
                         } else {
-                            warn("netback json object {}", .{tree.object});
+                            warn("netback json object {}", .{tree.value.object});
                         }
                     },
-                    else => warn("!netback json unknown root tagtype {!}", .{tree}),
+                    else => warn("!netback json unknown root tagtype {!}", .{tree.value}),
                 }
             } else { // empty body
                 column.inError = true;
@@ -172,10 +172,10 @@ fn netback(command: *thread.Command) void {
     }
 }
 
-fn column_load(column: *config.ColumnInfo, tree: *const std.json.Array) void {
+fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
     column.inError = false;
-    warn("column_load {s} loading payload len {}", .{ column.config.title, tree.items.len });
-    for (tree.items) |*jsonValue| {
+    warn("column_load {s} loading payload len {}", .{ column.config.title, tree.value.array.items.len });
+    for (tree.value.array.items) |*jsonValue| {
         const item = jsonValue.object;
         warn("column_load payload item {*} item.id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
         var toot = toot_lib.Type.init(&item, alloc);
