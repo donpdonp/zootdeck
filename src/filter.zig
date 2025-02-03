@@ -1,9 +1,9 @@
 // filter.zig
 const std = @import("std");
-const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const util = @import("util.zig");
+const warn = util.log;
 const string = []const u8;
 const toot_lib = @import("toot.zig");
 
@@ -41,7 +41,7 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
     var ragel_points = c.urlPoints{ .scheme_pos = 0, .loc_pos = 0 };
     const clang = util.sliceToCstr(allocator, lang);
     _ = c.url(clang, &ragel_points);
-    warn("ragel parse \"{s}\"\n", .{lang});
+    warn("ragel parse \"{s}\"", .{lang});
 
     var newTree = allocator.create(ptree) catch unreachable;
     newTree.tags = allocator.create(toot_lib.Type.TagList) catch unreachable;
@@ -52,11 +52,11 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
         idx += 1;
         if (idx == 1) {
             newTree.hostname = part;
-            warn("filter set host {s}\n", .{part});
+            warn("filter set host={s}", .{part});
         }
         if (idx > 1) {
             newTree.tags.append(part) catch unreachable;
-            warn("filter set tag #{} {s}\n", .{ newTree.tags.items.len, part });
+            warn("filter set tag #{} {s}", .{ newTree.tags.items.len, part });
         }
     }
     return newTree;

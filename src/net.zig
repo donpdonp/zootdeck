@@ -30,12 +30,12 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
             std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
         {
-            warn("http body {} bytes dumped to tmp/body.json\n", .{body.len}); // json dump
+            warn("http body {} bytes dumped to tmp/body.json", .{body.len}); // json dump
             std.fs.cwd().writeFile(.{ .sub_path = "tmp/body.json", .data = body }) catch unreachable;
             if (std.json.parseFromSlice(std.json.Value, actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
                 //defer json_parsed.deinit();
-                warn("json parsed {*} {}", .{ &json_parsed.value, json_parsed.value });
-                warn("json parsed item0 {}", .{json_parsed.value.array.items[0]});
+                warn("json parsed {*} {}", .{ &json_parsed.value, json_parsed.value.array.items.len });
+                warn("json parsed item0 {*}", .{&json_parsed.value.array.items[0]});
                 actor.payload.http.tree = json_parsed;
             } else |err| {
                 warn("net json err {!}", .{err});
@@ -46,7 +46,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
         warn("net thread http err {!}", .{err});
     }
     thread.signal(actor, command);
-    warn("json parsedtree {*} {}", .{ &actor.payload.http.tree.value, actor.payload.http.tree.value });
+    warn("json parsedtree {*} {}", .{ &actor.payload.http.tree.value, actor.payload.http.tree.value.array.items.len });
     return null;
 }
 

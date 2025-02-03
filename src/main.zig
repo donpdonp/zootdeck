@@ -175,17 +175,18 @@ fn netback(command: *thread.Command) void {
 fn column_load(column: *config.ColumnInfo, tree: *const std.json.Array) void {
     column.inError = false;
     warn("column_load {s} loading payload len {}", .{ column.config.title, tree.items.len });
-    for (tree.items) |jsonValue| {
+    for (tree.items) |*jsonValue| {
         const item = jsonValue.object;
-        warn("column_load item {*} item.id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
+        warn("column_load payload item {*} item.id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
         var toot = toot_lib.Type.init(&item, alloc);
         warn("column_load {*} {*} toot.id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
+        _ = column.toots.count();
         const id = toot.id();
         if (column.toots.contains(toot)) {
             warn("column_load toot skipped {*} #{s} already in column", .{ toot, id });
         } else {
             column.toots.sortedInsert(toot, alloc);
-            warn("column_load inserted toot #{s}", .{id});
+            warn("column_load inserted toot #{s} list len {}", .{ id, column.toots.len() });
             const html = toot.get("content").?.string;
             const root = html_lib.parse(html);
             html_lib.search(root);

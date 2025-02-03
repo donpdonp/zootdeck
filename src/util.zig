@@ -48,7 +48,10 @@ pub fn log(comptime msg: []const u8, args: anytype) void {
 }
 
 pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
-    return std.mem.eql(u8, a.get("id").?.string, b.get("id").?.string);
+    const a_id = a.get("id").?.string;
+    const b_id = b.get("id").?.string;
+    warn("idCompare {} {s} - {} {s}\n", .{ &a_id, a_id, &b_id, b_id });
+    return std.mem.eql(u8, a_id, b_id);
 }
 
 pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: Allocator) []const u8 {

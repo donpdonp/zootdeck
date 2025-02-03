@@ -1,10 +1,10 @@
 // toot_list.zig
 const std = @import("std");
-const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const toot_lib = @import("./toot.zig");
 const util = @import("./util.zig");
+const warn = util.log;
 
 pub const TootList = SomeList(*toot_lib.Type);
 
@@ -73,6 +73,7 @@ pub fn SomeList(comptime T: type) type {
             var counter: usize = 0;
             var current = self.list.first;
             while (current) |item| {
+                warn("#{} tlist {*}", .{ counter, item.data });
                 counter = counter + 1;
                 current = item.next;
             }
