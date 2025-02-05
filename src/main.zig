@@ -152,24 +152,19 @@ fn netback(command: *thread.Command) void {
                 if (body.len > 0 and (command.actor.payload.http.content_type.len == 0 or
                     std.mem.eql(u8, command.actor.payload.http.content_type, "application/json; charset=utf-8")))
                 {
-                    warn("http body {} bytes dumped to tmp/body.json", .{body.len}); // json dump
-                    std.fs.cwd().writeFile(.{ .sub_path = "tmp/body.json", .data = body }) catch unreachable;
                     if (std.json.parseFromSlice(std.json.Value, command.actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
                         //defer json_parsed.deinit();
-                        warn("json parsed {*} {*} {}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len });
-                        warn("json parsed item0 {*}", .{&json_parsed.value.array.items[0]});
-                        const tree = json_parsed;
-                        warn("netback received tree {*}", .{&tree});
-                        switch (tree.value) {
-                            .array => column_load(column, &tree),
+                        warn("json parsed {*} {*} {} item0 {*}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len, &json_parsed.value.array.items[0] });
+                        switch (json_parsed.value) {
+                            .array => column_load(column, &json_parsed),
                             .object => {
-                                if (tree.value.object.get("error")) |err| {
+                                if (json_parsed.value.object.get("error")) |err| {
                                     warn("netback json err {s}", .{err.string});
                                 } else {
-                                    warn("netback json object {}", .{tree.value.object});
+                                    warn("netback json object {}", .{json_parsed.value.object});
                                 }
                             },
-                            else => warn("!netback json unknown root tagtype {!}", .{tree.value}),
+                            else => warn("!netback json unknown root tagtype {!}", .{json_parsed.value}),
                         }
                     } else |err| {
                         warn("net json err {!}", .{err});
@@ -188,11 +183,10 @@ fn netback(command: *thread.Command) void {
 
 fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
     column.inError = false;
-    warn("column_load {s} loading payload len {}", .{ column.config.title, tree.value.array.items.len });
-    for (tree.value.array.items) |*jsonValue| {
-        const item = jsonValue.object;
-        warn("column_load payload item {*} item.id #{s}", .{ &item, if (item.contains("id")) item.get("id").?.string else "MISSING" });
-        var toot = toot_lib.Type.init(&item, alloc);
+    warn("column_load \"{s}\" {*} {*} len {} item0 {*} {*}", .{ column.config.title, tree, &tree.value, tree.value.array.items.len, &tree.value.array.items[0], &tree.value.array.items[0].object });
+    for (tree.value.array.items, 0..) |*json_value, idx| {
+        warn("column_load item #{} {*} {*} item.id #{s}", .{ idx, json_value, &json_value.object, if (json_value.object.contains("id")) json_value.object.get("id").?.string else "MISSING" });
+        var toot = toot_lib.Type.init(&json_value.object, alloc);
         warn("column_load {*} {*} toot.id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.hashmap.get("id").?.string else "MISSING" });
         _ = column.toots.count();
         const id = toot.id();

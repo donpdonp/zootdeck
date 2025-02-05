@@ -73,7 +73,6 @@ pub fn SomeList(comptime T: type) type {
             var counter: usize = 0;
             var current = self.list.first;
             while (current) |item| {
-                warn("#{} tlist {*}", .{ counter, item.data });
                 counter = counter + 1;
                 current = item.next;
             }

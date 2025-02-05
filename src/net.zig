@@ -25,13 +25,13 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     command.verb = actor.payload;
 
     if (httpget(actor.allocator, actor.payload.http)) |body| {
-        //const maxlen = if (body.len > 400) 400 else body.len;
+        warn("http body {} bytes dumped to tmp/body", .{body.len}); // json dump
+        std.fs.cwd().writeFile(.{ .sub_path = "tmp/body", .data = body }) catch unreachable;
         actor.payload.http.body = body;
     } else |err| {
         warn("net thread http err {!}", .{err});
     }
     thread.signal(actor, command);
-    warn("json parsedtree {*} {*} {}", .{ &actor.payload.http.tree, &actor.payload.http.tree.value, actor.payload.http.tree.value.array.items.len });
     return null;
 }
 
