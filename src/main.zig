@@ -12,7 +12,6 @@ const gui = @import("./gui.zig");
 const net = @import("./net.zig");
 const heartbeat = @import("./heartbeat.zig");
 const config = @import("./config.zig");
-const state = @import("./statemachine.zig");
 const thread = @import("./thread.zig");
 const db = @import("./db/lmdb.zig");
 const dbfile = @import("./db/file.zig");
@@ -37,7 +36,7 @@ pub fn main() !void {
         _ = try thread.create("gui", gui.go, dummy_payload, guiback);
         _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);
         while (true) {
-            statewalk(alloc);
+            stateNext(alloc);
             util.log("thread.wait()/epoll", .{});
             thread.wait(); // main ipc listener
         }
@@ -58,9 +57,9 @@ fn initialize(allocator: std.mem.Allocator) !void {
     try dbfile.init(allocator);
 }
 
-fn statewalk(allocator: std.mem.Allocator) void {
-    if (statemachine.state == statemachine.States.Init) {
-        statemachine.setState(statemachine.States.Setup); // transition
+fn stateNext(allocator: std.mem.Allocator) void {
+    if (statemachine.state == .Init) {
+        statemachine.setState(.Setup); // transition
         var ram = allocator.alloc(u8, 1) catch unreachable;
         ram[0] = 1;
         gui.schedule(gui.show_main_schedule, @ptrCast(&ram));
@@ -75,8 +74,8 @@ fn statewalk(allocator: std.mem.Allocator) void {
         }
     }
 
-    if (statemachine.state == statemachine.States.Setup) {
-        statemachine.setState(statemachine.States.Running); // transition
+    if (statemachine.state == .Setup) {
+        statemachine.setState(.Running); // transition
         columns_net_freshen(allocator);
     }
 }
@@ -149,18 +148,33 @@ fn netback(command: *thread.Command) void {
         column.last_check = config.now();
         if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
             if (command.verb.http.body.len > 0) {
-                const tree = command.verb.http.tree; //.array;
-                warn("netback received tree {*}", .{&tree});
-                switch (tree.value) {
-                    .array => column_load(column, &tree),
-                    .object => {
-                        if (tree.value.object.get("error")) |err| {
-                            warn("netback json err {s}", .{err.string});
-                        } else {
-                            warn("netback json object {}", .{tree.value.object});
+                const body = command.actor.payload.http.body;
+                if (body.len > 0 and (command.actor.payload.http.content_type.len == 0 or
+                    std.mem.eql(u8, command.actor.payload.http.content_type, "application/json; charset=utf-8")))
+                {
+                    warn("http body {} bytes dumped to tmp/body.json", .{body.len}); // json dump
+                    std.fs.cwd().writeFile(.{ .sub_path = "tmp/body.json", .data = body }) catch unreachable;
+                    if (std.json.parseFromSlice(std.json.Value, command.actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
+                        //defer json_parsed.deinit();
+                        warn("json parsed {*} {*} {}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len });
+                        warn("json parsed item0 {*}", .{&json_parsed.value.array.items[0]});
+                        const tree = json_parsed;
+                        warn("netback received tree {*}", .{&tree});
+                        switch (tree.value) {
+                            .array => column_load(column, &tree),
+                            .object => {
+                                if (tree.value.object.get("error")) |err| {
+                                    warn("netback json err {s}", .{err.string});
+                                } else {
+                                    warn("netback json object {}", .{tree.value.object});
+                                }
+                            },
+                            else => warn("!netback json unknown root tagtype {!}", .{tree.value}),
                         }
-                    },
-                    else => warn("!netback json unknown root tagtype {!}", .{tree.value}),
+                    } else |err| {
+                        warn("net json err {!}", .{err});
+                        command.actor.payload.http.response_code = 1000;
+                    }
                 }
             } else { // empty body
                 column.inError = true;

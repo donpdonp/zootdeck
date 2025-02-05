@@ -27,21 +27,6 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     if (httpget(actor.allocator, actor.payload.http)) |body| {
         //const maxlen = if (body.len > 400) 400 else body.len;
         actor.payload.http.body = body;
-        if (body.len > 0 and (actor.payload.http.content_type.len == 0 or
-            std.mem.eql(u8, actor.payload.http.content_type, "application/json; charset=utf-8")))
-        {
-            warn("http body {} bytes dumped to tmp/body.json", .{body.len}); // json dump
-            std.fs.cwd().writeFile(.{ .sub_path = "tmp/body.json", .data = body }) catch unreachable;
-            if (std.json.parseFromSlice(std.json.Value, actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
-                //defer json_parsed.deinit();
-                warn("json parsed {*} {*} {}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len });
-                warn("json parsed item0 {*}", .{&json_parsed.value.array.items[0]});
-                actor.payload.http.tree = json_parsed;
-            } else |err| {
-                warn("net json err {!}", .{err});
-                actor.payload.http.response_code = 1000;
-            }
-        }
     } else |err| {
         warn("net thread http err {!}", .{err});
     }
