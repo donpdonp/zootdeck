@@ -381,14 +381,15 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     const author_url = account.get("url").?.string;
     const created_at = toot.get("created_at").?.string;
 
+    warn("makeTootBox author_name {s}", .{author_name});
     const name_label = builder_get_widget(builder, "toot_author_name");
-    labelBufPrint(name_label, "{s}", .{author_name});
+    labelBufPrint(@ptrCast(name_label), "{s}", .{author_name});
     const url_label = builder_get_widget(builder, "toot_author_url");
-    labelBufPrint(url_label, "{s}", .{author_url});
+    labelBufPrint(@ptrCast(url_label), "{s}", .{author_url});
     const author_url_minimode_label = builder_get_widget(builder, "toot_author_url_minimode");
-    labelBufPrint(author_url_minimode_label, "{s}", .{author_url});
+    labelBufPrint(@ptrCast(author_url_minimode_label), "{s}", .{author_url});
     const date_label = builder_get_widget(builder, "toot_date");
-    labelBufPrint(date_label, "{s}", .{created_at});
+    labelBufPrint(@ptrCast(date_label), "{s}", .{created_at});
     photo_refresh(author_acct, builder);
 
     const hDecode = util.htmlEntityDecode(toot.content(), allocator) catch unreachable;
@@ -515,8 +516,10 @@ fn escapeGtkString(str: []const u8) []const u8 {
     return str_esc;
 }
 
-pub fn labelBufPrint(_: *c.GtkWidget, comptime _: []const u8, _: anytype) void {
-    //const buf = allocator.alloc(u8, 256) catch unreachable;
+pub fn labelBufPrint(label: *c.GtkLabel, comptime format: []const u8, text: anytype) void {
+    const str = std.fmt.allocPrint(allocator, format, text) catch unreachable;
+    const cstr = util.sliceToCstr(allocator, str);
+    c.gtk_label_set_text(label, @ptrCast(cstr));
 }
 
 fn column_config_btn(columnptr: ?*anyopaque) callconv(.C) void {

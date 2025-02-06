@@ -30,13 +30,13 @@ pub fn has(namespace: []const u8, key: []const u8, allocator: Allocator) bool {
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     const dirpath = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ cache_dir, namespace });
-    warn("MKDIR {s}\n", .{dirpath});
+    warn("mkdir {s}", .{dirpath});
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
     defer dir.close();
     if (dir.createFile(key, .{ .truncate = true })) |*file| {
         _ = try file.write(value);
         file.close();
     } else |err| {
-        warn("open write err {s} {s} {any}\n", .{ dirpath, key, err });
+        warn("open write err {s} {s} {any}", .{ dirpath, key, err });
     }
 }

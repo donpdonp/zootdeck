@@ -73,7 +73,7 @@ pub fn Toot() type {
         }
 
         pub fn addImg(self: *Self, imgdata: ImgType) void {
-            warn("addImg toot {any}", .{self});
+            warn("addImg toot {s}", .{self.id()});
             self.imgList.append(imgdata) catch unreachable;
         }
 
