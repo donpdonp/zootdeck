@@ -316,8 +316,11 @@ pub fn update_column_toots(column: *Column) void {
     } else {
         // help? logo?
     }
-    //const column_footer_count_label = builder_get_widget(column.builder, "column_footer_count");
-    //const tootword = if (column.main.config.img_only) "images" else "toots";
+    const column_footer_count_label = builder_get_widget(column.builder, "column_footer_count");
+    const tootword = if (column.main.config.img_only) "images" else "toots";
+    const countStr = std.fmt.allocPrint(allocator, "{} {s}", .{ column.main.toots.count(), tootword }) catch unreachable;
+    const cCountStr = util.sliceToCstr(allocator, countStr);
+    c.gtk_label_set_text(@ptrCast(column_footer_count_label), cCountStr);
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
@@ -438,8 +441,11 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     return builder;
 }
 
-fn photo_refresh(_: []const u8, _: *c.GtkBuilder) void {
-    //const avatar = builder_get_widget(builder, "toot_author_avatar");
+fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
+    const avatar = builder_get_widget(builder, "toot_author_avatar");
+    const avatar_path = std.fmt.allocPrint(allocator, "./cache/{s}/photo", .{acct}) catch unreachable;
+    const pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path), 50, -1, 1, null);
+    c.gtk_image_set_from_pixbuf(@ptrCast(avatar), pixbuf);
 }
 
 fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
@@ -707,7 +713,12 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
     oauth_url_buf.append("&amp;scope=read+write") catch unreachable;
     oauth_url_buf.append("&amp;response_type=code") catch unreachable;
     oauth_url_buf.append("&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob") catch unreachable;
-    //const markupBuf = allocator.alloc(u8, 512) catch unreachable;
+
+    const oauth_label = builder_get_widget(column.builder, "column_config_oauth_label");
+    const markupBuf = allocator.alloc(u8, 512) catch unreachable;
+    const markup = std.fmt.bufPrint(markupBuf, "<a href=\"{s}\">{s} oauth</a>", .{ oauth_url_buf.toSliceConst(), column.main.filter.host() }) catch unreachable;
+    const cLabel = util.sliceToCstr(allocator, markup);
+    c.gtk_label_set_markup(@ptrCast(oauth_label), cLabel);
 }
 
 fn column_config_oauth_activate(selfptr: *anyopaque) callconv(.C) void {
