@@ -226,7 +226,7 @@ fn mediaback(command: *thread.Command) void {
     const tootpic = alloc.create(gui.TootPic) catch unreachable;
     tootpic.toot = reqres.toot;
     tootpic.pic = reqres.body;
-    warn("mediaback toot #{s} tootpic.toot {*} adding 1 img\n", .{ tootpic.toot.id(), tootpic.toot });
+    warn("mediaback toot #{s} tootpic.toot {*} adding 1 img", .{ tootpic.toot.id(), tootpic.toot });
     tootpic.toot.addImg(tootpic.pic);
     gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
 }
@@ -236,7 +236,7 @@ fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.object;
     const acct = account.get("acct").?.string;
-    //warn("photoback! acct {s} type {s} size {}\n", .{ acct, reqres.content_type, reqres.body.len });
+    //warn("photoback! acct {s} type {s} size {}", .{ acct, reqres.content_type, reqres.body.len });
     dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
@@ -249,7 +249,7 @@ fn profileback(command: *thread.Command) void {
         reqres.column.account = reqres.tree.value.object;
         gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(reqres.column)));
     } else {
-        //warn("profile fail http status {!}\n", .{reqres.response_code});
+        //warn("profile fail http status {!}", .{reqres.response_code});
     }
 }
 
@@ -363,7 +363,7 @@ fn columns_net_freshen(allocator: std.mem.Allocator) void {
         if (since > refresh) {
             column_refresh(column, allocator);
         } else {
-            //warn("col {} is fresh for {} sec\n", column.makeTitle(), refresh-since);
+            //warn("col {} is fresh for {} sec", column.makeTitle(), refresh-since);
         }
     }
 }
@@ -406,7 +406,7 @@ fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.me
 }
 
 fn oauthtokenback(command: *thread.Command) void {
-    //warn("*oauthtokenback tid {x} {}\n", .{ thread.self(), command });
+    //warn("*oauthtokenback tid {x} {}", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -424,12 +424,12 @@ fn oauthtokenback(command: *thread.Command) void {
             warn("*oauthtokenback json err body {}", .{http.body});
         }
     } else {
-        //warn("*oauthtokenback net err {}\n", .{http.response_code});
+        //warn("*oauthtokenback net err {}", .{http.response_code});
     }
 }
 
 fn oauthback(command: *thread.Command) void {
-    //warn("*oauthback tid {x} {}\n", .{ thread.self(), command });
+    //warn("*oauthback tid {x} {}", .{ thread.self(), command });
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
@@ -442,12 +442,12 @@ fn oauthback(command: *thread.Command) void {
             if (tree.object.get("client_secret")) |cid| {
                 column.oauthClientSecret = cid.string;
             }
-            //warn("*oauthback client id {s} secret {s}\n", .{ column.oauthClientId, column.oauthClientSecret });
+            //warn("*oauthback client id {s} secret {s}", .{ column.oauthClientId, column.oauthClientSecret });
             gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
         } else {
             warn("*oauthback json type err {} {s}", .{ rootJsonType, http.body });
         }
     } else {
-        //warn("*oauthback net err {}\n", .{http.response_code});
+        //warn("*oauthback net err {}", .{http.response_code});
     }
 }
