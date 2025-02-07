@@ -7,7 +7,7 @@ var GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{}){};
 const alloc = GeneralPurposeAllocator.allocator(); // take the ptr in a separate step
 
 const simple_buffer = @import("./simple_buffer.zig");
-const auth = @import("./auth.zig");
+const oauth = @import("./oauth.zig");
 const gui = @import("./gui.zig");
 const net = @import("./net.zig");
 const heartbeat = @import("./heartbeat.zig");
@@ -284,6 +284,7 @@ fn guiback(command: *thread.Command) void {
         colInfo.toots = toot_list.TootList.init();
         colInfo.last_check = 0;
         settings.columns.append(colInfo) catch unreachable;
+        warn("add column: settings.columns.len {}", .{settings.columns.items.len});
         const colConfig = alloc.create(config.ColumnConfig) catch unreachable;
         colInfo.config = colConfig.reset();
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
@@ -381,7 +382,7 @@ fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
 fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    auth.oauthClientRegister(allocator, httpInfo, column.filter.host());
+    oauth.clientRegisterUrl(allocator, httpInfo, column.filter.host());
     httpInfo.token = null;
     httpInfo.column = column;
     httpInfo.response_code = 0;
@@ -395,7 +396,7 @@ fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
 fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
-    auth.oauthTokenUpgrade(allocator, httpInfo, column.filter.host(), code, column.oauthClientId.?, column.oauthClientSecret.?);
+    oauth.tokenUpgradeUrl(allocator, httpInfo, column.filter.host(), code, column.oauthClientId.?, column.oauthClientSecret.?);
     httpInfo.token = null;
     httpInfo.column = column;
     httpInfo.response_code = 0;
@@ -434,6 +435,7 @@ fn oauthback(command: *thread.Command) void {
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
         const tree = command.verb.http.tree.value;
+        warn("oauthback {}", .{tree});
         const rootJsonType = @TypeOf(tree);
         if (true) { //todo: rootJsonType == std.json.Value) {
             if (tree.object.get("client_id")) |cid| {

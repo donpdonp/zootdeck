@@ -199,6 +199,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
     configFile.win_y = settings.win_y;
     var column_infos = std.ArrayList(*ColumnConfig).init(allocator);
     for (settings.columns.items) |column| {
+        warn("config.writefile writing column {s}", .{column.config.title});
         column_infos.append(column.config) catch unreachable;
     }
     configFile.columns = column_infos.items;
