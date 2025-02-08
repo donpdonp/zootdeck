@@ -119,27 +119,29 @@ pub fn init(alloc: Allocator) !void {
 pub fn config_file_path() []const u8 {
     const home_path = std.posix.getenv("HOME").?;
     const home_dir = std.fs.openDirAbsolute(home_path, .{}) catch unreachable;
-    const config_path = std.fs.path.join(allocator, &.{ home_path, ".config", "zootdeck" }) catch unreachable;
-    home_dir.makePath(config_path) catch unreachable;
-    return config_path;
-}
-
-pub fn readfile(dirname: []const u8, filename: []const u8) !Settings {
-    util.log("config file {s} {s}", .{ dirname, filename });
-    const dir = std.fs.openDirAbsolute(dirname, .{}) catch unreachable;
-    dir.access(filename, .{}) catch |err| switch (err) {
+    const config_dir_path = std.fs.path.join(allocator, &.{ home_path, ".config", "zootdeck" }) catch unreachable;
+    home_dir.makePath(config_dir_path) catch unreachable; // try every time
+    const config_dir = std.fs.openDirAbsolute(config_dir_path, .{}) catch unreachable;
+    const filename = "config.json";
+    const config_path = std.fs.path.join(allocator, &.{ config_dir_path, filename }) catch unreachable;
+    config_dir.access(filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
-            warn("Warning: creating new {s}", .{filename});
-            try dir.writeFile(.{ .sub_path = filename, .data = "{}\n" });
+            warn("Warning: creating new {s}", .{config_path});
+            config_dir.writeFile(.{ .sub_path = filename, .data = "{}\n" }) catch unreachable;
         },
         else => {
             warn("readfile err {any}", .{err});
-            return err;
+            unreachable;
         },
     };
-    const json = try dir.readFileAlloc(allocator, filename, std.math.maxInt(usize));
+    return config_path;
+}
+
+pub fn readfile(filename: []const u8) !Settings {
+    util.log("config file {s}", .{filename});
+    const json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
     var settings = try read(json);
-    settings.config_path = dirname;
+    settings.config_path = filename;
     return settings;
 }
 
@@ -203,6 +205,7 @@ pub fn writefile(settings: Settings, filename: []const u8) void {
         column_infos.append(column.config) catch unreachable;
     }
     configFile.columns = column_infos.items;
+
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
         warn("config saved. {s} {} bytes", .{ filename, file.getPos() catch unreachable });

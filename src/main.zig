@@ -29,7 +29,7 @@ pub fn main() !void {
     hello(); // wait for thread.init so log entry for main thread will have a name
     try initialize(alloc);
 
-    if (config.readfile(config.config_file_path(), "config.json")) |config_data| {
+    if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
         try gui.init(alloc, &settings);
         const dummy_payload = try alloc.create(thread.CommandVerb);
@@ -289,14 +289,14 @@ fn guiback(command: *thread.Command) void {
         colInfo.config = colConfig.reset();
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
         gui.schedule(gui.add_column_schedule, @as(*anyopaque, @ptrCast(colInfo)));
-        config.writefile(settings, "config.json");
+        config.writefile(settings, config.config_file_path());
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
         warn("guiback save config column title: ({d}){s}", .{ column.config.title.len, column.config.title });
         column.inError = false;
         column.refreshing = false;
-        config.writefile(settings, "config.json");
+        config.writefile(settings, config.config_file_path());
     }
     if (command.id == 5) { // column remove
         const column = command.verb.column;
@@ -308,7 +308,7 @@ fn guiback(command: *thread.Command) void {
                 break;
             }
         }
-        config.writefile(settings, "config.json");
+        config.writefile(settings, config.config_file_path());
         gui.schedule(gui.column_remove_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 6) { //oauth
@@ -339,11 +339,11 @@ fn guiback(command: *thread.Command) void {
     if (command.id == 9) { // image-only button
         const column = command.verb.column;
         column.config.img_only = !column.config.img_only;
-        config.writefile(settings, "config.json");
+        config.writefile(settings, config.config_file_path());
         gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 10) { // window size changed
-        config.writefile(settings, "config.json");
+        config.writefile(settings, config.config_file_path());
     }
     if (command.id == 11) { // Quit
         warn("byebye...", .{});
@@ -416,7 +416,7 @@ fn oauthtokenback(command: *thread.Command) void {
         if (true) { // todo: rootJsonType == std.json.ObjectMap) {
             if (tree.object.get("access_token")) |cid| {
                 column.config.token = cid.string;
-                config.writefile(settings, "config.json");
+                config.writefile(settings, config.config_file_path());
                 column.last_check = 0;
                 profileget(column, alloc);
                 gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
