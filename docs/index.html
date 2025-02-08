@@ -1,12 +1,14 @@
 <html>
 <style>
-  body { text-align: center;
-         color: white;
+  body { color: white;
          background-color: #777;}
   a { color: white; }
   .name { font-size: 150%; }
   .spacious { padding: 0.5em 0; }
   .logo { width: 1.5em; vertical-align: middle; }
+  .header {  text-align: center; }
+  .screenshot {  text-align: center; }
+  #features { text-align: left; width: 70%; }
 </style>
 <body>
   <div class="header spacious">
@@ -19,11 +21,17 @@
     </div>
   </div>
 
-  <div class="releases spacious">
-    <a href="https://github.com/donpdonp/zootdeck/releases">releases</a>
+  <div id="features">
+    <li> Visit public timeline of any mastodon server quickly and easily
+    <li> Image-only mode
+    <li> Filter by tag
   </div>
 
-  <div>
+  <div class="releases spacious">
+    <a href="https://github.com/donpdonp/zootdeck/releases">Github Releases Page</a>
+  </div>
+
+  <div class="screenshot">
      <img src="img/zoot-shot1.png">
    </div>
 </body>
