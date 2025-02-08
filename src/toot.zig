@@ -27,7 +27,7 @@ pub fn Toot() type {
             toot.tagList = TagList.init(allocator);
             toot.imgList = ImgList.init(allocator);
             toot.parseTags(allocator);
-            warn("toot init {*} {*} has id #{s}", .{ toot, toot.hashmap, if (toot.hashmap.contains("id")) toot.id() else "NO-ID" });
+            warn("toot init #{s}", .{toot.id()});
             return toot;
         }
 
