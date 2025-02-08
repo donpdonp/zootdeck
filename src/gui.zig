@@ -8,7 +8,7 @@ const config = @import("./config.zig");
 const toot_lib = @import("./toot.zig");
 const thread = @import("./thread.zig");
 
-const guilib = @import("./gui/qt.zig");
+const guilib = @import("./gui/gtk3.zig");
 
 const GUIError = error{Init};
 const Column = guilib.Column;
