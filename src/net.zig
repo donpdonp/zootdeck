@@ -25,11 +25,9 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     command.verb = actor.payload;
 
     if (httpget(actor.allocator, actor.payload.http)) |body| {
-        warn("http body {} bytes dumped to tmp/body", .{body.len}); // json dump
-        std.fs.cwd().writeFile(.{ .sub_path = "tmp/body", .data = body }) catch unreachable;
         actor.payload.http.body = body;
     } else |err| {
-        warn("net thread http err {!}", .{err});
+        warn("net.go http err {!}", .{err});
     }
     thread.signal(actor, command);
     return null;

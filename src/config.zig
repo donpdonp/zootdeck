@@ -189,7 +189,6 @@ pub fn read(json: []const u8) !Settings {
             const img_only = value.object.get("img_only").?.bool;
             colInfo.config.img_only = img_only;
             settings.columns.append(colInfo) catch unreachable;
-            warn("config read colinfo {*}", .{colInfo});
         }
     }
     return settings.*;
