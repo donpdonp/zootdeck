@@ -27,7 +27,7 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     if (httpget(actor.allocator, actor.payload.http)) |body| {
         actor.payload.http.body = body;
     } else |err| {
-        warn("net.go http err {!}", .{err});
+        warn("net.go http {!} #{}", .{ err, actor.payload.http.response_code });
     }
     thread.signal(actor, command);
     return null;
@@ -88,6 +88,7 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
                 return NetError.DNS;
             } else {
                 req.response_code = 2000;
+                warn("net.go unknown curl result code {}", .{res});
                 return NetError.Curl;
             }
         }
