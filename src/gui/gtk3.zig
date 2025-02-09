@@ -326,6 +326,7 @@ pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
     const column_footer_netstatus = builder_get_widget(column.builder, "column_footer_netstatus");
     const gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
     if (http.response_code == 0) { // active is a special case
+        c.gtk_style_context_remove_class(gtk_context_netstatus, "net_error");
         c.gtk_style_context_add_class(gtk_context_netstatus, "net_active");
         c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "GET");
     } else {
