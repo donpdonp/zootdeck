@@ -279,7 +279,7 @@ pub fn update_column_toots(column: *Column) void {
     warn("update_column_toots title: {s} toot count: {} {s}", .{
         util.json(column.main.config.title),
         column.main.toots.count(),
-        if (column.main.inError) @as([]const u8, "ERROR") else @as([]const u8, ""),
+        if (column.main.inError) @as([]const u8, "INERROR") else @as([]const u8, ""),
     });
     const column_toot_zone = builder_get_widget(column.builder, "toot_zone");
     var current = column.main.toots.first();
@@ -322,19 +322,21 @@ pub fn update_column_toots(column: *Column) void {
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
-    warn("update_netstatus_column {s} status: {}", .{ http.url, http.response_code });
+    warn("update_netstatus_column {s} {s} status: {}", .{ column.main.filter.hostname, http.url, http.response_code });
     const column_footer_netstatus = builder_get_widget(column.builder, "column_footer_netstatus");
     const gtk_context_netstatus = c.gtk_widget_get_style_context(column_footer_netstatus);
-    //var netmsg: *const u8 = undefined;
-    if (http.response_code == 0) {
-        c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "GET");
+    if (http.response_code == 0) { // active is a special case
         c.gtk_style_context_add_class(gtk_context_netstatus, "net_active");
-    } else if (http.response_code >= 200 and http.response_code < 300) {
-        c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "OK");
+        c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "GET");
+    } else {
         c.gtk_style_context_remove_class(gtk_context_netstatus, "net_active");
+    }
+    if (http.response_code >= 200 and http.response_code < 300) {
+        c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "OK");
     } else if (http.response_code >= 300 and http.response_code < 400) {
         c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "redirect");
     } else if (http.response_code >= 400 and http.response_code < 500) {
+        column.main.inError = true;
         if (http.response_code == 401) {
             c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "token bad");
         } else if (http.response_code == 404) {
@@ -343,13 +345,17 @@ pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
             c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "4xx err");
         }
     } else if (http.response_code >= 500 and http.response_code < 600) {
+        column.main.inError = true;
         c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "5xx err");
     } else if (http.response_code >= 1000 and http.response_code < 1100) {
+        column.main.inError = true;
         c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "json err");
     } else if (http.response_code == 2100) {
+        column.main.inError = true;
         c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "DNS err");
     } else if (http.response_code == 2200) {
-        c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "timeout err");
+        column.main.inError = true;
+        c.gtk_label_set_text(@as(*c.GtkLabel, @ptrCast(column_footer_netstatus)), "timeout");
     }
     if (column.main.inError) {
         c.gtk_style_context_add_class(gtk_context_netstatus, "net_error");
