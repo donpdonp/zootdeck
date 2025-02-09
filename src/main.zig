@@ -384,7 +384,6 @@ fn oauthcolumnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
     _ = thread.create("net", net.go, verb, oauthback) catch unreachable;
-    //  defer thread.destroy(allocator, netthread);
 }
 
 fn oauthtokenget(column: *config.ColumnInfo, code: []const u8, allocator: std.mem.Allocator) void {
@@ -405,21 +404,23 @@ fn oauthtokenback(command: *thread.Command) void {
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
-        const tree = command.verb.http.tree.value;
-        //const rootJsonType = @TypeOf(tree.root);
-        if (true) { // todo: rootJsonType == std.json.ObjectMap) {
-            if (tree.object.get("access_token")) |cid| {
-                column.config.token = cid.string;
-                config.writefile(settings, config.config_file_path());
-                column.last_check = 0;
-                profileget(column, alloc);
-                gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
+        if (std.json.parseFromSlice(std.json.Value, command.actor.allocator, http.body, .{ .allocate = .alloc_always })) |json_parsed| {
+            if (json_parsed.value == .object) {
+                if (json_parsed.value.object.get("access_token")) |cid| {
+                    column.config.token = cid.string;
+                    config.writefile(settings, config.config_file_path());
+                    column.last_check = 0;
+                    profileget(column, alloc);
+                    gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
+                }
+            } else {
+                warn("*oauthtokenback json err body {s}", .{http.body});
             }
-        } else {
-            warn("*oauthtokenback json err body {}", .{http.body});
+        } else |err| {
+            warn("oauthtokenback json parse err {}", .{err});
         }
     } else {
-        //warn("*oauthtokenback net err {}", .{http.response_code});
+        warn("oauthtokenback net err {d}", .{http.response_code});
     }
 }
 
@@ -428,22 +429,23 @@ fn oauthback(command: *thread.Command) void {
     const column = command.verb.http.column;
     const http = command.verb.http;
     if (http.response_code >= 200 and http.response_code < 300) {
-        const tree = command.verb.http.tree.value;
-        warn("oauthback {}", .{tree});
-        const rootJsonType = @TypeOf(tree);
-        if (true) { //todo: rootJsonType == std.json.Value) {
-            if (tree.object.get("client_id")) |cid| {
-                column.oauthClientId = cid.string;
+        if (std.json.parseFromSlice(std.json.Value, command.actor.allocator, http.body, .{ .allocate = .alloc_always })) |json_parsed| {
+            if (json_parsed.value == .object) {
+                if (json_parsed.value.object.get("client_id")) |cid| {
+                    column.oauthClientId = cid.string;
+                }
+                if (json_parsed.value.object.get("client_secret")) |cid| {
+                    column.oauthClientSecret = cid.string;
+                }
+                //warn("*oauthback client id {s} secret {s}", .{ column.oauthClientId, column.oauthClientSecret });
+                gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
+            } else {
+                warn("*oauthback json type err {} {s}", .{ json_parsed.value, http.body });
             }
-            if (tree.object.get("client_secret")) |cid| {
-                column.oauthClientSecret = cid.string;
-            }
-            //warn("*oauthback client id {s} secret {s}", .{ column.oauthClientId, column.oauthClientSecret });
-            gui.schedule(gui.column_config_oauth_url_schedule, @as(*anyopaque, @ptrCast(column)));
-        } else {
-            warn("*oauthback json type err {} {s}", .{ rootJsonType, http.body });
+        } else |err| {
+            warn("oauthback json parse err {}", .{err});
         }
     } else {
-        //warn("*oauthback net err {}", .{http.response_code});
+        warn("*oauthback net err {}", .{http.response_code});
     }
 }
