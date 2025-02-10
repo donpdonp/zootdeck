@@ -159,36 +159,39 @@ fn netback(command: *thread.Command) void {
 fn http_json_object(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Value) {
     if (http.response_ok()) {
         if (http.body.len > 0) {
-            if (http.body.len > 0 and (http.content_type.len == 0 or
-                std.mem.eql(u8, http.content_type, "application/json; charset=utf-8")))
-            {
+            if (http.content_type.len == 0 or http.content_type_json()) {
                 if (std.json.parseFromSlice(std.json.Value, alloc, http.body, .{ .allocate = .alloc_always })) |json_parsed| {
-                    //defer json_parsed.deinit();
                     warn("json parsed {*} {*} {} item0 {*}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len, &json_parsed.value.array.items[0] });
                     switch (json_parsed.value) {
                         .array => return &json_parsed,
                         .object => {
                             if (json_parsed.value.object.get("error")) |err| {
-                                warn("netback json err {s}", .{err.string});
+                                warn("netback mastodon err {s}", .{err.string});
+                                return error.MastodonReponseErr;
                             } else {
-                                warn("netback json object {}", .{json_parsed.value.object});
+                                warn("netback mastodon unknown response {}", .{json_parsed.value.object});
+                                return error.MastodonReponseErr;
                             }
                         },
-                        else => warn("!netback json unknown root tagtype {!}", .{json_parsed.value}),
+                        else => {
+                            warn("!netback json unknown root tagtype {!}", .{json_parsed.value});
+                            return error.JSONparse;
+                        },
                     }
                 } else |err| {
-                    warn("net json err {!}", .{err});
+                    warn("net json parse err {!}", .{err});
                     http.response_code = 1000;
+                    return error.JSONparse;
                 }
+            } else {
+                return error.HTTPContentNotJson;
             }
         } else { // empty body
             return error.JSONparse;
         }
     } else {
-        return error.JSONparse;
+        return error.HTTPResponseNot400;
     }
-
-    return error.HTTPnot400;
 }
 
 fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {

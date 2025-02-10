@@ -107,6 +107,10 @@ pub const HttpInfo = struct {
     pub fn response_ok(self: *HttpInfo) bool {
         return self.response_code >= 200 and self.response_code < 300;
     }
+
+    pub fn content_type_json(self: *HttpInfo) bool {
+        return std.mem.eql(u8, self.content_type, "application/json; charset=utf-8");
+    }
 };
 
 pub const ColumnAuth = struct {
