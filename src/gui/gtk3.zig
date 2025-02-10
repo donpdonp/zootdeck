@@ -9,6 +9,8 @@ const toot_lib = @import("../toot.zig");
 const thread = @import("../thread.zig");
 const filter_lib = @import("../filter.zig");
 
+const theme_css = @embedFile("theme.css");
+
 const c = @cImport({
     @cInclude("gtk/gtk.h");
 });
@@ -55,7 +57,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     myActor = actor;
     // GtkCssProvider *cssProvider = gtk_css_provider_new();
     myCssProvider = c.gtk_css_provider_new();
-    _ = c.gtk_css_provider_load_from_path(myCssProvider, "theme.css", null);
+    _ = c.gtk_css_provider_load_from_data(myCssProvider, theme_css, theme_css.len, null);
     c.gtk_style_context_add_provider_for_screen(c.gdk_screen_get_default(), @as(*c.GtkStyleProvider, @ptrCast(myCssProvider)), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
 
     myBuilder = c.gtk_builder_new();
