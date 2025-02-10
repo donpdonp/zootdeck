@@ -14,7 +14,7 @@ const heartbeat = @import("./heartbeat.zig");
 const config = @import("./config.zig");
 const thread = @import("./thread.zig");
 const db = @import("./db/lmdb.zig");
-const dbfile = @import("./db/file.zig");
+const db_file = @import("./db/file.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
 const toot_list = @import("./toot_list.zig");
@@ -54,7 +54,7 @@ fn initialize(allocator: std.mem.Allocator) !void {
     try heartbeat.init(allocator);
     try statemachine.init(allocator);
     try db.init(allocator);
-    try dbfile.init(allocator);
+    try db_file.init(allocator);
 }
 
 fn stateNext(allocator: std.mem.Allocator) void {
@@ -231,7 +231,7 @@ fn photoback(command: *thread.Command) void {
     var account = reqres.toot.get("account").?.object;
     const acct = account.get("acct").?.string;
     //warn("photoback! acct {s} type {s} size {}", .{ acct, reqres.content_type, reqres.body.len });
-    dbfile.write(acct, "photo", reqres.body, alloc) catch unreachable;
+    db_file.write(acct, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
 }
@@ -254,7 +254,7 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
     const name: []const u8 = account.get("display_name").?.string;
     db.write(acct, "name", name, allocator) catch unreachable;
-    if (dbfile.has(acct, "photo", allocator)) {} else {
+    if (db_file.has(acct, "photo", allocator)) {} else {
         photoget(toot, avatar_url, allocator);
     }
 }
