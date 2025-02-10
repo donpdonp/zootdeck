@@ -103,6 +103,10 @@ pub const HttpInfo = struct {
     tree: std.json.Parsed(std.json.Value),
     column: *ColumnInfo,
     toot: *toot_lib.Type,
+
+    pub fn response_ok(self: *HttpInfo) bool {
+        return self.response_code >= 200 and self.response_code < 300;
+    }
 };
 
 pub const ColumnAuth = struct {

@@ -13,7 +13,7 @@ const net = @import("./net.zig");
 const heartbeat = @import("./heartbeat.zig");
 const config = @import("./config.zig");
 const thread = @import("./thread.zig");
-const db = @import("./db/lmdb.zig");
+const db_kv = @import("./db/lmdb.zig");
 const db_file = @import("./db/file.zig");
 const statemachine = @import("./statemachine.zig");
 const util = @import("./util.zig");
@@ -52,9 +52,9 @@ fn hello() void {
 fn initialize(allocator: std.mem.Allocator) !void {
     try config.init(allocator);
     try heartbeat.init(allocator);
-    try statemachine.init(allocator);
-    try db.init(allocator);
+    try db_kv.init(allocator);
     try db_file.init(allocator);
+    try statemachine.init();
 }
 
 fn stateNext(allocator: std.mem.Allocator) void {
@@ -146,39 +146,49 @@ fn netback(command: *thread.Command) void {
         warn("netback adding toots to column {s}", .{util.json(column.config.title)});
         column.refreshing = false;
         column.last_check = config.now();
-        if (command.verb.http.response_code >= 200 and command.verb.http.response_code < 300) {
-            if (command.verb.http.body.len > 0) {
-                const body = command.actor.payload.http.body;
-                if (body.len > 0 and (command.actor.payload.http.content_type.len == 0 or
-                    std.mem.eql(u8, command.actor.payload.http.content_type, "application/json; charset=utf-8")))
-                {
-                    if (std.json.parseFromSlice(std.json.Value, command.actor.allocator, body, .{ .allocate = .alloc_always })) |json_parsed| {
-                        //defer json_parsed.deinit();
-                        warn("json parsed {*} {*} {} item0 {*}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len, &json_parsed.value.array.items[0] });
-                        switch (json_parsed.value) {
-                            .array => column_load(column, &json_parsed),
-                            .object => {
-                                if (json_parsed.value.object.get("error")) |err| {
-                                    warn("netback json err {s}", .{err.string});
-                                } else {
-                                    warn("netback json object {}", .{json_parsed.value.object});
-                                }
-                            },
-                            else => warn("!netback json unknown root tagtype {!}", .{json_parsed.value}),
-                        }
-                    } else |err| {
-                        warn("net json err {!}", .{err});
-                        command.actor.payload.http.response_code = 1000;
-                    }
-                }
-            } else { // empty body
-                column.inError = true;
-            }
-        } else {
+        if (http_json_object(command.verb.http)) |json_response_object| {
+            column_load(column, json_response_object);
+        } else |_| {
             column.inError = true;
         }
+
         gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
     }
+}
+
+fn http_json_object(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Value) {
+    if (http.response_ok()) {
+        if (http.body.len > 0) {
+            if (http.body.len > 0 and (http.content_type.len == 0 or
+                std.mem.eql(u8, http.content_type, "application/json; charset=utf-8")))
+            {
+                if (std.json.parseFromSlice(std.json.Value, alloc, http.body, .{ .allocate = .alloc_always })) |json_parsed| {
+                    //defer json_parsed.deinit();
+                    warn("json parsed {*} {*} {} item0 {*}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len, &json_parsed.value.array.items[0] });
+                    switch (json_parsed.value) {
+                        .array => return &json_parsed,
+                        .object => {
+                            if (json_parsed.value.object.get("error")) |err| {
+                                warn("netback json err {s}", .{err.string});
+                            } else {
+                                warn("netback json object {}", .{json_parsed.value.object});
+                            }
+                        },
+                        else => warn("!netback json unknown root tagtype {!}", .{json_parsed.value}),
+                    }
+                } else |err| {
+                    warn("net json err {!}", .{err});
+                    http.response_code = 1000;
+                }
+            }
+        } else { // empty body
+            return error.JSONparse;
+        }
+    } else {
+        return error.JSONparse;
+    }
+
+    return error.HTTPnot400;
 }
 
 fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
@@ -251,9 +261,9 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     var account = toot.get("account").?.object;
     const acct: []const u8 = account.get("acct").?.string;
     const avatar_url: []const u8 = account.get("avatar").?.string;
-    db.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
+    db_kv.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
     const name: []const u8 = account.get("display_name").?.string;
-    db.write(acct, "name", name, allocator) catch unreachable;
+    db_kv.write(acct, "name", name, allocator) catch unreachable;
     if (db_file.has(acct, "photo", allocator)) {} else {
         photoget(toot, avatar_url, allocator);
     }

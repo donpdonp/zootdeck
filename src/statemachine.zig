@@ -12,8 +12,7 @@ pub const States = enum {
 
 pub var state: States = undefined;
 
-pub fn init(my_allocator: Allocator) !void {
-    _ = my_allocator;
+pub fn init() !void {
     setState(States.Init);
     if (state != States.Init) return error.StatemachineSetupFail;
 }
