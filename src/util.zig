@@ -76,6 +76,11 @@ pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: Allocator) []c
     }
 }
 
+test "mastodonExpandUrl" {
+    const url = mastodonExpandUrl("some.masto", true, alloc);
+    try std.testing.expectEqualSlices(u8, url, "https://some.masto/api/v1/timelines/home");
+}
+
 pub fn htmlTagStrip(str: []const u8, allocator: Allocator) ![]const u8 {
     var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
     const States = enum { Looking, TagBegin };
@@ -97,13 +102,12 @@ pub fn htmlTagStrip(str: []const u8, allocator: Allocator) ![]const u8 {
 }
 
 test "htmlTagStrip" {
-    const allocator = std.debug.global_allocator;
-    var stripped = htmlTagStrip("a<p>b</p>", allocator) catch unreachable;
-    std.testing.expect(std.mem.eql(u8, stripped, "ab"));
-    stripped = htmlTagStrip("a<p>b</p>c", allocator) catch unreachable;
-    std.testing.expect(std.mem.eql(u8, stripped, "abc"));
-    stripped = htmlTagStrip("a<a img=\"\">b</a>c", allocator) catch unreachable;
-    std.testing.expect(std.mem.eql(u8, stripped, "abc"));
+    var stripped = htmlTagStrip("a<p>b</p>", alloc) catch unreachable;
+    try std.testing.expect(std.mem.eql(u8, stripped, "ab"));
+    stripped = htmlTagStrip("a<p>b</p>c", alloc) catch unreachable;
+    try std.testing.expect(std.mem.eql(u8, stripped, "abc"));
+    stripped = htmlTagStrip("a<a img=\"\">b</a>c", alloc) catch unreachable;
+    try std.testing.expect(std.mem.eql(u8, stripped, "abc"));
 }
 
 pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
@@ -140,7 +144,6 @@ pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
 }
 
 test "htmlEntityParse" {
-    const allocator = std.debug.global_allocator;
-    const stripped = htmlEntityDecode("amp&amp;pam", allocator) catch unreachable;
-    std.testing.expect(std.mem.eql(u8, stripped, "amp&pam"));
+    const stripped = htmlEntityDecode("amp&amp;pam", alloc) catch unreachable;
+    try std.testing.expect(std.mem.eql(u8, stripped, "amp&pam"));
 }

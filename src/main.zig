@@ -146,7 +146,7 @@ fn netback(command: *thread.Command) void {
         warn("netback adding toots to column {s}", .{util.json(column.config.title)});
         column.refreshing = false;
         column.last_check = config.now();
-        if (http_json_object(command.verb.http)) |json_response_object| {
+        if (http_json_parse(command.verb.http)) |json_response_object| {
             column_load(column, json_response_object);
         } else |_| {
             column.inError = true;
@@ -156,7 +156,7 @@ fn netback(command: *thread.Command) void {
     }
 }
 
-fn http_json_object(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Value) {
+fn http_json_parse(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Value) {
     if (http.response_ok()) {
         if (http.body.len > 0) {
             if (http.content_type.len == 0 or http.content_type_json()) {
