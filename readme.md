@@ -3,9 +3,17 @@ https://donpdonp.github.io/zootdeck/
 
 ### Features
 * Any number of columns
-* Column Sources: User account, Site public feed
-* per-column filtering on specific tags, or has an image
-* linux/GTK+
+* Column Sources: Mastodon account, Mastodon public feed
+* per-column filtering on specific tags, or image-only mode
+* native linux/GTK+3 app written in zig
+
+## Column specifiers
+* `@mastodon.server`
+* `@username@mastodon.server`
+ * Public feed
+ * Option to do oauth sign-in to read your own feed
+* `!newsgroup@lemmy.server`
+
 
 ### Roadmap
 * initial QT support
