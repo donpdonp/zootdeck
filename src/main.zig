@@ -254,25 +254,31 @@ fn profileback(command: *thread.Command) void {
 
 fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     var account = toot.get("account").?.object;
-    const acct: []const u8 = account.get("acct").?.string;
 
     // save body
     const json = util.json_stringify(toot.hashmap);
     const toot_acct = toot.acct() catch unreachable;
+    const toot_created_at = toot.get("created_at").?.string;
+
     var toot_host_iter = std.mem.splitScalar(u8, toot_acct, '@');
     _ = toot_host_iter.next();
     const toot_host = toot_host_iter.next().?;
+    // index post
+    const posts_acct_date = std.fmt.allocPrint(allocator, "posts/{s}/{s}", .{ toot_host, toot_created_at }) catch unreachable;
+    db_kv.write(posts_acct_date, "", toot.id(), allocator) catch unreachable;
+    // save post json
     if (db_file.write(&.{ "posts", toot_host }, toot.id(), json, alloc)) |_| {} else |_| {}
 
-    // save avatar url
+    // index avatar url
     const avatar_url: []const u8 = account.get("avatar").?.string;
-    const photos_acct = std.fmt.allocPrint(allocator, "photos/{s}", .{acct}) catch unreachable;
-    db_kv.write(photos_acct, "photo_url", avatar_url, allocator) catch unreachable;
+    const photos_acct = std.fmt.allocPrint(allocator, "photos/{s}", .{toot_acct}) catch unreachable;
+    db_kv.write(photos_acct, "url", avatar_url, allocator) catch unreachable;
 
-    // save display name
+    // index display name
     const name: []const u8 = account.get("display_name").?.string;
     db_kv.write(photos_acct, "name", name, allocator) catch unreachable;
-    if (db_file.has(&.{"photos"}, acct, allocator)) {} else {
+    if (db_file.has(&.{"photos"}, toot_acct, allocator)) {} else {
+        // save photo
         photoget(toot, avatar_url, allocator);
     }
 }

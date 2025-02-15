@@ -27,8 +27,8 @@ pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator
     var found = false;
     if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
         found = true;
-    } else |err| {
-        warn("db_file did not find {s} {!}", .{ keypath, err });
+    } else |_| {
+        // warn("db_file did not find {s} {!}", .{ keypath, err });
     }
     return found;
 }
