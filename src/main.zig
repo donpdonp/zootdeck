@@ -198,6 +198,8 @@ fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json
     column.inError = false;
     for (tree.value.array.items) |*json_value| {
         var toot = toot_lib.Type.init(json_value, alloc);
+        column.toots.sortedInsert(toot, alloc);
+
         cache_update(toot, alloc);
 
         if (toot.get("media_attachments")) |images| {
