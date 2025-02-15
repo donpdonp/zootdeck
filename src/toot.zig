@@ -42,16 +42,15 @@ pub fn Toot() type {
             }
         }
 
-        pub fn author(self: *const Self, acct: []const u8) bool {
+        pub fn acct(self: *const Self) ![]const u8 {
             if (self.hashmap.object.get("account")) |kv| {
                 if (kv.object.get("acct")) |akv| {
-                    const existing_acct = akv.string;
-                    return std.mem.order(u8, acct, existing_acct) == std.math.Order.eq;
+                    return akv.string;
                 } else {
-                    return false;
+                    return error.NoAcct;
                 }
             } else {
-                return false;
+                return error.NoAccount;
             }
         }
 

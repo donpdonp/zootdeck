@@ -45,9 +45,11 @@ pub fn SomeList(comptime T: type) type {
             var ptr = self.list.first;
             while (ptr) |listItem| {
                 const toot = listItem.data;
-                if (toot.author(acct)) {
-                    winners.append(toot) catch unreachable;
-                }
+                if (toot.acct()) |toot_acct| {
+                    if (std.mem.order(u8, acct, toot_acct) == std.math.Order.eq) {
+                        winners.append(toot) catch unreachable;
+                    }
+                } else |_| {}
                 ptr = listItem.next;
             }
             return winners.items;
