@@ -165,7 +165,7 @@ pub fn add_column(colInfo: *config.ColumnInfo) void {
     column.guitoots = std.StringHashMap(*c.GtkBuilder).init(allocator);
     columns.append(column) catch unreachable;
     columns_resize();
-    warn("column added {s}", .{util.json(column.main.makeTitle())});
+    warn("column added {s}", .{util.json_stringify(column.main.makeTitle())});
     const filter = builder_get_widget(column.builder, "column_filter");
     const cFilter = util.sliceToCstr(allocator, column.main.config.filter);
     c.gtk_entry_set_text(@as(*c.GtkEntry, @ptrCast(filter)), cFilter);
@@ -279,7 +279,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 
 pub fn update_column_toots(column: *Column) void {
     warn("update_column_toots title: {s} toot count: {} {s}", .{
-        util.json(column.main.config.title),
+        util.json_stringify(column.main.config.title),
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "INERROR") else @as([]const u8, ""),
     });

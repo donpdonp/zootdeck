@@ -143,7 +143,7 @@ fn netback(command: *thread.Command) void {
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
-        warn("netback adding toots to column {s}", .{util.json(column.config.title)});
+        warn("netback adding toots to column {s}", .{util.json_stringify(column.config.title)});
         column.refreshing = false;
         column.last_check = config.now();
         if (http_json_parse(command.verb.http)) |json_response_object| {
@@ -190,26 +190,18 @@ fn http_json_parse(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Valu
             return error.JSONparse;
         }
     } else {
-        return error.HTTPResponseNot400;
+        return error.HTTPResponseNot2xx;
     }
 }
 
 fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
     column.inError = false;
     for (tree.value.array.items) |*json_value| {
-        var toot = toot_lib.Type.init(&json_value.object, alloc);
-        if (column.toots.contains(toot)) {
-            warn("column_load toot skipped {*} #{s} already in column", .{ toot, toot.id() });
-        } else {
-            column.toots.sortedInsert(toot, alloc);
-            // const html = toot.get("content").?.string;
-            // const root = html_lib.parse(html);
-            // html_lib.search(root);
-            cache_update(toot, alloc);
+        var toot = toot_lib.Type.init(json_value, alloc);
+        cache_update(toot, alloc);
 
-            if (toot.get("media_attachments")) |images| {
-                media_attachments(toot, images.array);
-            }
+        if (toot.get("media_attachments")) |images| {
+            media_attachments(toot, images.array);
         }
     }
 }
@@ -244,7 +236,7 @@ fn photoback(command: *thread.Command) void {
     var account = reqres.toot.get("account").?.object;
     const acct = account.get("acct").?.string;
     //warn("photoback! acct {s} type {s} size {}", .{ acct, reqres.content_type, reqres.body.len });
-    db_file.write(acct, "photo", reqres.body, alloc) catch unreachable;
+    db_file.write(&.{ "accounts", acct }, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
 }
@@ -263,11 +255,20 @@ fn profileback(command: *thread.Command) void {
 fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     var account = toot.get("account").?.object;
     const acct: []const u8 = account.get("acct").?.string;
+
+    // save body
+    const json = util.json_stringify(toot.hashmap);
+    if (db_file.write(&.{"posts"}, toot.id(), json, alloc)) |_| {} else |_| {}
+
+    // save avatar url
     const avatar_url: []const u8 = account.get("avatar").?.string;
-    db_kv.write(acct, "photo_url", avatar_url, allocator) catch unreachable;
+    const photos_acct = std.fmt.allocPrint(allocator, "photos/{s}", .{acct}) catch unreachable;
+    db_kv.write(photos_acct, "photo_url", avatar_url, allocator) catch unreachable;
+
+    // save display name
     const name: []const u8 = account.get("display_name").?.string;
-    db_kv.write(acct, "name", name, allocator) catch unreachable;
-    if (db_file.has(acct, "photo", allocator)) {} else {
+    db_kv.write(photos_acct, "name", name, allocator) catch unreachable;
+    if (db_file.has(&.{"photos"}, acct, allocator)) {} else {
         photoget(toot, avatar_url, allocator);
     }
 }
@@ -380,7 +381,7 @@ fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     if (column.refreshing) {
         warn("column {s} in {s} Ignoring request.", .{ column.config.title, if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        warn("column_refresh http get for title: {s}", .{util.json(column.config.title)});
+        warn("column_refresh http get for title: {s}", .{util.json_stringify(column.config.title)});
         column.refreshing = true;
         columnget(column, allocator);
     }

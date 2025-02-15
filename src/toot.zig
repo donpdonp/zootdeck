@@ -9,7 +9,7 @@ pub const Type = Toot();
 
 pub fn Toot() type {
     return struct {
-        hashmap: *const Toothashmap,
+        hashmap: *const std.json.Value,
         tagList: TagList,
         imgList: ImgList,
 
@@ -20,8 +20,7 @@ pub fn Toot() type {
         const ImgList = std.ArrayList(ImgType);
         const K = []const u8;
         const V = std.json.Value;
-        const Toothashmap = std.ArrayHashMap(K, V, std.array_hash_map.StringContext, true); //std.json.Object
-        pub fn init(hash: *const Toothashmap, allocator: Allocator) *Self {
+        pub fn init(hash: *const std.json.Value, allocator: Allocator) *Self {
             var toot = allocator.create(Self) catch unreachable;
             toot.hashmap = hash;
             toot.tagList = TagList.init(allocator);
@@ -32,11 +31,11 @@ pub fn Toot() type {
         }
 
         pub fn get(self: *const Self, key: K) ?V {
-            return self.hashmap.get(key);
+            return self.hashmap.object.get(key);
         }
 
         pub fn id(self: *const Self) []const u8 {
-            if (self.hashmap.get("id")) |kv| {
+            if (self.hashmap.object.get("id")) |kv| {
                 return kv.string;
             } else {
                 unreachable;
@@ -44,7 +43,7 @@ pub fn Toot() type {
         }
 
         pub fn author(self: *const Self, acct: []const u8) bool {
-            if (self.hashmap.get("account")) |kv| {
+            if (self.hashmap.object.get("account")) |kv| {
                 if (kv.object.get("acct")) |akv| {
                     const existing_acct = akv.string;
                     return std.mem.order(u8, acct, existing_acct) == std.math.Order.eq;
@@ -57,7 +56,7 @@ pub fn Toot() type {
         }
 
         pub fn content(self: *const Self) []const u8 {
-            return self.hashmap.get("content").?.string;
+            return self.hashmap.object.get("content").?.string;
         }
 
         pub fn parseTags(self: *Self, allocator: Allocator) void {
@@ -78,7 +77,7 @@ pub fn Toot() type {
         }
 
         pub fn imgCount(self: *Self) usize {
-            const images = self.hashmap.get("media_attachments").?.array;
+            const images = self.hashmap.object.get("media_attachments").?.array;
             return images.items.len;
         }
     };

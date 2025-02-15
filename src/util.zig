@@ -26,7 +26,7 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
     return ram;
 }
 
-pub fn json(value: anytype) []u8 {
+pub fn json_stringify(value: anytype) []u8 {
     return std.json.stringifyAlloc(alloc, value, .{}) catch unreachable;
 }
 
