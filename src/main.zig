@@ -258,7 +258,11 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
 
     // save body
     const json = util.json_stringify(toot.hashmap);
-    if (db_file.write(&.{"posts"}, toot.id(), json, alloc)) |_| {} else |_| {}
+    const toot_acct = toot.acct() catch unreachable;
+    var toot_host_iter = std.mem.splitScalar(u8, toot_acct, '@');
+    _ = toot_host_iter.next();
+    const toot_host = toot_host_iter.next().?;
+    if (db_file.write(&.{ "posts", toot_host }, toot.id(), json, alloc)) |_| {} else |_| {}
 
     // save avatar url
     const avatar_url: []const u8 = account.get("avatar").?.string;
