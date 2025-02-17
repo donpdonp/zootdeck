@@ -38,6 +38,11 @@ pub fn stats() void {
     util.log("lmdb cache {} entries", .{mdbStat.ms_entries});
 }
 
+pub fn scan(namespaces: []const []const u8) [][]u8 {
+    _ = namespaces;
+    return .{};
+}
+
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     const txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
     const ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));

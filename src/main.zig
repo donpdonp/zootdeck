@@ -147,7 +147,7 @@ fn netback(command: *thread.Command) void {
         column.refreshing = false;
         column.last_check = config.now();
         if (http_json_parse(command.verb.http)) |json_response_object| {
-            column_load(column, json_response_object);
+            cache_load(column, json_response_object);
         } else |_| {
             column.inError = true;
         }
@@ -194,11 +194,21 @@ fn http_json_parse(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Valu
     }
 }
 
-fn column_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
+fn column_sync(column: *config.ColumnInfo) void {
+    warn("column_sync {s}", .{column.config.title});
+    const start_date = "2025-01-01";
+    const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date });
+    for (post_ids) |id| {
+        db_file.read(id);
+    }
+    const toot: *toot_lib.Type = null;
+    column.toots.sortedInsert(toot, alloc);
+}
+
+fn cache_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
     column.inError = false;
     for (tree.value.array.items) |*json_value| {
         var toot = toot_lib.Type.init(json_value, alloc);
-        column.toots.sortedInsert(toot, alloc);
 
         cache_update(toot, alloc);
 
@@ -262,12 +272,13 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     const toot_acct = toot.acct() catch unreachable;
     const toot_created_at = toot.get("created_at").?.string;
 
+    // separate user and host
     var toot_host_iter = std.mem.splitScalar(u8, toot_acct, '@');
     _ = toot_host_iter.next();
     const toot_host = toot_host_iter.next().?;
     // index post
-    const posts_acct_date = std.fmt.allocPrint(allocator, "posts/{s}/{s}", .{ toot_host, toot_created_at }) catch unreachable;
-    db_kv.write(posts_acct_date, "", toot.id(), allocator) catch unreachable;
+    const posts_host_date = std.fmt.allocPrint(allocator, "posts/{s}/{s}", .{ toot_host, toot_created_at }) catch unreachable;
+    db_kv.write(posts_host_date, "", toot.id(), allocator) catch unreachable;
     // save post json
     if (db_file.write(&.{ "posts", toot_host }, toot.id(), json, alloc)) |_| {} else |_| {}
 
