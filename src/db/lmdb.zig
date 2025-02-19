@@ -38,48 +38,74 @@ pub fn stats() void {
     util.log("lmdb cache {} entries", .{mdbStat.ms_entries});
 }
 
-// pub fn scan(namespaces: []const []const u8, allocator: Allocator) []const []const u8 {
-//     const prefix = util.strings_join_separator(namespaces, ':', allocator);
-//     return .{};
-// }
-
-pub fn start_txn(allocator: Allocator) !*c.struct_MDB_txn {
+pub fn txn_open(allocator: Allocator) !*c.struct_MDB_txn {
     const txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
     const ret = c.mdb_txn_begin(env, null, 0, @ptrCast(txnptr));
     if (ret == 0) {
         return txnptr.*;
     } else {
-        warn("mdb_txn_begin ERR {}\n", .{ret});
+        warn("mdb_txn_begin ERR {}", .{ret});
         return error.mdb_txn_begin;
     }
 }
-pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
-    const txnptr = try start_txn(allocator);
-    warn("lmdb write {s} {s}={s}", .{ namespace, key, value });
+
+pub fn dbi_open(txn: *c.struct_MDB_txn, allocator: Allocator) !c.MDB_dbi {
     const dbi_ptr_ptr = allocator.create(c.MDB_dbi) catch unreachable;
-    var ret = c.mdb_dbi_open(txnptr, null, c.MDB_CREATE, dbi_ptr_ptr);
+    const ret = c.mdb_dbi_open(txn, null, c.MDB_CREATE, dbi_ptr_ptr);
     if (ret == 0) {
-        const dbiptr = dbi_ptr_ptr.*;
-        // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
-        const fullkey = std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
-        const mdb_key = mdbVal(fullkey, allocator);
-        const mdb_value = mdbVal(value, allocator);
-        ret = c.mdb_put(txnptr, dbiptr, mdb_key, mdb_value, 0);
+        return dbi_ptr_ptr.*;
+    } else {
+        warn("mdb_dbi_open ERR {}", .{ret});
+        return error.mdb_dbi_open;
+    }
+}
+
+pub fn csr_open(dbi: *c.MDB_dbi, txn: *c.struct_MDB_txn, allocator: Allocator) !*c.MDB_cursor {
+    const csr_ptr_ptr = allocator.create(*c.MDB_cursor) catch unreachable;
+    const ret = c.mdb_cursor_open(txn, dbi, csr_ptr_ptr);
+    if (ret == 0) {
+        return csr_ptr_ptr.*;
+    } else {
+        warn("mdb_dbi_open ERR {}", .{ret});
+        return error.mdb_dbi_open;
+    }
+}
+
+pub fn scan(namespaces: []const []const u8, allocator: Allocator) []const []const u8 {
+    const txn = try txn_open(allocator);
+    const dbi = try dbi_open(txn, allocator);
+    const csr = try csr_open(dbi, txn, allocator);
+
+    const fullkey = util.strings_join_separator(namespaces, ':', allocator);
+    const mdb_key = mdbVal(fullkey, allocator);
+    const mdb_value = mdbVal(null, allocator);
+    const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
+    if (ret == 0) {
+        warn("lmdb.scan {s} key{} val{}", .{ fullkey, mdb_key.mv_size, mdb_value.mv_size });
+        return .{};
+    }
+}
+
+pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
+    warn("lmdb write {s} {s}={s}", .{ namespace, key, value });
+    const txn = try txn_open(allocator);
+    const dbi = try dbi_open(txn, allocator);
+    // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
+    const fullkey = util.strings_join_separator(&.{ namespace, key }, ':', allocator);
+    const mdb_key = mdbVal(fullkey, allocator);
+    const mdb_value = mdbVal(value, allocator);
+    var ret = c.mdb_put(txn, dbi, mdb_key, mdb_value, 0);
+    if (ret == 0) {
+        ret = c.mdb_txn_commit(txn);
         if (ret == 0) {
-            ret = c.mdb_txn_commit(txnptr);
-            if (ret == 0) {
-                _ = c.mdb_dbi_close(env, dbiptr);
-            } else {
-                warn("mdb_txn_commit ERR {}\n", .{ret});
-                return error.mdb_txn_commit;
-            }
+            _ = c.mdb_dbi_close(env, dbi);
         } else {
-            warn("mdb_put ERR {}\n", .{ret});
-            return error.mdb_put;
+            warn("mdb_txn_commit ERR {}\n", .{ret});
+            return error.mdb_txn_commit;
         }
     } else {
-        warn("mdb_dbi_open ERR {}\n", .{ret});
-        return error.mdb_dbi_open;
+        warn("mdb_put ERR {}\n", .{ret});
+        return error.mdb_put;
     }
 }
 
