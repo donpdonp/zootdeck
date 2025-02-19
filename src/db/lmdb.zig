@@ -43,6 +43,23 @@ pub fn scan(namespaces: []const []const u8) [][]u8 {
     return .{};
 }
 
+pub fn join_prefixes(parts: []const []const u8, separator: u8, allocator: Allocator) []const u8 {
+    var buf = std.ArrayList(u8).init(allocator);
+    for (parts, 0..) |part, idx| {
+        buf.appendSlice(part) catch unreachable;
+        if (idx != parts.len - 1) {
+            buf.append(separator) catch unreachable;
+        }
+    }
+    return buf.toOwnedSlice() catch unreachable;
+}
+
+test join_prefixes {
+    const joined = join_prefixes(&.{ "a", "b" }, ':', std.testing.allocator);
+    try std.testing.expectEqualSlices(u8, "a:b", joined);
+    std.testing.allocator.free(joined);
+}
+
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     const txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
     const ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));
