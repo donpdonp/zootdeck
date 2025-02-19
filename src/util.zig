@@ -30,6 +30,23 @@ pub fn json_stringify(value: anytype) []u8 {
     return std.json.stringifyAlloc(alloc, value, .{}) catch unreachable;
 }
 
+pub fn strings_join_separator(parts: []const []const u8, separator: u8, allocator: Allocator) []const u8 {
+    var buf = std.ArrayList(u8).init(allocator);
+    for (parts, 0..) |part, idx| {
+        buf.appendSlice(part) catch unreachable;
+        if (idx != parts.len - 1) {
+            buf.append(separator) catch unreachable;
+        }
+    }
+    return buf.toOwnedSlice() catch unreachable;
+}
+
+test strings_join_separator {
+    const joined = strings_join_separator(&.{ "a", "b" }, ':', std.testing.allocator);
+    try std.testing.expectEqualSlices(u8, "a:b", joined);
+    std.testing.allocator.free(joined);
+}
+
 pub fn log(comptime msg: []const u8, args: anytype) void {
     const tid = thread.self();
     const tid_name = thread.name(tid);

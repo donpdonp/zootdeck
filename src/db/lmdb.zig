@@ -38,61 +38,48 @@ pub fn stats() void {
     util.log("lmdb cache {} entries", .{mdbStat.ms_entries});
 }
 
-pub fn scan(namespaces: []const []const u8) [][]u8 {
-    _ = namespaces;
-    return .{};
-}
+// pub fn scan(namespaces: []const []const u8, allocator: Allocator) []const []const u8 {
+//     const prefix = util.strings_join_separator(namespaces, ':', allocator);
+//     return .{};
+// }
 
-pub fn join_prefixes(parts: []const []const u8, separator: u8, allocator: Allocator) []const u8 {
-    var buf = std.ArrayList(u8).init(allocator);
-    for (parts, 0..) |part, idx| {
-        buf.appendSlice(part) catch unreachable;
-        if (idx != parts.len - 1) {
-            buf.append(separator) catch unreachable;
-        }
-    }
-    return buf.toOwnedSlice() catch unreachable;
-}
-
-test join_prefixes {
-    const joined = join_prefixes(&.{ "a", "b" }, ':', std.testing.allocator);
-    try std.testing.expectEqualSlices(u8, "a:b", joined);
-    std.testing.allocator.free(joined);
-}
-
-pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
+pub fn start_txn(allocator: Allocator) !*c.struct_MDB_txn {
     const txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
-    const ctxnMaybe = @as([*c]?*c.struct_MDB_txn, @ptrCast(txnptr));
-    var ret = c.mdb_txn_begin(env, null, 0, ctxnMaybe);
+    const ret = c.mdb_txn_begin(env, null, 0, @ptrCast(txnptr));
     if (ret == 0) {
-        warn("lmdb write {s} {s}={s}", .{ namespace, key, value });
-        const dbiptr = allocator.create(c.MDB_dbi) catch unreachable;
-        ret = c.mdb_dbi_open(txnptr.*, null, c.MDB_CREATE, dbiptr);
-        if (ret == 0) {
-            // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
-            const fullkey = std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
-            const mdb_key = mdbVal(fullkey, allocator);
-            const mdb_value = mdbVal(value, allocator);
-            ret = c.mdb_put(txnptr.*, dbiptr.*, mdb_key, mdb_value, 0);
-            if (ret == 0) {
-                ret = c.mdb_txn_commit(txnptr.*);
-                if (ret == 0) {
-                    _ = c.mdb_dbi_close(env, dbiptr.*);
-                } else {
-                    warn("mdb_txn_commit ERR {}\n", .{ret});
-                    return error.mdb_txn_commit;
-                }
-            } else {
-                warn("mdb_put ERR {}\n", .{ret});
-                return error.mdb_put;
-            }
-        } else {
-            warn("mdb_dbi_open ERR {}\n", .{ret});
-            return error.mdb_dbi_open;
-        }
+        return txnptr.*;
     } else {
         warn("mdb_txn_begin ERR {}\n", .{ret});
         return error.mdb_txn_begin;
+    }
+}
+pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
+    const txnptr = try start_txn(allocator);
+    warn("lmdb write {s} {s}={s}", .{ namespace, key, value });
+    const dbi_ptr_ptr = allocator.create(c.MDB_dbi) catch unreachable;
+    var ret = c.mdb_dbi_open(txnptr, null, c.MDB_CREATE, dbi_ptr_ptr);
+    if (ret == 0) {
+        const dbiptr = dbi_ptr_ptr.*;
+        // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
+        const fullkey = std.fmt.allocPrint(allocator, "{s}:{s}", .{ namespace, key }) catch unreachable;
+        const mdb_key = mdbVal(fullkey, allocator);
+        const mdb_value = mdbVal(value, allocator);
+        ret = c.mdb_put(txnptr, dbiptr, mdb_key, mdb_value, 0);
+        if (ret == 0) {
+            ret = c.mdb_txn_commit(txnptr);
+            if (ret == 0) {
+                _ = c.mdb_dbi_close(env, dbiptr);
+            } else {
+                warn("mdb_txn_commit ERR {}\n", .{ret});
+                return error.mdb_txn_commit;
+            }
+        } else {
+            warn("mdb_put ERR {}\n", .{ret});
+            return error.mdb_put;
+        }
+    } else {
+        warn("mdb_dbi_open ERR {}\n", .{ret});
+        return error.mdb_dbi_open;
     }
 }
 
