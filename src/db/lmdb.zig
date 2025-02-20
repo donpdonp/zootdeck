@@ -49,9 +49,10 @@ pub fn txn_open(allocator: Allocator) !*c.struct_MDB_txn {
     }
 }
 
-pub fn dbi_open(txn: *c.struct_MDB_txn, allocator: Allocator) !*c.MDB_dbi {
-    const dbi_ptr = allocator.create(c.MDB_dbi) catch unreachable;
-    const ret = c.mdb_dbi_open(txn, null, c.MDB_CREATE, dbi_ptr);
+pub fn dbi_open(txn: *c.struct_MDB_txn, allocator: Allocator) !c.MDB_dbi {
+    _ = allocator;
+    var dbi_ptr: c.MDB_dbi = 0;
+    const ret = c.mdb_dbi_open(txn, null, c.MDB_CREATE, @ptrCast(&dbi_ptr));
     if (ret == 0) {
         return dbi_ptr;
     } else {
@@ -60,11 +61,11 @@ pub fn dbi_open(txn: *c.struct_MDB_txn, allocator: Allocator) !*c.MDB_dbi {
     }
 }
 
-pub fn csr_open(dbi: *c.MDB_dbi, txn: *c.struct_MDB_txn, allocator: Allocator) !?*c.MDB_cursor {
+pub fn csr_open(dbi: c.MDB_dbi, txn: *c.struct_MDB_txn, allocator: Allocator) !?*c.MDB_cursor {
     // const csr_ptr_ptr = allocator.create(*c.MDB_cursor) catch unreachable;
     _ = allocator;
     const csr_ptr: ?*c.MDB_cursor = undefined;
-    const ret = c.mdb_cursor_open(txn, dbi.*, @constCast(&csr_ptr));
+    const ret = c.mdb_cursor_open(txn, dbi, @constCast(&csr_ptr));
     if (ret == 0) {
         return csr_ptr;
     } else {
@@ -96,11 +97,11 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     const fullkey = util.strings_join_separator(&.{ namespace, key }, ':', allocator);
     const mdb_key = mdbVal(fullkey, allocator);
     const mdb_value = mdbVal(value, allocator);
-    var ret = c.mdb_put(txn, dbi.*, mdb_key, mdb_value, 0);
+    var ret = c.mdb_put(txn, dbi, mdb_key, mdb_value, 0);
     if (ret == 0) {
         ret = c.mdb_txn_commit(txn);
         if (ret == 0) {
-            _ = c.mdb_dbi_close(env, dbi.*);
+            _ = c.mdb_dbi_close(env, dbi);
         } else {
             warn("mdb_txn_commit ERR {}", .{ret});
             return error.mdb_txn_commit;
