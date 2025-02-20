@@ -33,7 +33,7 @@ pub fn json_stringify(value: anytype) []u8 {
 pub fn strings_join_separator(parts: []const []const u8, separator: u8, allocator: Allocator) []const u8 {
     var buf = std.ArrayList(u8).init(allocator);
     for (parts, 0..) |part, idx| {
-        // bail if part contains separator
+        // todo abort if part contains separator
 
         buf.appendSlice(part) catch unreachable;
         if (idx != parts.len - 1) {

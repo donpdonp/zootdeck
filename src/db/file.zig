@@ -33,6 +33,10 @@ pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator
     return found;
 }
 
+pub fn read(filename: []const u8, allocator: Allocator) []const u8 {
+    return std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize)) catch unreachable;
+}
+
 pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     var namespace_paths = std.ArrayList([]const u8).init(allocator);
     namespace_paths.append(cache_path) catch unreachable;
