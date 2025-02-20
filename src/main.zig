@@ -76,8 +76,8 @@ fn stateNext(allocator: std.mem.Allocator) void {
 
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
+        columns_net_freshen(allocator);
         columns_db_sync(allocator);
-        // columns_net_freshen(allocator);
     }
 }
 
@@ -196,16 +196,17 @@ fn http_json_parse(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Valu
 }
 
 fn columns_db_sync(allocator: std.mem.Allocator) void {
+    _ = allocator;
     for (settings.columns.items) |column| {
-        warn("column_sync {s}", .{column.config.title});
-        const start_date = "2025-01-01";
-        const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
-        for (post_ids) |id| {
-            _ = db_file.read(id, allocator);
-        }
-        const parsed = std.json.parseFromSlice(std.json.Value, allocator, "{}", .{}) catch unreachable;
-        const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
-        column.toots.sortedInsert(toot, alloc);
+        warn("column_db_sync {s}", .{column.makeTitle()});
+        // const start_date = "2025-01-01";
+        // const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
+        // for (post_ids) |id| {
+        //     const post_json = db_file.read(id, allocator);
+        //     const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
+        //     const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
+        // column.toots.sortedInsert(toot, alloc);
+        // }
     }
 }
 
@@ -392,6 +393,7 @@ fn heartback(command: *thread.Command) void {
 }
 
 fn columns_net_freshen(allocator: std.mem.Allocator) void {
+    warn("columns_net_freshen", .{});
     for (settings.columns.items) |column| {
         const now = config.now();
         const refresh = 60;

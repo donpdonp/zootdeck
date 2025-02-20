@@ -34,6 +34,7 @@ pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator
 }
 
 pub fn read(filename: []const u8, allocator: Allocator) []const u8 {
+    warn("dbfile.read {s}", .{filename});
     return std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize)) catch unreachable;
 }
 
