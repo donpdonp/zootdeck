@@ -38,19 +38,18 @@ pub fn stats() void {
     util.log("lmdb cache {} entries", .{mdbStat.ms_entries});
 }
 
-pub fn txn_open(allocator: Allocator) !*c.struct_MDB_txn {
-    const txnptr = allocator.create(*c.struct_MDB_txn) catch unreachable;
-    const ret = c.mdb_txn_begin(env, null, 0, @ptrCast(txnptr));
+pub fn txn_open() !?*c.MDB_txn {
+    var txn: ?*c.MDB_txn = undefined;
+    const ret = c.mdb_txn_begin(env, null, 0, &txn);
     if (ret == 0) {
-        return txnptr.*;
+        return txn;
     } else {
         warn("mdb_txn_begin ERR {}", .{ret});
         return error.mdb_txn_begin;
     }
 }
 
-pub fn dbi_open(txn: *c.struct_MDB_txn, allocator: Allocator) !c.MDB_dbi {
-    _ = allocator;
+pub fn dbi_open(txn: ?*c.struct_MDB_txn) !c.MDB_dbi {
     var dbi_ptr: c.MDB_dbi = 0;
     const ret = c.mdb_dbi_open(txn, null, c.MDB_CREATE, @ptrCast(&dbi_ptr));
     if (ret == 0) {
@@ -61,11 +60,9 @@ pub fn dbi_open(txn: *c.struct_MDB_txn, allocator: Allocator) !c.MDB_dbi {
     }
 }
 
-pub fn csr_open(dbi: c.MDB_dbi, txn: *c.struct_MDB_txn, allocator: Allocator) !?*c.MDB_cursor {
-    // const csr_ptr_ptr = allocator.create(*c.MDB_cursor) catch unreachable;
-    _ = allocator;
-    const csr_ptr: ?*c.MDB_cursor = undefined;
-    const ret = c.mdb_cursor_open(txn, dbi, @constCast(&csr_ptr));
+pub fn csr_open(txn: ?*c.struct_MDB_txn, dbi: c.MDB_dbi) !?*c.MDB_cursor {
+    var csr_ptr: ?*c.MDB_cursor = undefined;
+    const ret = c.mdb_cursor_open(txn, dbi, &csr_ptr);
     if (ret == 0) {
         return csr_ptr;
     } else {
@@ -75,9 +72,9 @@ pub fn csr_open(dbi: c.MDB_dbi, txn: *c.struct_MDB_txn, allocator: Allocator) !?
 }
 
 pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []const u8 {
-    const txn = try txn_open(allocator);
-    const dbi = try dbi_open(txn, allocator);
-    const csr = try csr_open(dbi, txn, allocator);
+    const txn = try txn_open();
+    const dbi = try dbi_open(txn);
+    const csr = try csr_open(txn, dbi);
 
     const fullkey = util.strings_join_separator(namespaces, ':', allocator);
     const mdb_key = mdbVal(fullkey, allocator);
@@ -91,8 +88,8 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
     warn("lmdb write {s} {s}={s}", .{ namespace, key, value });
-    const txn = try txn_open(allocator);
-    const dbi = try dbi_open(txn, allocator);
+    const txn = try txn_open();
+    const dbi = try dbi_open(txn);
     // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
     const fullkey = util.strings_join_separator(&.{ namespace, key }, ':', allocator);
     const mdb_key = mdbVal(fullkey, allocator);
