@@ -81,17 +81,17 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     const mdb_value = mdbVal("", allocator);
     const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
     if (ret == 0) {
-        warn("lmdb.scan {s} key{} val{}", .{ fullkey, mdb_key.mv_size, mdb_value.mv_size });
+        warn("lmdb.scan {s} key {s} = val {s}", .{ fullkey, @as([*:0]const u8, @ptrCast(mdb_key.mv_data)), @as([*:0]const u8, @ptrCast(mdb_value.mv_data)) });
     }
     return &.{};
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
-    warn("lmdb write {s} {s}={s}", .{ namespace, key, value });
     const txn = try txn_open();
     const dbi = try dbi_open(txn);
     // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
     const fullkey = util.strings_join_separator(&.{ namespace, key }, ':', allocator);
+    warn("lmdb.write {s}={s}", .{ fullkey, value });
     const mdb_key = mdbVal(fullkey, allocator);
     const mdb_value = mdbVal(value, allocator);
     var ret = c.mdb_put(txn, dbi, mdb_key, mdb_value, 0);

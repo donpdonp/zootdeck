@@ -196,17 +196,18 @@ fn http_json_parse(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Valu
 }
 
 fn columns_db_sync(allocator: std.mem.Allocator) void {
-    _ = allocator;
     for (settings.columns.items) |column| {
         warn("column_db_sync {s}", .{column.makeTitle()});
-        // const start_date = "2025-01-01";
-        // const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
-        // for (post_ids) |id| {
-        //     const post_json = db_file.read(id, allocator);
-        //     const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
-        //     const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
-        // column.toots.sortedInsert(toot, alloc);
-        // }
+        const start_date = "2025-01-01";
+        // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
+        // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
+        const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
+        for (post_ids) |id| {
+            const post_json = db_file.read(id, allocator);
+            const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
+            const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
+            column.toots.sortedInsert(toot, alloc);
+        }
     }
 }
 
@@ -282,14 +283,14 @@ fn cache_update(toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     _ = toot_host_iter.next();
     const toot_host = toot_host_iter.next().?;
     // index post
-    const posts_host_date = std.fmt.allocPrint(allocator, "posts/{s}/{s}", .{ toot_host, toot_created_at }) catch unreachable;
+    const posts_host_date = std.fmt.allocPrint(allocator, "posts:{s}:{s}", .{ toot_host, toot_created_at }) catch unreachable; // todo
     db_kv.write(posts_host_date, "", toot.id(), allocator) catch unreachable;
     // save post json
     if (db_file.write(&.{ "posts", toot_host }, toot.id(), json, alloc)) |_| {} else |_| {}
 
     // index avatar url
     const avatar_url: []const u8 = account.get("avatar").?.string;
-    const photos_acct = std.fmt.allocPrint(allocator, "photos/{s}", .{toot_acct}) catch unreachable;
+    const photos_acct = std.fmt.allocPrint(allocator, "photos:{s}", .{toot_acct}) catch unreachable;
     db_kv.write(photos_acct, "url", avatar_url, allocator) catch unreachable;
 
     // index display name
