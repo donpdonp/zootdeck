@@ -80,8 +80,14 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     const mdb_key = mdbVal(fullkey, allocator);
     const mdb_value = mdbVal("", allocator);
     const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
+    var ret_key: []const u8 = undefined;
+    ret_key.len = mdb_key.mv_size;
+    ret_key.ptr = @as([*]const u8, @ptrCast(mdb_key.mv_data));
+    var ret_value: []const u8 = undefined;
+    ret_value.len = mdb_value.mv_size;
+    ret_value.ptr = @as([*]const u8, @ptrCast(mdb_value.mv_data));
     if (ret == 0) {
-        warn("lmdb.scan {s} key {s} = val {s}", .{ fullkey, @as([*:0]const u8, @ptrCast(mdb_key.mv_data)), @as([*:0]const u8, @ptrCast(mdb_value.mv_data)) });
+        warn("lmdb.scan {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
     }
     return &.{};
 }

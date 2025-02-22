@@ -160,19 +160,16 @@ pub fn read(json: []const u8) !Settings {
     settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
 
     if (root.get("win_x")) |w| {
-        warn("config: win_x", .{});
         settings.win_x = w.integer;
     } else {
         settings.win_x = 800;
     }
     if (root.get("win_y")) |h| {
-        warn("config: win_y", .{});
         settings.win_y = h.integer;
     } else {
         settings.win_y = 600;
     }
     if (root.get("columns")) |columns| {
-        warn("config: columns {}", .{columns.array.items.len});
         for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             _ = colInfo.reset();
