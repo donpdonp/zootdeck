@@ -82,6 +82,7 @@ pub fn csr_open(txn: ?*c.struct_MDB_txn, dbi: c.MDB_dbi) !?*c.MDB_cursor {
 }
 
 pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []const u8 {
+    var answers = std.ArrayList([]const u8).init(allocator);
     const txn = try txn_open();
     const dbi = try dbi_open(txn);
     const csr = try csr_open(txn, dbi);
@@ -98,9 +99,10 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     ret_value.ptr = @as([*]const u8, @ptrCast(mdb_value.mv_data));
     if (ret == 0) {
         warn("lmdb.scan {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
+        try answers.append(ret_value);
     }
     try txn_commit(txn);
-    return &.{};
+    return answers.toOwnedSlice();
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {

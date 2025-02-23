@@ -33,8 +33,12 @@ pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator
     return found;
 }
 
-pub fn read(filename: []const u8, allocator: Allocator) []const u8 {
-    warn("dbfile.read {s}", .{filename});
+pub fn read(namespaces: []const []const u8, allocator: Allocator) []const u8 {
+    var namespace_paths = std.ArrayList([]const u8).init(allocator);
+    namespace_paths.append(cache_path) catch unreachable;
+    namespace_paths.appendSlice(namespaces) catch unreachable;
+    const filename = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
+    warn("db_file.read {s}", .{filename});
     return std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize)) catch unreachable;
 }
 
@@ -43,13 +47,13 @@ pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8,
     namespace_paths.append(cache_path) catch unreachable;
     namespace_paths.appendSlice(namespaces) catch unreachable;
     const dirpath = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
-    warn("mkdir {s}", .{dirpath});
+    warn("db_file.write mkdir {s}", .{dirpath});
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
     defer dir.close();
     if (dir.createFile(key, .{ .truncate = true })) |*file| {
         _ = try file.write(value);
         file.close();
     } else |err| {
-        warn("open write err {s} {s} {any}", .{ dirpath, key, err });
+        warn("db_file.write open err {s} {s} {any}", .{ dirpath, key, err });
     }
 }

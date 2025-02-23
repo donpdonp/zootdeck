@@ -197,17 +197,18 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
 
 fn columns_db_sync(allocator: std.mem.Allocator) void {
     for (settings.columns.items) |column| {
-        warn("column_db_sync {s}", .{column.makeTitle()});
         const start_date = "2025-01-01";
         // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
         // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
         const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
+        warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
         for (post_ids) |id| {
-            const post_json = db_file.read(id, allocator);
+            const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
             const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
             const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
             column.toots.sortedInsert(toot, alloc);
         }
+        // gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
     }
 }
 

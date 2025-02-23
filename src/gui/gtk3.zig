@@ -279,7 +279,7 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 
 pub fn update_column_toots(column: *Column) void {
     warn("update_column_toots title: {s} toot count: {} {s}", .{
-        util.json_stringify(column.main.config.title),
+        util.json_stringify(column.main.makeTitle()),
         column.main.toots.count(),
         if (column.main.inError) @as([]const u8, "INERROR") else @as([]const u8, ""),
     });
