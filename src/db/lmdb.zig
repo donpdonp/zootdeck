@@ -49,7 +49,18 @@ pub fn txn_open() !?*c.MDB_txn {
     }
 }
 
+pub fn txn_commit(txn: ?*c.MDB_txn) !void {
+    const ret = c.mdb_txn_commit(txn);
+    if (ret == 0) {
+        return;
+    } else {
+        warn("mdb_txn_commit ERR {}", .{ret});
+        return error.mdb_txn_commit;
+    }
+}
+
 pub fn dbi_open(txn: ?*c.struct_MDB_txn) !c.MDB_dbi {
+    warn("dbi_open()", .{});
     var dbi_ptr: c.MDB_dbi = 0;
     const ret = c.mdb_dbi_open(txn, null, c.MDB_CREATE, @ptrCast(&dbi_ptr));
     if (ret == 0) {
@@ -89,26 +100,24 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     if (ret == 0) {
         warn("lmdb.scan {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
     }
+    try txn_commit(txn);
     return &.{};
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
+    warn("lmdb.write pre open", .{});
     const txn = try txn_open();
+    warn("lmdb.write pre dbi", .{});
     const dbi = try dbi_open(txn);
     // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
     const fullkey = util.strings_join_separator(&.{ namespace, key }, ':', allocator);
     warn("lmdb.write {s}={s}", .{ fullkey, value });
     const mdb_key = mdbVal(fullkey, allocator);
     const mdb_value = mdbVal(value, allocator);
-    var ret = c.mdb_put(txn, dbi, mdb_key, mdb_value, 0);
+    warn("lmdb.write pre put", .{});
+    const ret = c.mdb_put(txn, dbi, mdb_key, mdb_value, 0);
     if (ret == 0) {
-        ret = c.mdb_txn_commit(txn);
-        if (ret == 0) {
-            _ = c.mdb_dbi_close(env, dbi);
-        } else {
-            warn("mdb_txn_commit ERR {}", .{ret});
-            return error.mdb_txn_commit;
-        }
+        try txn_commit(txn);
     } else {
         warn("mdb_put ERR {}\n", .{ret});
         return error.mdb_put;

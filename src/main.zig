@@ -140,7 +140,7 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
 }
 
 fn netback(command: *thread.Command) void {
-    warn("*netback {*} cmd# {} {*}", .{ command, command.id, command.verb });
+    warn("*netback {*} cmd#{} {*}", .{ command, command.id, command.verb });
     if (command.id == 1) {
         gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
         var column = command.verb.http.column;
@@ -157,14 +157,14 @@ fn netback(command: *thread.Command) void {
     }
 }
 
-fn http_json_parse(http: *config.HttpInfo) !*const std.json.Parsed(std.json.Value) {
+fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
     if (http.response_ok()) {
         if (http.body.len > 0) {
             if (http.content_type.len == 0 or http.content_type_json()) {
                 if (std.json.parseFromSlice(std.json.Value, alloc, http.body, .{ .allocate = .alloc_always })) |json_parsed| {
                     warn("http_json_parse {*} {*} {} item0 {*}", .{ &json_parsed, &json_parsed.value, json_parsed.value.array.items.len, &json_parsed.value.array.items[0] });
                     switch (json_parsed.value) {
-                        .array => return &json_parsed,
+                        .array => return json_parsed,
                         .object => {
                             if (json_parsed.value.object.get("error")) |err| {
                                 warn("netback mastodon err {s}", .{err.string});
@@ -211,9 +211,9 @@ fn columns_db_sync(allocator: std.mem.Allocator) void {
     }
 }
 
-fn cache_load(column: *config.ColumnInfo, tree: *const std.json.Parsed(std.json.Value)) void {
+fn cache_load(column: *config.ColumnInfo, tree: std.json.Parsed(std.json.Value)) void {
     column.inError = false;
-    warn("cache_load tree parsed {*} value {*} len {}", .{ tree, &tree.value, tree.value.array.items.len });
+    warn("cache_load parsed {*} value {*} len {}", .{ &tree, &tree.value, tree.value.array.items.len });
     for (tree.value.array.items) |*json_value| {
         warn("cache_load item_loop {*}", .{json_value});
         var toot = toot_lib.Type.init(json_value, alloc);
@@ -279,10 +279,13 @@ fn cache_update(host: []const u8, toot: *toot_lib.Type, allocator: std.mem.Alloc
     const json = util.json_stringify(toot.hashmap);
     const toot_acct = toot.acct() catch unreachable;
     const toot_created_at = toot.get("created_at").?.string;
+    warn("cache_update toot {*}", .{toot});
 
     // index post
     const posts_host_date = std.fmt.allocPrint(allocator, "posts:{s}", .{host}) catch unreachable; // todo
+    warn("cache_update pre kv write toot {*}", .{toot});
     db_kv.write(posts_host_date, toot_created_at, toot.id(), allocator) catch unreachable;
+    warn("cache_update post kv write toot {*}", .{toot});
     // save post json
     if (db_file.write(&.{ "posts", host }, toot.id(), json, alloc)) |_| {} else |_| {}
 
