@@ -279,13 +279,10 @@ fn cache_update(host: []const u8, toot: *toot_lib.Type, allocator: std.mem.Alloc
     const json = util.json_stringify(toot.hashmap);
     const toot_acct = toot.acct() catch unreachable;
     const toot_created_at = toot.get("created_at").?.string;
-    warn("cache_update toot {*}", .{toot});
 
     // index post
     const posts_host_date = std.fmt.allocPrint(allocator, "posts:{s}", .{host}) catch unreachable; // todo
-    warn("cache_update pre kv write toot {*}", .{toot});
     db_kv.write(posts_host_date, toot_created_at, toot.id(), allocator) catch unreachable;
-    warn("cache_update post kv write toot {*}", .{toot});
     // save post json
     if (db_file.write(&.{ "posts", host }, toot.id(), json, alloc)) |_| {} else |_| {}
 
