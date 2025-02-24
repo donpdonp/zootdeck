@@ -6,7 +6,7 @@ const Allocator = std.mem.Allocator;
 var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
 const alloc = GPAllocator.allocator();
 
-const Buffers = @import("./simple_buffer.zig");
+const SimpleBuffer = @import("./simple_buffer.zig");
 
 pub fn sliceAddNull(allocator: Allocator, str: []const u8) []const u8 {
     return allocator.dupeZ(u8, str) catch unreachable;
@@ -73,7 +73,7 @@ pub fn hashIdSame(comptime T: type, a: T, b: T) bool {
 }
 
 pub fn mastodonExpandUrl(host: []const u8, home: bool, allocator: Allocator) []const u8 {
-    var url = Buffers.SimpleU8.initSize(allocator, 0) catch unreachable;
+    var url = SimpleBuffer.SimpleU8.initSize(allocator, 0) catch unreachable;
     var filteredHost = host;
     if (filteredHost.len > 0) {
         if (filteredHost[filteredHost.len - 1] == '/') {
@@ -101,7 +101,7 @@ test "mastodonExpandUrl" {
 }
 
 pub fn htmlTagStrip(str: []const u8, allocator: Allocator) ![]const u8 {
-    var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
+    var newStr = try SimpleBuffer.SimpleU8.initSize(allocator, 0);
     const States = enum { Looking, TagBegin };
     var state = States.Looking;
     var tagEndPlusOne: usize = 0;
@@ -130,7 +130,7 @@ test "htmlTagStrip" {
 }
 
 pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
-    var newStr = try Buffers.SimpleU8.initSize(allocator, 0);
+    var newStr = try SimpleBuffer.SimpleU8.initSize(allocator, 0);
     var previousStrEndMark: usize = 0;
     const States = enum { Looking, EntityBegin, EntityFound };
     var state = States.Looking;

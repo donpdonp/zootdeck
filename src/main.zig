@@ -2,11 +2,9 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const warn = util.log;
-var LogAllocator = std.heap.loggingAllocator(std.heap.c_allocator);
 var GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{}){};
 const alloc = GeneralPurposeAllocator.allocator(); // take the ptr in a separate step
 
-const simple_buffer = @import("./simple_buffer.zig");
 const oauth = @import("./oauth.zig");
 const gui = @import("./gui.zig");
 const net = @import("./net.zig");

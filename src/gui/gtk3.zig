@@ -1,10 +1,9 @@
 // GTK+
 const std = @import("std");
-const Allocator = std.mem.Allocator;
 const util = @import("../util.zig");
 const warn = util.log;
 const config = @import("../config.zig");
-const simple_buffer = @import("../simple_buffer.zig");
+const SimpleBuffer = @import("../simple_buffer.zig");
 const toot_lib = @import("../toot.zig");
 const thread = @import("../thread.zig");
 const filter_lib = @import("../filter.zig");
@@ -20,7 +19,7 @@ const GUIError = error{
     GladeLoad,
 };
 
-var allocator: Allocator = undefined;
+var allocator: std.mem.Allocator = undefined;
 var settings: *config.Settings = undefined;
 pub const queue = std.ArrayList(u8).init(allocator);
 var myActor: *thread.Actor = undefined;
@@ -42,7 +41,7 @@ pub fn libname() []const u8 {
     return "GTK";
 }
 
-pub fn init(alloca: Allocator, set: *config.Settings) !void {
+pub fn init(alloca: std.mem.Allocator, set: *config.Settings) !void {
     warn("{s} init()", .{libname()});
     settings = set;
     allocator = alloca;
@@ -511,7 +510,7 @@ fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_heig
 }
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
-    var wrapped = try simple_buffer.SimpleU8.initSize(allocator, 0);
+    var wrapped = try SimpleBuffer.SimpleU8.initSize(allocator, 0);
     const short_lines = str.len / limit;
     const extra_bytes = str.len % limit;
     var idx: usize = 0;
@@ -711,7 +710,7 @@ pub fn column_config_oauth_url(colInfo: *config.ColumnInfo) void {
     //var oauth_box = builder_get_widget(column.builder, "column_config_oauth_box");
 
     //const oauth_label = builder_get_widget(column.builder, "column_config_oauth_label");
-    var oauth_url_buf = simple_buffer.SimpleU8.initSize(allocator, 0) catch unreachable;
+    var oauth_url_buf = SimpleBuffer.SimpleU8.initSize(allocator, 0) catch unreachable;
     oauth_url_buf.append("https://") catch unreachable;
     oauth_url_buf.append(column.main.filter.host()) catch unreachable;
     oauth_url_buf.append("/oauth/authorize") catch unreachable;
