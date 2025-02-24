@@ -44,7 +44,7 @@ pub fn main() !void {
 }
 
 fn hello() void {
-    util.log("zootdeck {s} {s} tid {}", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), thread.self() });
+    util.log("zootdeck {s} {s} zig {s}", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), builtin.zig_version_string });
 }
 
 fn initialize(allocator: std.mem.Allocator) !void {
@@ -74,7 +74,7 @@ fn stateNext(allocator: std.mem.Allocator) void {
 
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
-        columns_net_freshen(allocator);
+        // columns_net_freshen(allocator);
         columns_db_sync(allocator);
     }
 }
@@ -204,9 +204,10 @@ fn columns_db_sync(allocator: std.mem.Allocator) void {
             const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
             const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
             const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
+            warn("columns_db_sync inserting {*} {}", .{ toot, toot });
             column.toots.sortedInsert(toot, alloc);
         }
-        // gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
+        gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
     }
 }
 

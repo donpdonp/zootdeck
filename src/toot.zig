@@ -83,23 +83,20 @@ pub fn Toot() type {
 }
 
 test "Toot" {
-    var bytes: [8096]u8 = undefined;
-    const allocator = std.heap.FixedBufferAllocator.init(bytes[0..]).allocator;
-    var tootHash = Type.Toothashmap.init(allocator);
+    const allocator = std.testing.allocator;
+    var tootHash = std.json.Value{ .object = std.json.ObjectMap.init(allocator) };
 
-    var jString = std.json.Value{ .String = "" };
-    _ = tootHash.put("content", jString) catch unreachable;
+    var jString = std.json.Value{ .string = "ABC" };
+    _ = tootHash.object.put("content", jString) catch unreachable;
 
-    jString.String = "ABC";
-    _ = tootHash.put("content", jString) catch unreachable;
-    var toot = Type.init(tootHash, allocator);
-    testing.expect(toot.tagList.count() == 0);
+    var toot = Type.init(&tootHash, allocator);
+    try testing.expect(toot.tagList.items.len == 0);
     warn("toot1 {*}\n", &toot);
 
-    jString.String = "ABC   #xyz";
-    _ = tootHash.put("content", jString) catch unreachable;
-    const toot2 = Type.init(tootHash, allocator);
+    jString.string = "ABC   #xyz";
+    _ = tootHash.object.put("content", jString) catch unreachable;
+    const toot2 = Type.init(&tootHash, allocator);
     warn("toot2 {*}\n", &toot2);
-    testing.expect(toot2.tagList.count() == 1);
-    testing.expect(std.mem.order(u8, toot2.tagList.at(0), "#xyz") == std.math.Order.eq);
+    try testing.expect(toot2.tagList.items.len == 1);
+    try testing.expect(std.mem.order(u8, toot2.tagList.items[0], "#xyz") == std.math.Order.eq);
 }
