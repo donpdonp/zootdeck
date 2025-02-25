@@ -203,7 +203,7 @@ fn columns_db_sync(allocator: std.mem.Allocator) void {
         for (post_ids) |id| {
             const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
             const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
-            const toot: *toot_lib.Type = toot_lib.Type.init(&parsed.value, allocator);
+            const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
             warn("columns_db_sync inserting {*} {}", .{ toot, toot });
             column.toots.sortedInsert(toot, alloc);
         }
@@ -214,8 +214,7 @@ fn columns_db_sync(allocator: std.mem.Allocator) void {
 fn cache_load(column: *config.ColumnInfo, tree: std.json.Parsed(std.json.Value)) void {
     column.inError = false;
     warn("cache_load parsed {*} value {*} len {}", .{ &tree, &tree.value, tree.value.array.items.len });
-    for (tree.value.array.items) |*json_value| {
-        warn("cache_load item_loop {*}", .{json_value});
+    for (tree.value.array.items) |json_value| {
         var toot = toot_lib.Type.init(json_value, alloc);
 
         cache_update(column.filter.hostname, toot, alloc);

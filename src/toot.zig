@@ -9,7 +9,7 @@ pub const Type = Toot();
 
 pub fn Toot() type {
     return struct {
-        hashmap: *const std.json.Value,
+        hashmap: std.json.Value,
         tagList: TagList,
         imgList: ImgList,
 
@@ -20,7 +20,7 @@ pub fn Toot() type {
         const ImgList = std.ArrayList(ImgType);
         const K = []const u8;
         const V = std.json.Value;
-        pub fn init(hash: *const std.json.Value, allocator: Allocator) *Self {
+        pub fn init(hash: std.json.Value, allocator: Allocator) *Self {
             var toot = allocator.create(Self) catch unreachable;
             toot.hashmap = hash;
             toot.tagList = TagList.init(allocator);
