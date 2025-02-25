@@ -318,7 +318,7 @@ pub fn update_column_toots(column: *Column) void {
         // help? logo?
     }
     const column_footer_count_label = builder_get_widget(column.builder, "column_footer_count");
-    const tootword = if (column.main.config.img_only) "images" else "toots";
+    const tootword = if (column.main.config.img_only) "images" else "posts";
     const countStr = std.fmt.allocPrint(allocator, "{} {s}", .{ column.main.toots.count(), tootword }) catch unreachable;
     const cCountStr = util.sliceToCstr(allocator, countStr);
     c.gtk_label_set_text(@ptrCast(column_footer_count_label), cCountStr);
