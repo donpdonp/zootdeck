@@ -88,21 +88,33 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     const csr = try csr_open(txn, dbi);
 
     const fullkey = util.strings_join_separator(namespaces, ':', allocator);
-    const mdb_key = mdbVal(fullkey, allocator);
-    const mdb_value = mdbVal("", allocator);
+    const mdb_key = sliceToMdbVal(fullkey, allocator);
+    const mdb_value = sliceToMdbVal("", allocator);
     const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_SET_RANGE);
-    var ret_key: []const u8 = undefined;
-    ret_key.len = mdb_key.mv_size;
-    ret_key.ptr = @as([*]const u8, @ptrCast(mdb_key.mv_data));
-    var ret_value: []const u8 = undefined;
-    ret_value.len = mdb_value.mv_size;
-    ret_value.ptr = @as([*]const u8, @ptrCast(mdb_value.mv_data));
+    const ret_key = mdbValToBytes(mdb_key);
+    const ret_value = mdbValToBytes(mdb_value);
     if (ret == 0) {
         warn("lmdb.scan {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
         try answers.append(ret_value);
+        while (innerScan(csr, mdb_key, allocator)) |val| {
+            if (answers.items.len < 5) {
+                try answers.append(val);
+            }
+        }
     }
     try txn_commit(txn);
     return answers.toOwnedSlice();
+}
+
+fn innerScan(csr: ?*c.MDB_cursor, mdb_key: ?*c.MDB_val, allocator: std.mem.Allocator) ?[]const u8 {
+    const mdb_value = sliceToMdbVal("", allocator);
+    const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
+    const ret_value = mdbValToBytes(mdb_value);
+    if (ret == 0) {
+        warn("lmdb.scan \"{s}\"", .{ret_value});
+        return ret_value;
+    }
+    return null;
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
@@ -111,8 +123,8 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     // TODO: seperator issue. perhaps 2 byte invalid utf8 sequence
     const fullkey = util.strings_join_separator(&.{ namespace, key }, ':', allocator);
     warn("lmdb.write {s}={s}", .{ fullkey, value });
-    const mdb_key = mdbVal(fullkey, allocator);
-    const mdb_value = mdbVal(value, allocator);
+    const mdb_key = sliceToMdbVal(fullkey, allocator);
+    const mdb_value = sliceToMdbVal(value, allocator);
     const ret = c.mdb_put(txn, dbi, mdb_key, mdb_value, 0);
     if (ret == 0) {
         try txn_commit(txn);
@@ -122,10 +134,16 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
     }
 }
 
-fn mdbVal(data: []const u8, allocator: Allocator) *c.MDB_val {
-    const dataptr = @as(?*anyopaque, @ptrFromInt(@intFromPtr(data.ptr)));
+fn sliceToMdbVal(data: []const u8, allocator: Allocator) *c.MDB_val {
     var mdb_val = allocator.create(c.MDB_val) catch unreachable;
     mdb_val.mv_size = data.len;
-    mdb_val.mv_data = dataptr;
+    mdb_val.mv_data = @constCast(@ptrCast(data.ptr));
     return mdb_val;
+}
+
+fn mdbValToBytes(mdb_val: *c.MDB_val) []const u8 {
+    var ret_key: []const u8 = undefined;
+    ret_key.len = mdb_val.mv_size;
+    ret_key.ptr = @as([*]const u8, @ptrCast(mdb_val.mv_data));
+    return ret_key;
 }
