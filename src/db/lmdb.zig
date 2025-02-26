@@ -94,9 +94,9 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     const ret_key = mdbValToBytes(mdb_key);
     const ret_value = mdbValToBytes(mdb_value);
     if (ret == 0) {
-        warn("lmdb.scan {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
+        warn("lmdb.scan set_range {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
         try answers.append(ret_value);
-        while (innerScan(csr, mdb_key, allocator)) |val| {
+        while (innerScan(csr, fullkey, allocator)) |val| {
             if (answers.items.len < 5) {
                 try answers.append(val);
             }
@@ -106,15 +106,31 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     return answers.toOwnedSlice();
 }
 
-fn innerScan(csr: ?*c.MDB_cursor, mdb_key: ?*c.MDB_val, allocator: std.mem.Allocator) ?[]const u8 {
+fn innerScan(csr: ?*c.MDB_cursor, fullkey: []const u8, allocator: std.mem.Allocator) ?[]const u8 {
+    const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
     const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
+    const ret_key = mdbValToBytes(mdb_key);
     const ret_value = mdbValToBytes(mdb_value);
     if (ret == 0) {
-        warn("lmdb.scan \"{s}\"", .{ret_value});
-        return ret_value;
+        if (prefix_match(fullkey, ret_key)) {
+            warn("lmdb.scan next {s} \"{s}\" \"{s}\"", .{ fullkey, ret_key, ret_value });
+            return ret_value;
+        } else {
+            warn("lmdb.scan next mismatch {s} \"{s}\" \"{s}\"", .{ fullkey, ret_key, ret_value });
+        }
     }
     return null;
+}
+fn prefix_match(a: []const u8, b: []const u8) bool {
+    return std.mem.eql(u8, a, b[0..a.len]);
+}
+
+test prefix_match {
+    try std.testing.expect(prefix_match("A", "AB"));
+    try std.testing.expect(prefix_match("A:", "A:"));
+    try std.testing.expect(prefix_match("", "A:"));
+    try std.testing.expect(!prefix_match("B", "AB"));
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
