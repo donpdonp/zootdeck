@@ -106,9 +106,8 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     return answers.toOwnedSlice();
 }
 
-fn prefix_match(a: []const u8, b: []const u8) bool {
-    warn("prefix_match {s} {s}", .{ a, b });
-    return std.mem.eql(u8, a, b[0..a.len]);
+fn prefix_match(prefix: []const u8, body: []const u8) bool {
+    return std.mem.startsWith(u8, body, prefix);
 }
 
 test prefix_match {
@@ -116,6 +115,7 @@ test prefix_match {
     try std.testing.expect(prefix_match("A:", "A:"));
     try std.testing.expect(prefix_match("", "A:"));
     try std.testing.expect(!prefix_match("B", "AB"));
+    try std.testing.expect(!prefix_match("BB", "B"));
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
