@@ -195,7 +195,7 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
 
 fn columns_db_sync(allocator: std.mem.Allocator) void {
     for (settings.columns.items) |column| {
-        const start_date = "2025-01-01";
+        const start_date = "2025-02-25";
         // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
         // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
         const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;

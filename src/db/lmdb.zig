@@ -90,39 +90,24 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     const fullkey = util.strings_join_separator(namespaces, ':', allocator);
     const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
-    const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_SET_RANGE);
-    const ret_key = mdbValToBytes(mdb_key);
-    const ret_value = mdbValToBytes(mdb_value);
-    if (ret == 0) {
-        warn("lmdb.scan set_range {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
-        try answers.append(ret_value);
-        while (innerScan(csr, fullkey, allocator)) |val| {
-            if (answers.items.len < 5) {
-                try answers.append(val);
-            }
+    var ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_SET_RANGE);
+    var ret_key = mdbValToBytes(mdb_key);
+    var ret_value = mdbValToBytes(mdb_value);
+    warn("lmdb.scan set_range {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
+    while (ret == 0 and prefix_match(fullkey, ret_key)) {
+        if (answers.items.len < 5) {
+            try answers.append(ret_value);
         }
+        ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
+        ret_value = mdbValToBytes(mdb_value);
+        ret_key = mdbValToBytes(mdb_key);
     }
     try txn_commit(txn);
     return answers.toOwnedSlice();
 }
 
-fn innerScan(csr: ?*c.MDB_cursor, fullkey: []const u8, allocator: std.mem.Allocator) ?[]const u8 {
-    const mdb_key = sliceToMdbVal(fullkey, allocator);
-    const mdb_value = sliceToMdbVal("", allocator);
-    const ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
-    const ret_key = mdbValToBytes(mdb_key);
-    const ret_value = mdbValToBytes(mdb_value);
-    if (ret == 0) {
-        if (prefix_match(fullkey, ret_key)) {
-            warn("lmdb.scan next {s} \"{s}\" \"{s}\"", .{ fullkey, ret_key, ret_value });
-            return ret_value;
-        } else {
-            warn("lmdb.scan next mismatch {s} \"{s}\" \"{s}\"", .{ fullkey, ret_key, ret_value });
-        }
-    }
-    return null;
-}
 fn prefix_match(a: []const u8, b: []const u8) bool {
+    warn("prefix_match {s} {s}", .{ a, b });
     return std.mem.eql(u8, a, b[0..a.len]);
 }
 
