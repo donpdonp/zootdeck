@@ -75,12 +75,13 @@ fn stateNext(allocator: std.mem.Allocator) void {
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
         // columns_net_freshen(allocator);
-        columns_db_sync(allocator);
+        for (settings.columns.items) |column| {
+            column_db_sync(column, allocator);
+        }
     }
 }
 
 fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
-    var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
     httpInfo.url = util.mastodonExpandUrl(column.filter.host(), column.config.token != null, allocator);
     httpInfo.verb = .get;
@@ -90,6 +91,7 @@ fn columnget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     }
     httpInfo.column = column;
     httpInfo.response_code = 0;
+    var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.http = httpInfo;
     gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(httpInfo)));
     if (thread.create("net", net.go, verb, netback)) |_| {} else |_| {
@@ -138,9 +140,9 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
 }
 
 fn netback(command: *thread.Command) void {
-    warn("*netback {*} cmd#{} {*}", .{ command, command.id, command.verb });
+    warn("*netback {*} cmd#{} {}", .{ command, command.id, @TypeOf(command.verb) });
     if (command.id == 1) {
-        gui.schedule(gui.update_column_netstatus_schedule, @as(*anyopaque, @ptrCast(command.verb.http)));
+        gui.schedule(gui.update_column_netstatus_schedule, @ptrCast(command.verb.http));
         var column = command.verb.http.column;
         column.refreshing = false;
         column.last_check = config.now();
@@ -193,22 +195,20 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
     }
 }
 
-fn columns_db_sync(allocator: std.mem.Allocator) void {
-    for (settings.columns.items) |column| {
-        const start_date = "2025-02-25";
-        // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
-        // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
-        const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
-        warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
-        for (post_ids) |id| {
-            const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
-            const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
-            const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
-            warn("columns_db_sync inserting {*} {}", .{ toot, toot });
-            column.toots.sortedInsert(toot, alloc);
-        }
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
+fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
+    const start_date = "2025-02-25";
+    // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
+    // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
+    const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
+    warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
+    for (post_ids) |id| {
+        const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
+        const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
+        const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
+        warn("columns_db_sync inserting {*} {}", .{ toot, toot });
+        column.toots.sortedInsert(toot, alloc);
     }
+    gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
 }
 
 fn cache_load(column: *config.ColumnInfo, tree: std.json.Parsed(std.json.Value)) void {
