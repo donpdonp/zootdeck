@@ -204,11 +204,15 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
         const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
         const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
         const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
-        column.toots.sortedInsert(toot, alloc);
-        if (toot.get("media_attachments")) |images| {
-            media_attachments(toot, images.array);
+        if (!column.toots.contains(toot)) {
+            column.toots.sortedInsert(toot, alloc);
+            if (toot.get("media_attachments")) |images| {
+                media_attachments(toot, images.array);
+            }
+            warn("column_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
+        } else {
+            warn("column_db_sync ignored dupe #{s}", .{toot.id()});
         }
-        warn("columns_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
     }
     gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
 }

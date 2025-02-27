@@ -195,7 +195,7 @@ pub fn update_author_photo(acct: []const u8) void {
     for (columns.items) |column| {
         const toots = column.main.toots.author(acct, allocator);
         for (toots) |toot| {
-            warn("update_author_photo column:{s} author:{s} toot#{s}\n", .{ column.main.filter.host(), acct, toot.id() });
+            warn("update_author_photo column:{s} author:{s} toot#{s}", .{ column.main.filter.host(), acct, toot.id() });
             const tootbuilderMaybe = column.guitoots.get(toot.id());
             if (tootbuilderMaybe) |kv| {
                 photo_refresh(acct, kv);
