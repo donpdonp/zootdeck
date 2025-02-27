@@ -195,16 +195,19 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
 }
 
 fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
-    const start_date = "2025-02-25";
+    // const start_date = "2025-02-25";
     // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
     // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
-    const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, start_date }, allocator) catch unreachable;
+    const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname }, allocator) catch unreachable;
     warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
     for (post_ids) |id| {
         const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
         const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
         const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
         column.toots.sortedInsert(toot, alloc);
+        if (toot.get("media_attachments")) |images| {
+            media_attachments(toot, images.array);
+        }
         warn("columns_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
     }
     gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
@@ -214,14 +217,8 @@ fn cache_load(column: *config.ColumnInfo, tree: std.json.Parsed(std.json.Value))
     column.inError = false;
     warn("cache_load parsed count {} adding to {s}", .{ tree.value.array.items.len, column.makeTitle() });
     for (tree.value.array.items) |json_value| {
-        var toot = toot_lib.Type.init(json_value, alloc);
-
+        const toot = toot_lib.Type.init(json_value, alloc);
         cache_update(column.filter.hostname, toot, alloc);
-        column.toots.sortedInsert(toot, alloc);
-
-        if (toot.get("media_attachments")) |images| {
-            media_attachments(toot, images.array);
-        }
     }
 }
 
