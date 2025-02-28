@@ -225,13 +225,14 @@ pub fn now() Time {
     return t;
 }
 
-const assert = @import("std").debug.assert;
 test "read" {
+    try init(std.testing.allocator);
     const ret = read("{\"url\":\"abc\"}");
-    if (ret) |config| {
-        assert(config.win_x == 0);
+    if (ret) |settings| {
+        try std.testing.expectEqual(800, settings.win_x);
+        std.testing.allocator.free(settings);
     } else |err| {
         warn("warn: {!}", .{err});
-        assert(false);
+        try std.testing.expect(false);
     }
 }

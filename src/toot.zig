@@ -86,15 +86,17 @@ test "Toot" {
     const allocator = std.testing.allocator;
     var tootHash = std.json.Value{ .object = std.json.ObjectMap.init(allocator) };
 
-    var jString = std.json.Value{ .string = "ABC" };
-    _ = tootHash.object.put("content", jString) catch unreachable;
+    const id_value = std.json.Value{ .string = "1234" };
+    _ = tootHash.object.put("id", id_value) catch unreachable;
+    const content_value = std.json.Value{ .string = "I am a post." };
+    _ = tootHash.object.put("content", content_value) catch unreachable;
 
     const toot = Type.init(tootHash, allocator);
     try testing.expect(toot.tagList.items.len == 0);
 
-    jString.string = "ABC   #xyz";
-    _ = tootHash.object.put("content", jString) catch unreachable;
+    const content_with_tag_value = std.json.Value{ .string = "Kirk or Picard? #startrek" };
+    _ = tootHash.object.put("content", content_with_tag_value) catch unreachable;
     const toot2 = Type.init(tootHash, allocator);
     try testing.expect(toot2.tagList.items.len == 1);
-    try testing.expect(std.mem.order(u8, toot2.tagList.items[0], "#xyz") == std.math.Order.eq);
+    try testing.expect(std.mem.order(u8, toot2.tagList.items[0], "#startrek") == std.math.Order.eq);
 }
