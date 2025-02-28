@@ -73,4 +73,25 @@ pub fn build(b: *std.Build) void {
     // This will evaluate the `run` step rather than the default, which is "install".
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+    const test_step = b.step("test", "Run unit tests");
+    const prefix = "src";
+    var dir = std.fs.cwd().openDir(prefix, .{ .iterate = true }) catch unreachable;
+    scan_dir(b, test_step, prefix, &dir);
+}
+
+fn scan_dir(b: *std.Build, test_step: *std.Build.Step, prefix: []const u8, dir: *std.fs.Dir) void {
+    var iter = dir.iterate();
+    while (iter.next() catch unreachable) |file_entry| {
+        const prefix2 = std.fs.path.join(b.allocator, &.{ prefix, file_entry.name }) catch unreachable;
+        if (file_entry.kind == .directory) {
+            var dir2 = std.fs.cwd().openDir(prefix2, .{ .iterate = true }) catch unreachable;
+            scan_dir(b, test_step, prefix2, &dir2);
+        }
+        if (file_entry.kind == .file) {
+            const unit_test = b.addTest(.{ .root_source_file = b.path(prefix2) });
+            const run_unit_tests = b.addRunArtifact(unit_test);
+            test_step.dependOn(&run_unit_tests.step);
+        }
+    }
 }
