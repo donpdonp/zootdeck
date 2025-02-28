@@ -91,6 +91,7 @@ fn scan_dir(b: *std.Build, test_step: *std.Build.Step, prefix: []const u8, dir: 
         if (file_entry.kind == .file) {
             if (std.mem.endsWith(u8, prefix2, ".zig")) {
                 const unit_test = b.addTest(.{ .root_source_file = b.path(prefix2) });
+                unit_test.linkLibC();
                 const run_unit_tests = b.addRunArtifact(unit_test);
                 test_step.dependOn(&run_unit_tests.step);
             }

@@ -3,7 +3,7 @@ const std = @import("std");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 const std_allocator = std.heap.c_allocator; // passing through pthread nope
-const util = @import("./util.zig");
+const util = @import("../util.zig");
 
 const c = @cImport({
     @cInclude("unistd.h");
@@ -52,14 +52,13 @@ pub fn dial(socket: *sock, url: []u8) void {
 
 pub fn newClient(allocator: *Allocator) *Client {
     const client = allocator.create(Client) catch unreachable;
-    var url_buf: [256]u8 = undefined;
     const socket = allocator.create(sock) catch unreachable;
     client.srv = socket;
     var nng_ret = c.nng_pair0_open(client.srv);
     if (nng_ret != 0) {
         warn("nng_pair0_open FAIL {}\n", nng_ret);
     }
-    listen(client.srv, myUrl);
+    listen(client.srv, Url);
 
     const socket2 = allocator.create(sock) catch unreachable;
     client.clnt = socket2;
@@ -67,12 +66,12 @@ pub fn newClient(allocator: *Allocator) *Client {
     if (nng_ret != 0) {
         warn("nng_pair0_open FAIL {}\n", nng_ret);
     }
-    dial(client.clnt, myUrl);
+    dial(client.clnt, Url);
     return client;
 }
 
 pub fn send(client: *Client) void {
-    var payload = "X";
+    const payload = "X";
     warn("nng send {} {}\n", client, payload);
     if (c.nng_send(client.clnt.*, util.sliceToCstr(std_allocator, payload), payload.len, 0) != 0) {
         warn("nng send to master FAIL\n");
