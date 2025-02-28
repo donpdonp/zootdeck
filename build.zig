@@ -89,9 +89,11 @@ fn scan_dir(b: *std.Build, test_step: *std.Build.Step, prefix: []const u8, dir: 
             scan_dir(b, test_step, prefix2, &dir2);
         }
         if (file_entry.kind == .file) {
-            const unit_test = b.addTest(.{ .root_source_file = b.path(prefix2) });
-            const run_unit_tests = b.addRunArtifact(unit_test);
-            test_step.dependOn(&run_unit_tests.step);
+            if (std.mem.endsWith(u8, prefix2, ".zig")) {
+                const unit_test = b.addTest(.{ .root_source_file = b.path(prefix2) });
+                const run_unit_tests = b.addRunArtifact(unit_test);
+                test_step.dependOn(&run_unit_tests.step);
+            }
         }
     }
 }
