@@ -20,8 +20,6 @@ pub fn build(b: *std.Build) void {
     // running `zig build`).
     // b.installArtifact(lib);
 
-    const gen_ragel = b.addSystemCommand(&.{ "ragel", "-o", "ragel/lang.c", "ragel/lang.c.rl" });
-
     const exe = b.addExecutable(.{
         .name = "zootdeck",
         .root_source_file = b.path("src/main.zig"),
@@ -30,8 +28,6 @@ pub fn build(b: *std.Build) void {
     });
 
     enhance_executable(b, exe);
-    exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
-    exe.step.dependOn(&gen_ragel.step);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
@@ -102,4 +98,8 @@ fn enhance_executable(b: *std.Build, exe: *std.Build.Step.Compile) void {
     exe.linkSystemLibrary("curl");
     exe.linkSystemLibrary("lmdb");
     exe.linkSystemLibrary("gumbo");
+
+    const gen_ragel = b.addSystemCommand(&.{ "ragel", "-o", "ragel/lang.c", "ragel/lang.c.rl" });
+    exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
+    exe.step.dependOn(&gen_ragel.step);
 }
