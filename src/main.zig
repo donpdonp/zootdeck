@@ -148,7 +148,7 @@ fn netback(command: *thread.Command) void {
         column.last_check = config.now();
         if (http_json_parse(command.verb.http)) |json_response_object| {
             warn("netback adding {} toots to column {s}", .{ json_response_object.value.array.items.len, util.json_stringify(column.makeTitle()) });
-            cache_load(column, json_response_object);
+            cache_save(column, json_response_object);
         } else |_| {
             column.inError = true;
         }
@@ -217,7 +217,7 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
 }
 
-fn cache_load(column: *config.ColumnInfo, tree: std.json.Parsed(std.json.Value)) void {
+fn cache_save(column: *config.ColumnInfo, tree: std.json.Parsed(std.json.Value)) void {
     column.inError = false;
     warn("cache_load parsed count {} adding to {s}", .{ tree.value.array.items.len, column.makeTitle() });
     for (tree.value.array.items) |json_value| {
