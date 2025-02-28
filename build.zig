@@ -28,21 +28,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.linkLibC();
-    exe.addIncludePath(b.path("."));
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gtk-3.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/glib-2.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/pango-1.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gdk-pixbuf-2.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/atk-1.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
-    exe.linkSystemLibrary("gtk-3");
-    exe.linkSystemLibrary("gdk-3");
-    exe.linkSystemLibrary("curl");
-    exe.linkSystemLibrary("lmdb");
-    exe.linkSystemLibrary("gumbo");
+
+    enhance_executable(b, exe);
     exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
     exe.step.dependOn(&gen_ragel.step);
 
@@ -91,10 +78,28 @@ fn scan_dir(b: *std.Build, test_step: *std.Build.Step, prefix: []const u8, dir: 
         if (file_entry.kind == .file) {
             if (std.mem.endsWith(u8, prefix2, ".zig")) {
                 const unit_test = b.addTest(.{ .root_source_file = b.path(prefix2) });
-                unit_test.linkLibC();
+                enhance_executable(b, unit_test);
                 const run_unit_tests = b.addRunArtifact(unit_test);
                 test_step.dependOn(&run_unit_tests.step);
             }
         }
     }
+}
+
+fn enhance_executable(b: *std.Build, exe: *std.Build.Step.Compile) void {
+    exe.linkLibC();
+    exe.addIncludePath(b.path("."));
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gtk-3.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/glib-2.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/pango-1.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gdk-pixbuf-2.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/atk-1.0" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
+    exe.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
+    exe.linkSystemLibrary("gtk-3");
+    exe.linkSystemLibrary("gdk-3");
+    exe.linkSystemLibrary("curl");
+    exe.linkSystemLibrary("lmdb");
+    exe.linkSystemLibrary("gumbo");
 }

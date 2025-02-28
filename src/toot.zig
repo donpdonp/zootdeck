@@ -89,14 +89,12 @@ test "Toot" {
     var jString = std.json.Value{ .string = "ABC" };
     _ = tootHash.object.put("content", jString) catch unreachable;
 
-    var toot = Type.init(&tootHash, allocator);
+    const toot = Type.init(tootHash, allocator);
     try testing.expect(toot.tagList.items.len == 0);
-    warn("toot1 {*}\n", &toot);
 
     jString.string = "ABC   #xyz";
     _ = tootHash.object.put("content", jString) catch unreachable;
-    const toot2 = Type.init(&tootHash, allocator);
-    warn("toot2 {*}\n", &toot2);
+    const toot2 = Type.init(tootHash, allocator);
     try testing.expect(toot2.tagList.items.len == 1);
     try testing.expect(std.mem.order(u8, toot2.tagList.items[0], "#xyz") == std.math.Order.eq);
 }

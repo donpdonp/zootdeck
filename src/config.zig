@@ -228,8 +228,8 @@ pub fn now() Time {
 const assert = @import("std").debug.assert;
 test "read" {
     const ret = read("{\"url\":\"abc\"}");
-    if (ret) {
-        assert(true);
+    if (ret) |config| {
+        assert(config.win_x == 0);
     } else |err| {
         warn("warn: {!}", .{err});
         assert(false);
