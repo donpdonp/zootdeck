@@ -74,7 +74,7 @@ fn stateNext(allocator: std.mem.Allocator) void {
 
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
-        // columns_net_freshen(allocator);
+        columns_net_freshen(allocator);
         for (settings.columns.items) |column| {
             column_db_sync(column, allocator);
         }
@@ -149,6 +149,7 @@ fn netback(command: *thread.Command) void {
         if (http_json_parse(command.verb.http)) |json_response_object| {
             warn("netback adding {} toots to column {s}", .{ json_response_object.value.array.items.len, util.json_stringify(column.makeTitle()) });
             cache_save(column, json_response_object);
+            column_db_sync(column, alloc);
         } else |_| {
             column.inError = true;
         }
