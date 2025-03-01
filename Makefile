@@ -37,5 +37,7 @@ deb:
 	cp control.deb ${DISTDEB}/DEBIAN/control
 	ls -lR ${DISTDEB}
 	dpkg-deb --build ${DISTDEB}
+	mv ${DISTDEB}.deb ${DISTDEB}-amd64.deb
+
 	
 

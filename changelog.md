@@ -1,4 +1,5 @@
 ### Change Log
+* 20250301 rework for zig 0.13
 * 20191010 ragel filter language parsing
 * 20190710 image only filter
 * 20190706 profile image loading

@@ -3,7 +3,7 @@ Version: 0.6.0-1
 Section: base
 Priority: optional
 Architecture: amd64
-Depends: 
+Depends: libgumbo2 (>= 0.12.0), liblmdb0 (>=0.9.31), libcurl3t64-gnutls | libcurl4t64, libgtk-3-0t64
 Maintainer: Don Park <donp@donp.org>
 Description: Linux Desktop Reader for the Fediverse
  A linux/gtk3 app to read the newsfeeds from multiple mastodon servers.
