@@ -7,6 +7,11 @@ const warn = util.log;
 
 pub const Type = Toot();
 
+pub const Img = struct {
+    bytes: []const u8,
+    url: []const u8,
+};
+
 pub fn Toot() type {
     return struct {
         hashmap: std.json.Value,
@@ -16,8 +21,8 @@ pub fn Toot() type {
         const Self = @This();
         const TagType = []const u8;
         pub const TagList = std.ArrayList(TagType);
-        const ImgType = []const u8;
-        const ImgList = std.ArrayList(ImgType);
+        const ImgBytes = []const u8;
+        const ImgList = std.ArrayList(Img);
         const K = []const u8;
         const V = std.json.Value;
         pub fn init(hash: std.json.Value, allocator: Allocator) *Self {
@@ -70,9 +75,19 @@ pub fn Toot() type {
             }
         }
 
-        pub fn addImg(self: *Self, imgdata: ImgType) void {
+        pub fn containsImgUrl(self: *const @This(), img_url: []const u8) bool {
+            var contains_img = false;
+            for (self.imgList.items) |img| {
+                if (std.mem.eql(u8, img.url, img_url)) {
+                    contains_img = true;
+                }
+            }
+            return contains_img;
+        }
+
+        pub fn addImg(self: *Self, img: Img) void {
             warn("addImg toot {s}", .{self.id()});
-            self.imgList.append(imgdata) catch unreachable;
+            self.imgList.append(img) catch unreachable;
         }
 
         pub fn imgCount(self: *Self) usize {

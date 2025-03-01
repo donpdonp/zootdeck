@@ -232,7 +232,15 @@ fn media_attachments(toot: *toot_lib.Type, images: std.json.Array) void {
         if (img_url_raw == .string) {
             const img_url = img_url_raw.string;
             warn("toot #{s} has img {s}", .{ toot.id(), img_url });
-            mediaget(toot, img_url, alloc);
+            var contains_img = false;
+            for (toot.imgList.items) |img| {
+                if (std.mem.eql(u8, img.url, img_url)) {
+                    contains_img = true;
+                }
+            }
+            if (!contains_img) {
+                mediaget(toot, img_url, alloc);
+            }
         } else {
             warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
         }
@@ -244,9 +252,12 @@ fn mediaback(command: *thread.Command) void {
     const reqres = command.verb.http;
     const tootpic = alloc.create(gui.TootPic) catch unreachable;
     tootpic.toot = reqres.toot;
-    tootpic.pic = reqres.body;
+    const url_ram = alloc.dupe(u8, reqres.url) catch unreachable;
+    const body_ram = alloc.dupe(u8, reqres.body) catch unreachable;
+    const img = toot_lib.Img{ .url = url_ram, .bytes = body_ram };
+    tootpic.img = img;
     warn("mediaback toot #{s} tootpic.toot {*} adding 1 img", .{ tootpic.toot.id(), tootpic.toot });
-    tootpic.toot.addImg(tootpic.pic);
+    tootpic.toot.addImg(img);
     gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
 }
 

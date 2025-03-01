@@ -134,14 +134,15 @@ pub fn update_column_ui_schedule(in: ?*anyopaque) callconv(.C) c_int {
 
 pub const TootPic = struct {
     toot: *toot_lib.Type,
-    pic: []const u8,
+    img: toot_lib.Img,
 };
+
 pub fn toot_media_schedule(in: ?*anyopaque) callconv(.C) c_int {
     const tootpic = @as(*TootPic, @ptrCast(@alignCast(in)));
     const toot = tootpic.toot;
     if (findColumnByTootId(toot.id())) |column| {
         const builder = column.guitoots.get(toot.id()).?;
-        toot_media(column, builder, toot, tootpic.pic);
+        toot_media(column, builder, toot, tootpic.img.bytes);
     }
     return 0;
 }
@@ -441,9 +442,9 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
         }
     }
 
-    for (toot.imgList.items) |imgdata| {
+    for (toot.imgList.items) |img| {
         warn("toot #{s} rebuilding with img", .{toot.id()});
-        toot_media(column, builder, toot, imgdata);
+        toot_media(column, builder, toot, img.bytes);
     }
 
     return builder;
