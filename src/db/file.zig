@@ -47,12 +47,12 @@ pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8,
     namespace_paths.append(cache_path) catch unreachable;
     namespace_paths.appendSlice(namespaces) catch unreachable;
     const dirpath = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
-    warn("db_file.write mkdir {s}", .{dirpath});
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
     defer dir.close();
     if (dir.createFile(key, .{ .truncate = true })) |*file| {
         _ = try file.write(value);
         file.close();
+        warn("db_file.write {s}/{s}", .{ dirpath, key });
     } else |err| {
         warn("db_file.write open err {s} {s} {any}", .{ dirpath, key, err });
     }

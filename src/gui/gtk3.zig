@@ -458,7 +458,6 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
 }
 
 fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
-    const tootBox = builder_get_widget(builder, "tootbox");
     const imageBox = builder_get_widget(builder, "image_box");
     c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
     const loader = c.gdk_pixbuf_loader_new();
@@ -474,10 +473,8 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
         //const account = toot.get("account").?.Object;
         //const acct = account.get("acct").?.String;
         const pixbufWidth = c.gdk_pixbuf_get_width(pixbuf);
-        warn("toot_media #{s} {*} {*} {} images. win {}x{} col {}x{}px pixbuf {}px", .{
+        warn("toot_media #{s} {} images. win {}x{} col {}x{}px pixbuf {}px", .{
             toot.id(),
-            toot,
-            tootBox,
             toot.imgCount(),
             myAllocation.width,
             myAllocation.height,
