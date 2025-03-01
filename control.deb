@@ -1,0 +1,9 @@
+Package: zootdeck
+Version: 0.6.0-1
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: 
+Maintainer: Don Park <donp@donp.org>
+Description: Linux Desktop Reader for the Fediverse
+ A linux/gtk3 app to read the newsfeeds from multiple mastodon servers.
