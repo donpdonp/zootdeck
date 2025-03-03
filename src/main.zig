@@ -58,9 +58,7 @@ fn initialize(allocator: std.mem.Allocator) !void {
 fn stateNext(allocator: std.mem.Allocator) void {
     if (statemachine.state == .Init) {
         statemachine.setState(.Setup); // transition
-        var ram = allocator.alloc(u8, 1) catch unreachable;
-        ram[0] = 1;
-        gui.schedule(gui.show_main_schedule, @ptrCast(&ram));
+        gui.schedule(gui.show_main_schedule, null);
         for (settings.columns.items) |column| {
             if (column.config.token) |token| {
                 _ = token;
