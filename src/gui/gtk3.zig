@@ -452,7 +452,7 @@ pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
 
 fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
     const avatar = builder_get_widget(builder, "toot_author_avatar");
-    const avatar_path = std.fmt.allocPrint(allocator, "./cache/{s}/photo", .{acct}) catch unreachable;
+    const avatar_path = std.fmt.allocPrint(allocator, "./cache/accounts/{s}/photo", .{acct}) catch unreachable;
     const pixbuf = c.gdk_pixbuf_new_from_file_at_scale(util.sliceToCstr(allocator, avatar_path), 50, -1, 1, null);
     c.gtk_image_set_from_pixbuf(@ptrCast(avatar), pixbuf);
 }

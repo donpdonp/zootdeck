@@ -196,9 +196,6 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
 }
 
 fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
-    // const start_date = "2025-02-25";
-    // lmdb.write posts:heads.social:2025-02-20T04:27:43.000Z:=114034322015042353
-    // lmdb.scan posts:donpdonp@mastodon.xyz:2025-01-01 key1 val11
     const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname }, allocator) catch unreachable;
     warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
     for (post_ids) |id| {
@@ -207,10 +204,15 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
         const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
         if (!column.toots.contains(toot)) {
             column.toots.sortedInsert(toot, alloc);
-            if (toot.get("media_attachments")) |images| {
+            if (toot.get("media_attachments")) |images| { // media is not cached (yet), fetch now
                 media_attachments(toot, images.array);
             }
             warn("column_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
+            const acct = toot.acct() catch unreachable;
+            if (db_file.has(&.{ "accounts", acct }, "photo", allocator)) {
+                const cAcct = util.sliceToCstr(alloc, acct);
+                gui.schedule(gui.update_author_photo_schedule, @ptrCast(cAcct));
+            }
         } else {
             warn("column_db_sync ignored dupe #{s}", .{toot.id()});
         }
@@ -232,9 +234,9 @@ fn media_attachments(toot: *toot_lib.Type, images: std.json.Array) void {
         const img_url_raw = image.object.get("preview_url").?;
         if (img_url_raw == .string) {
             const img_url = img_url_raw.string;
-            warn("toot #{s} has img {s}", .{ toot.id(), img_url });
+            warn("toot #{s} has media {s}", .{ toot.id(), img_url });
             if (!toot.containsImgUrl(img_url)) {
-                mediaget(toot, img_url, alloc);
+                // mediaget(toot, img_url, alloc);
             }
         } else {
             warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
@@ -261,7 +263,7 @@ fn photoback(command: *thread.Command) void {
     const reqres = command.verb.http;
     var account = reqres.toot.get("account").?.object;
     const acct = account.get("acct").?.string;
-    //warn("photoback! acct {s} type {s} size {}", .{ acct, reqres.content_type, reqres.body.len });
+    warn("photoback! acct {s} type {s} size {}", .{ acct, reqres.content_type, reqres.body.len });
     db_file.write(&.{ "accounts", acct }, "photo", reqres.body, alloc) catch unreachable;
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
@@ -298,8 +300,8 @@ fn cache_write_post(host: []const u8, toot: *toot_lib.Type, allocator: std.mem.A
     // index display name
     const name: []const u8 = account.get("display_name").?.string;
     db_kv.write(photos_acct, "name", name, allocator) catch unreachable;
-    if (db_file.has(&.{"photos"}, toot_acct, allocator)) {} else {
-        // save photo
+
+    if (!db_file.has(&.{ "accounts", toot_acct }, "photo", allocator)) {
         photoget(toot, avatar_url, allocator);
     }
 }
@@ -413,7 +415,7 @@ fn column_refresh(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     if (column.refreshing) {
         warn("column {s} in {s} Ignoring request.", .{ column.config.title, if (column.inError) @as([]const u8, "error!") else @as([]const u8, "progress.") });
     } else {
-        warn("column_refresh http get for title: {s}", .{util.json_stringify(column.config.title)});
+        warn("column_refresh http get for title: {s}", .{util.json_stringify(column.makeTitle())});
         column.refreshing = true;
         columnget(column, allocator);
     }

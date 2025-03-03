@@ -38,7 +38,6 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
     const curl = c.curl_easy_init();
     if (curl != null) {
         const cstr = util.sliceAddNull(allocator, req.url);
-        //warn("httpget {s}\n", .{req.url});
         _ = c.curl_easy_setopt(curl, c.CURLOPT_URL, cstr.ptr);
 
         const zero: c_long = 0;
@@ -75,7 +74,7 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
             var ccontent_type: [*c]const u8 = undefined;
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_CONTENT_TYPE, &ccontent_type);
             req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
-            util.log("{s} {s} status: {} {} bytes content-type: {s}", .{ req.url, @tagName(req.verb), req.response_code, body_buffer.items.len, req.content_type });
+            util.log("# {s} {s} status: {} {} bytes content-type: {s}", .{ req.url, @tagName(req.verb), req.response_code, body_buffer.items.len, req.content_type });
             return body_buffer.toOwnedSliceSentinel(0);
         } else if (res == c.CURLE_OPERATION_TIMEDOUT) {
             req.response_code = 2200;

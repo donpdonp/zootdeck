@@ -26,9 +26,10 @@ pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator
     const keypath = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
     var found = false;
     if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
+        warn("db_file.has found {s}", .{keypath});
         found = true;
-    } else |_| {
-        // warn("db_file did not find {s} {!}", .{ keypath, err });
+    } else |err| {
+        warn("db_file.has did not find {s} {!}", .{ keypath, err });
     }
     return found;
 }
