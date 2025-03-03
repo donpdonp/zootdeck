@@ -95,7 +95,7 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     var ret_value = mdbValToBytes(mdb_value);
     warn("lmdb.scan set_range {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
     while (ret == 0 and prefix_match(fullkey, ret_key)) {
-        if (answers.items.len < 100) {
+        if (answers.items.len < 1) {
             try answers.append(ret_value);
         }
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
