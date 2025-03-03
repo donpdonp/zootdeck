@@ -31,6 +31,7 @@ pub const Column = struct {
     config_window: *c.GtkWidget,
     main: *config.ColumnInfo,
     guitoots: std.StringHashMap(*c.GtkBuilder),
+    ui_lock: bool,
 };
 
 var columns: std.ArrayList(*Column) = undefined;
@@ -156,6 +157,7 @@ pub fn add_column_schedule(in: ?*anyopaque) callconv(.C) c_int {
 pub fn add_column(colInfo: *config.ColumnInfo) void {
     const container = builder_get_widget(myBuilder, "ZootColumns");
     const column = allocator.create(Column) catch unreachable;
+    column.ui_lock = false;
     column.builder = c.gtk_builder_new_from_file("glade/column.glade");
     column.columnbox = builder_get_widget(column.builder, "column");
     column.main = colInfo;
@@ -246,7 +248,12 @@ pub fn update_column_toots_schedule(in: ?*anyopaque) callconv(.C) c_int {
     const c_column = @as(*config.ColumnInfo, @ptrCast(@alignCast(in)));
     const columnMaybe = find_gui_column(c_column);
     if (columnMaybe) |column| {
-        update_column_toots(column);
+        warn("update_column_toots_schedule {s}", .{column.main.makeTitle()});
+        if (column.ui_lock) {
+            warn("column {s} is ui-locked. skipping update_column_toots", .{column.main.makeTitle()});
+        } else {
+            update_column_toots(column);
+        }
     }
     return 0;
 }
@@ -278,12 +285,8 @@ fn find_gui_column(c_column: *config.ColumnInfo) ?*Column {
 }
 
 pub fn update_column_toots(column: *Column) void {
-    warn("update_column_toots title: {s} toot count: {} guitoots: {} {s}", .{
-        util.json_stringify(column.main.makeTitle()),
-        column.main.toots.count(),
-        column.guitoots.count(),
-        if (column.main.inError) @as([]const u8, "INERROR") else @as([]const u8, ""),
-    });
+    column.ui_lock = true;
+    warn("update_column_toots title: {s} toot count: {} guitoots: {} {s}", .{ util.json_stringify(column.main.makeTitle()), column.main.toots.count(), column.guitoots.count(), if (column.main.inError) @as([]const u8, "INERROR") else @as([]const u8, "") });
     const column_toot_zone = builder_get_widget(column.builder, "toot_zone");
     var current = column.main.toots.first();
     var idx: c_int = 0;
@@ -295,7 +298,7 @@ pub fn update_column_toots(column: *Column) void {
             if (column.main.filter.match(toot)) {
                 if (tootbuilderMaybe) |kv| {
                     const builder = kv;
-                    destroyTootBox(builder);
+                    destroyTootBox(builder); // redraw for image-only mode
                     warn("update_column_toots destroyTootBox toot #{s} {*} {*}", .{ toot.id(), toot, builder });
                 }
                 const tootbuilder = makeTootBox(toot, column);
@@ -323,6 +326,7 @@ pub fn update_column_toots(column: *Column) void {
     const countStr = std.fmt.allocPrint(allocator, "{} {s}", .{ column.main.toots.count(), tootword }) catch unreachable;
     const cCountStr = util.sliceToCstr(allocator, countStr);
     c.gtk_label_set_text(@ptrCast(column_footer_count_label), cCountStr);
+    column.ui_lock = false;
 }
 
 pub fn update_netstatus_column(http: *config.HttpInfo, column: *Column) void {
