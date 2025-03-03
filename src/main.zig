@@ -147,8 +147,9 @@ fn netback(command: *thread.Command) void {
         column.refreshing = false;
         column.last_check = config.now();
         if (http_json_parse(command.verb.http)) |json_response_object| {
-            warn("netback adding {} toots to column {s}", .{ json_response_object.value.array.items.len, util.json_stringify(column.makeTitle()) });
-            cache_save(column, json_response_object.value.array.items);
+            const items = json_response_object.value.array.items[0..1];
+            warn("netback adding {} toots to column {s}", .{ items.len, util.json_stringify(column.makeTitle()) });
+            cache_save(column, items);
             column_db_sync(column, alloc);
         } else |_| {
             column.inError = true;
@@ -223,7 +224,7 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
 fn cache_save(column: *config.ColumnInfo, items: []std.json.Value) void {
     column.inError = false;
     warn("cache_load parsed count {} adding to {s}", .{ items.len, column.makeTitle() });
-    for (items[0..1]) |json_value| {
+    for (items) |json_value| {
         const toot = toot_lib.Type.init(json_value, alloc);
         cache_write_post(column.filter.hostname, toot, alloc);
     }
