@@ -95,7 +95,7 @@ pub fn scan(key_parts: []const []const u8, descending: bool, allocator: Allocato
     var ret_value = mdbValToBytes(mdb_value);
     warn("lmdb.scan {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "mdb_last" else "mdb_set_range", fullkey, ret_key, ret_value });
     while (ret == 0 and prefix_match(key_parts[0 .. key_parts.len - 2], ret_key, allocator)) {
-        if (answers.items.len < 1) {
+        if (answers.items.len < 10) {
             try answers.append(ret_value);
         }
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_PREV else c.MDB_NEXT);
