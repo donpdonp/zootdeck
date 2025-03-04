@@ -81,24 +81,24 @@ pub fn csr_open(txn: ?*c.struct_MDB_txn, dbi: c.MDB_dbi) !?*c.MDB_cursor {
     }
 }
 
-pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []const u8 {
+pub fn scan(key_parts: []const []const u8, descending: bool, allocator: Allocator) ![]const []const u8 {
     var answers = std.ArrayList([]const u8).init(allocator);
     const txn = try txn_open();
     const dbi = try dbi_open(txn);
     const csr = try csr_open(txn, dbi);
 
-    const fullkey = util.strings_join_separator(namespaces, ':', allocator);
+    const fullkey = util.strings_join_separator(key_parts, ':', allocator);
     const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
-    var ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_SET_RANGE);
+    var ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_LAST else c.MDB_SET_RANGE);
     var ret_key = mdbValToBytes(mdb_key);
     var ret_value = mdbValToBytes(mdb_value);
-    warn("lmdb.scan set_range {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
-    while (ret == 0 and prefix_match(fullkey, ret_key)) {
+    warn("lmdb.scan {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "mdb_last" else "mdb_set_range", fullkey, ret_key, ret_value });
+    while (ret == 0 and prefix_match(key_parts[0 .. key_parts.len - 2], ret_key, allocator)) {
         if (answers.items.len < 1) {
             try answers.append(ret_value);
         }
-        ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_NEXT);
+        ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_PREV else c.MDB_NEXT);
         ret_value = mdbValToBytes(mdb_value);
         ret_key = mdbValToBytes(mdb_key);
     }
@@ -106,8 +106,9 @@ pub fn scan(namespaces: []const []const u8, allocator: Allocator) ![]const []con
     return answers.toOwnedSlice();
 }
 
-fn prefix_match(prefix: []const u8, body: []const u8) bool {
-    return std.mem.startsWith(u8, body, prefix);
+fn prefix_match(key_parts: []const []const u8, body: []const u8, allocator: Allocator) bool {
+    const full_key = util.strings_join_separator(key_parts, ':', allocator);
+    return std.mem.startsWith(u8, body, full_key);
 }
 
 test prefix_match {
