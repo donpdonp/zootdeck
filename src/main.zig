@@ -152,8 +152,6 @@ fn netback(command: *thread.Command) void {
         } else |_| {
             column.inError = true;
         }
-
-        gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
     }
 }
 
