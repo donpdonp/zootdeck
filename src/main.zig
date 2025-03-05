@@ -147,7 +147,7 @@ fn netback(command: *thread.Command) void {
         column.refreshing = false;
         column.last_check = config.now();
         if (http_json_parse(command.verb.http)) |json_response_object| {
-            const items = json_response_object.value.array.items[0..1];
+            const items = json_response_object.value.array.items;
             warn("netback adding {} toots to column {s}", .{ items.len, util.json_stringify(column.makeTitle()) });
             cache_save(column, items);
             column_db_sync(column, alloc);
@@ -225,7 +225,7 @@ fn cache_save(column: *config.ColumnInfo, items: []std.json.Value) void {
     warn("cache_load parsed count {} adding to {s}", .{ items.len, column.makeTitle() });
     for (items) |json_value| {
         const toot = toot_lib.Type.init(json_value, alloc);
-        cache_write_post(column.filter.hostname, toot, alloc);
+        cache_write_post(column, toot, alloc);
     }
 }
 
@@ -294,8 +294,9 @@ fn profileback(command: *thread.Command) void {
     }
 }
 
-fn cache_write_post(host: []const u8, toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
+fn cache_write_post(column: *config.ColumnInfo, toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
     var account = toot.get("account").?.object;
+    const host = column.filter.hostname;
 
     // index post by host and date
     const toot_created_at = toot.get("created_at").?.string;
@@ -316,7 +317,18 @@ fn cache_write_post(host: []const u8, toot: *toot_lib.Type, allocator: std.mem.A
     db_kv.write(photos_acct, "name", name, allocator) catch unreachable;
 
     if (!db_file.has(&.{ "accounts", toot_acct }, "photo", allocator)) {
+        warn("cache_write_post photoget {s}", .{avatar_url});
         photoget(toot, avatar_url, allocator);
+    }
+
+    if (toot.get("media_attachments")) |images| {
+        for (images.array.items) |image| {
+            const img_id = image.object.get("id").?.string;
+            const img_url = image.object.get("preview_url").?.string;
+            if (!db_file.has(&.{ "posts", host, toot.id(), "images" }, img_id, alloc)) {
+                mediaget(column, toot, img_id, img_url, alloc);
+            }
+        }
     }
 }
 
