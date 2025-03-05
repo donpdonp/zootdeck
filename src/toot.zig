@@ -10,6 +10,7 @@ pub const Type = Toot();
 pub const Img = struct {
     bytes: []const u8,
     url: []const u8,
+    id: []const u8,
 };
 
 pub fn Toot() type {
@@ -75,10 +76,10 @@ pub fn Toot() type {
             }
         }
 
-        pub fn containsImgUrl(self: *const @This(), img_url: []const u8) bool {
+        pub fn containsImg(self: *const @This(), img_id: []const u8) bool {
             var contains_img = false;
             for (self.imgList.items) |img| {
-                if (std.mem.eql(u8, img.url, img_url)) {
+                if (std.mem.eql(u8, img.id, img_id)) {
                     contains_img = true;
                 }
             }

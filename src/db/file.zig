@@ -43,7 +43,11 @@ pub fn read(namespaces: []const []const u8, allocator: Allocator) []const u8 {
     return std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize)) catch unreachable;
 }
 
-pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
+pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8, allocator: Allocator) ![]const u8 {
+    const namespace = std.fs.path.join(allocator, namespaces) catch unreachable;
+    const cache_dir = std.fs.openDirAbsolute(cache_path, .{ .access_sub_paths = true }) catch unreachable;
+    std.fs.Dir.makePath(cache_dir, namespace) catch unreachable;
+
     var namespace_paths = std.ArrayList([]const u8).init(allocator);
     namespace_paths.append(cache_path) catch unreachable;
     namespace_paths.appendSlice(namespaces) catch unreachable;
@@ -53,8 +57,11 @@ pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8,
     if (dir.createFile(key, .{ .truncate = true })) |*file| {
         _ = try file.write(value);
         file.close();
-        warn("db_file.write {s}/{s}", .{ dirpath, key });
+        warn("db_file.wrote {s}/{s}", .{ dirpath, key });
+        const filename = std.fs.path.join(allocator, &.{ dirpath, key }) catch unreachable;
+        return filename;
     } else |err| {
-        warn("db_file.write open err {s} {s} {any}", .{ dirpath, key, err });
+        warn("db_file.write( {s} {s} ) {any}", .{ dirpath, key, err });
+        return err;
     }
 }

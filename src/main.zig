@@ -125,7 +125,7 @@ fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     _ = thread.create("net", net.go, verb, photoback) catch unreachable;
 }
 
-fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator) void {
+fn mediaget(column: *config.ColumnInfo, toot: *toot_lib.Type, media_id: ?[]const u8, url: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.http = allocator.create(config.HttpInfo) catch unreachable;
     verb.http.url = url;
@@ -133,6 +133,8 @@ fn mediaget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     verb.http.token = null;
     verb.http.response_code = 0;
     verb.http.toot = toot;
+    verb.http.column = column;
+    verb.http.media_id = media_id;
     warn("mediaget toot #{s} toot {*} verb.http.toot {*}", .{ toot.id(), toot, verb.http.toot });
     _ = thread.create("net", net.go, verb, mediaback) catch unreachable;
 }
@@ -197,13 +199,13 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, last_day }, true, allocator) catch unreachable;
     warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
     for (post_ids) |id| {
-        const post_json = db_file.read(&.{ "posts", column.filter.hostname, id }, allocator);
+        const post_json = db_file.read(&.{ "posts", column.filter.hostname, id, "json" }, allocator);
         const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
         const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
         if (!column.toots.contains(toot)) {
             column.toots.sortedInsert(toot, alloc);
             if (toot.get("media_attachments")) |images| { // media is not cached (yet), fetch now
-                media_attachments(toot, images.array);
+                media_attachments(column, toot, images.array);
             }
             warn("column_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
             const acct = toot.acct() catch unreachable;
@@ -227,17 +229,24 @@ fn cache_save(column: *config.ColumnInfo, items: []std.json.Value) void {
     }
 }
 
-fn media_attachments(toot: *toot_lib.Type, images: std.json.Array) void {
+fn media_attachments(column: *config.ColumnInfo, toot: *toot_lib.Type, images: std.json.Array) void {
     for (images.items) |image| {
-        const img_url_raw = image.object.get("preview_url").?;
-        if (img_url_raw == .string) {
-            const img_url = img_url_raw.string;
-            warn("toot #{s} has media {s}", .{ toot.id(), img_url });
-            if (!toot.containsImgUrl(img_url)) {
-                // mediaget(toot, img_url, alloc);
+        const img_url = image.object.get("preview_url").?.string;
+        const img_id = image.object.get("id").?.string;
+        warn("toot #{s} has media #{s} {s}", .{ toot.id(), img_id, img_url });
+        if (!toot.containsImg(img_id)) {
+            const hostname = column.filter.hostname;
+            if (db_file.has(&.{ "posts", hostname, toot.id(), "images" }, img_id, alloc)) {
+                const img_bytes = db_file.read(&.{ "posts", hostname, toot.id(), "images", img_id }, alloc);
+                const tootpic = alloc.create(gui.TootPic) catch unreachable;
+                tootpic.toot = toot;
+                const img = toot_lib.Img{ .id = img_id, .url = img_url, .bytes = img_bytes };
+                tootpic.img = img;
+                toot.addImg(img);
+                gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
+            } else {
+                // mediaget(column, toot, img_id, img_url, alloc);
             }
-        } else {
-            warn("WARNING: image json 'preview_url' is not String: {}", .{img_url_raw});
         }
     }
 }
@@ -245,11 +254,17 @@ fn media_attachments(toot: *toot_lib.Type, images: std.json.Array) void {
 fn mediaback(command: *thread.Command) void {
     thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
+    if (db_file.write(&.{ "posts", reqres.column.filter.hostname, reqres.toot.id(), "images" }, reqres.media_id.?, reqres.body, alloc)) |filename| {
+        warn("mediaback db_file wrote {s}", .{filename});
+    } else |err| {
+        warn("mediaback write {}", .{err});
+    }
+
     const tootpic = alloc.create(gui.TootPic) catch unreachable;
     tootpic.toot = reqres.toot;
     const url_ram = alloc.dupe(u8, reqres.url) catch unreachable;
     const body_ram = alloc.dupe(u8, reqres.body) catch unreachable;
-    const img = toot_lib.Img{ .url = url_ram, .bytes = body_ram };
+    const img = toot_lib.Img{ .id = reqres.media_id.?, .url = url_ram, .bytes = body_ram };
     tootpic.img = img;
     warn("mediaback toot #{s} tootpic.toot {*} adding 1 img", .{ tootpic.toot.id(), tootpic.toot });
     tootpic.toot.addImg(img);
@@ -262,7 +277,8 @@ fn photoback(command: *thread.Command) void {
     var account = reqres.toot.get("account").?.object;
     const acct = account.get("acct").?.string;
     warn("photoback! acct {s} type {s} size {}", .{ acct, reqres.content_type, reqres.body.len });
-    db_file.write(&.{ "accounts", acct }, "photo", reqres.body, alloc) catch unreachable;
+    const filename = db_file.write(&.{ "accounts", acct }, "photo", reqres.body, alloc) catch unreachable;
+    warn("photoback wrote {s}", .{filename});
     const cAcct = util.sliceToCstr(alloc, acct);
     gui.schedule(gui.update_author_photo_schedule, @as(*anyopaque, @ptrCast(cAcct)));
 }
@@ -287,7 +303,7 @@ fn cache_write_post(host: []const u8, toot: *toot_lib.Type, allocator: std.mem.A
     db_kv.write(posts_host_date, toot_created_at, toot.id(), allocator) catch unreachable;
     // save post json
     const json = util.json_stringify(toot.hashmap);
-    if (db_file.write(&.{ "posts", host }, toot.id(), json, alloc)) |_| {} else |_| {}
+    if (db_file.write(&.{ "posts", host, toot.id() }, "json", json, alloc)) |_| {} else |_| {}
 
     // index avatar url
     const avatar_url: []const u8 = account.get("avatar").?.string;
