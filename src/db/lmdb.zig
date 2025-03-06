@@ -90,7 +90,7 @@ pub fn scan(key_parts: []const []const u8, descending: bool, allocator: Allocato
     const fullkey = util.strings_join_separator(key_parts, ':', allocator);
     const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
-    var ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_LAST else c.MDB_SET_RANGE);
+    var ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_SET_RANGE);
     var ret_key = mdbValToBytes(mdb_key);
     var ret_value = mdbValToBytes(mdb_value);
     warn("lmdb.scan {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "mdb_last" else "mdb_set_range", fullkey, ret_key, ret_value });
@@ -101,6 +101,7 @@ pub fn scan(key_parts: []const []const u8, descending: bool, allocator: Allocato
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_PREV else c.MDB_NEXT);
         ret_value = mdbValToBytes(mdb_value);
         ret_key = mdbValToBytes(mdb_key);
+        warn("lmdb.scan {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
     }
     try txn_commit(txn);
     return answers.toOwnedSlice();
