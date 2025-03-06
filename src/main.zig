@@ -199,22 +199,25 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, last_day }, true, allocator) catch unreachable;
     warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
     for (post_ids) |id| {
-        const post_json = db_file.read(&.{ "posts", column.filter.hostname, id, "json" }, allocator);
-        const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
-        const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
-        if (!column.toots.contains(toot)) {
-            column.toots.sortedInsert(toot, alloc);
-            if (toot.get("media_attachments")) |images| { // media is not cached (yet), fetch now
-                media_attachments(column, toot, images.array);
+        if (db_file.read(&.{ "posts", column.filter.hostname, id, "json" }, allocator)) |post_json| {
+            const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
+            const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
+            if (!column.toots.contains(toot)) {
+                column.toots.sortedInsert(toot, alloc);
+                if (toot.get("media_attachments")) |images| { // media is not cached (yet), fetch now
+                    media_attachments(column, toot, images.array);
+                }
+                warn("column_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
+                const acct = toot.acct() catch unreachable;
+                if (db_file.has(&.{ "accounts", acct }, "photo", allocator)) {
+                    const cAcct = util.sliceToCstr(alloc, acct);
+                    gui.schedule(gui.update_author_photo_schedule, @ptrCast(cAcct));
+                }
+            } else {
+                warn("column_db_sync ignored dupe #{s}", .{toot.id()});
             }
-            warn("column_db_sync inserted {*} #{s} count {}", .{ toot, toot.id(), column.toots.count() });
-            const acct = toot.acct() catch unreachable;
-            if (db_file.has(&.{ "accounts", acct }, "photo", allocator)) {
-                const cAcct = util.sliceToCstr(alloc, acct);
-                gui.schedule(gui.update_author_photo_schedule, @ptrCast(cAcct));
-            }
-        } else {
-            warn("column_db_sync ignored dupe #{s}", .{toot.id()});
+        } else |err| {
+            warn("!! column_db_sync file read error {}", .{err});
         }
     }
     gui.schedule(gui.update_column_toots_schedule, @ptrCast(column));
@@ -237,13 +240,16 @@ fn media_attachments(column: *config.ColumnInfo, toot: *toot_lib.Type, images: s
         if (!toot.containsImg(img_id)) {
             const hostname = column.filter.hostname;
             if (db_file.has(&.{ "posts", hostname, toot.id(), "images" }, img_id, alloc)) {
-                const img_bytes = db_file.read(&.{ "posts", hostname, toot.id(), "images", img_id }, alloc);
-                const tootpic = alloc.create(gui.TootPic) catch unreachable;
-                tootpic.toot = toot;
-                const img = toot_lib.Img{ .id = img_id, .url = img_url, .bytes = img_bytes };
-                tootpic.img = img;
-                toot.addImg(img);
-                gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
+                if (db_file.read(&.{ "posts", hostname, toot.id(), "images", img_id }, alloc)) |img_bytes| {
+                    const tootpic = alloc.create(gui.TootPic) catch unreachable;
+                    tootpic.toot = toot;
+                    const img = toot_lib.Img{ .id = img_id, .url = img_url, .bytes = img_bytes };
+                    tootpic.img = img;
+                    toot.addImg(img);
+                    gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
+                } else |err| {
+                    warn("!!media_attachments file read error {}", .{err});
+                }
             } else {
                 // mediaget(column, toot, img_id, img_url, alloc);
             }
