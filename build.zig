@@ -58,28 +58,10 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 
     const test_step = b.step("test", "Run unit tests");
-    const prefix = "src";
-    var dir = std.fs.cwd().openDir(prefix, .{ .iterate = true }) catch unreachable;
-    scan_dir(b, test_step, prefix, &dir);
-}
-
-fn scan_dir(b: *std.Build, test_step: *std.Build.Step, prefix: []const u8, dir: *std.fs.Dir) void {
-    var iter = dir.iterate();
-    while (iter.next() catch unreachable) |file_entry| {
-        const prefix2 = std.fs.path.join(b.allocator, &.{ prefix, file_entry.name }) catch unreachable;
-        if (file_entry.kind == .directory) {
-            var dir2 = std.fs.cwd().openDir(prefix2, .{ .iterate = true }) catch unreachable;
-            scan_dir(b, test_step, prefix2, &dir2);
-        }
-        if (file_entry.kind == .file) {
-            if (std.mem.endsWith(u8, prefix2, ".zig")) {
-                const unit_test = b.addTest(.{ .root_source_file = b.path(prefix2) });
-                enhance_executable(b, unit_test);
-                const run_unit_tests = b.addRunArtifact(unit_test);
-                test_step.dependOn(&run_unit_tests.step);
-            }
-        }
-    }
+    const unit_test = b.addTest(.{ .root_source_file = b.path("src/tests.zig") });
+    enhance_executable(b, unit_test);
+    const run_unit_tests = b.addRunArtifact(unit_test);
+    test_step.dependOn(&run_unit_tests.step);
 }
 
 fn enhance_executable(b: *std.Build, exe: *std.Build.Step.Compile) void {

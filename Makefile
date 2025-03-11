@@ -18,6 +18,9 @@ push:
 	pijul push donpdonp@nest.pijul.com:donpdonp/tootdeck
 
 test:
+	zig build test
+
+test-each:
 	find src -name \*zig -print -exec zig test {} \;
 
 dist:

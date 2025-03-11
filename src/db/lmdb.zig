@@ -113,11 +113,11 @@ fn prefix_match(key_parts: []const []const u8, body: []const u8, allocator: Allo
 }
 
 test prefix_match {
-    try std.testing.expect(prefix_match("A", "AB"));
-    try std.testing.expect(prefix_match("A:", "A:"));
-    try std.testing.expect(prefix_match("", "A:"));
-    try std.testing.expect(!prefix_match("B", "AB"));
-    try std.testing.expect(!prefix_match("BB", "B"));
+    try std.testing.expect(prefix_match(&.{"A"}, "AB", std.testing.allocator));
+    try std.testing.expect(prefix_match(&.{"A:"}, "A:", std.testing.allocator));
+    try std.testing.expect(prefix_match(&.{""}, "A:", std.testing.allocator));
+    try std.testing.expect(!prefix_match(&.{"B"}, "AB", std.testing.allocator));
+    try std.testing.expect(!prefix_match(&.{"BB"}, "B", std.testing.allocator));
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
