@@ -20,7 +20,7 @@ const toot_lib = @import("./toot.zig");
 const html_lib = @import("./html.zig");
 const filter_lib = @import("./filter.zig");
 
-var settings: config.Settings = undefined;
+var settings: *config.Settings = undefined;
 
 pub fn main() !void {
     try thread.init(alloc);
@@ -29,7 +29,7 @@ pub fn main() !void {
 
     if (config.readfile(config.config_file_path())) |config_data| {
         settings = config_data;
-        try gui.init(alloc, &settings);
+        try gui.init(alloc, settings);
         const dummy_payload = try alloc.create(thread.CommandVerb);
         _ = try thread.create("gui", gui.go, dummy_payload, guiback);
         _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);

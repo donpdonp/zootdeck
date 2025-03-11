@@ -146,7 +146,7 @@ pub fn config_file_path() []const u8 {
     return config_path;
 }
 
-pub fn readfile(filename: []const u8) !Settings {
+pub fn readfile(filename: []const u8) !*Settings {
     util.log("config file {s}", .{filename});
     const json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
     var settings = try read(json);
@@ -154,7 +154,7 @@ pub fn readfile(filename: []const u8) !Settings {
     return settings;
 }
 
-pub fn read(json: []const u8) !Settings {
+pub fn read(json: []const u8) !*Settings {
     const value_tree = try std.json.parseFromSlice(std.json.Value, allocator, json, .{});
     var root = value_tree.value.object;
     var settings = allocator.create(Settings) catch unreachable;
@@ -197,10 +197,10 @@ pub fn read(json: []const u8) !Settings {
             settings.columns.append(colInfo) catch unreachable;
         }
     }
-    return settings.*;
+    return settings;
 }
 
-pub fn writefile(settings: Settings, filename: []const u8) void {
+pub fn writefile(settings: *Settings, filename: []const u8) void {
     var configFile = allocator.create(ConfigFile) catch unreachable;
     configFile.win_x = settings.win_x;
     configFile.win_y = settings.win_y;
@@ -231,7 +231,7 @@ test "read" {
     const ret = read("{\"url\":\"abc\"}");
     if (ret) |settings| {
         try std.testing.expectEqual(800, settings.win_x);
-        std.testing.allocator.destroy(&settings);
+        std.testing.allocator.destroy(settings);
     } else |err| {
         warn("warn: {!}", .{err});
         try std.testing.expect(false);
