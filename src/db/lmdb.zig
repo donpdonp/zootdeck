@@ -107,6 +107,11 @@ pub fn scan(key_parts: []const []const u8, descending: bool, allocator: Allocato
     return answers.toOwnedSlice();
 }
 
+test scan {
+    try init(std.testing.allocator);
+    try std.testing.expect(true);
+}
+
 fn prefix_match(key_parts: []const []const u8, body: []const u8, allocator: Allocator) bool {
     const full_key = util.strings_join_separator(key_parts, ':', allocator);
     return std.mem.startsWith(u8, body, full_key);

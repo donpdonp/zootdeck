@@ -231,7 +231,7 @@ test "read" {
     const ret = read("{\"url\":\"abc\"}");
     if (ret) |settings| {
         try std.testing.expectEqual(800, settings.win_x);
-        std.testing.allocator.free(settings);
+        std.testing.allocator.destroy(&settings);
     } else |err| {
         warn("warn: {!}", .{err});
         try std.testing.expect(false);
