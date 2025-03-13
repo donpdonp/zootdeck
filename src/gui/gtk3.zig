@@ -496,17 +496,21 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
 }
 
 fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_height: c.gint, data_ptr: *anyopaque) void {
-    const colWidth = @as(*c_int, @ptrCast(@alignCast(data_ptr))).*;
-    var scaleWidth = img_width;
-    var scaleHeight = img_height;
-    if (img_width > colWidth) {
-        scaleWidth = colWidth;
-        //const scale_factor = @divFloor(img_width, colWidth);
-        const scale_factor = @as(f32, @floatFromInt(colWidth)) / @as(f32, @floatFromInt(img_width));
-        scaleHeight = @as(c_int, @intFromFloat(@as(f32, @floatFromInt(img_height)) * scale_factor));
+    if (img_width > 0 and img_height > 0) {
+        const colWidth = @as(*c_int, @ptrCast(@alignCast(data_ptr))).*;
+        var scaleWidth = img_width;
+        var scaleHeight = img_height;
+        if (img_width > colWidth) {
+            scaleWidth = colWidth;
+            //const scale_factor = @divFloor(img_width, colWidth);
+            const scale_factor = @as(f32, @floatFromInt(colWidth)) / @as(f32, @floatFromInt(img_width));
+            scaleHeight = @as(c_int, @intFromFloat(@as(f32, @floatFromInt(img_height)) * scale_factor));
+        }
+        warn("toot_media pixloaderSizePrepared col width {}px img {}x{} scaled {}x{}", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
+        c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
+    } else {
+        warn("pixloaderSizePrepared img {}x{} was negative", .{ img_width, img_height });
     }
-    warn("toot_media pixloaderSizePrepared col {}px img {}x{} scale {}x{}", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
-    c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
 }
 
 fn hardWrap(str: []const u8, limit: usize) ![]const u8 {
