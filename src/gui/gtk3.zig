@@ -509,7 +509,7 @@ fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_heig
         warn("toot_media pixloaderSizePrepared col width {}px img {}x{} scaled {}x{}", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
         c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
     } else {
-        warn("pixloaderSizePrepared img {}x{} was negative", .{ img_width, img_height });
+        warn("pixloaderSizePrepared img {}x{} was out of bounds", .{ img_width, img_height });
     }
 }
 
