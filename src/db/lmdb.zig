@@ -81,30 +81,75 @@ pub fn csr_open(txn: ?*c.struct_MDB_txn, dbi: c.MDB_dbi) !?*c.MDB_cursor {
     }
 }
 
-pub fn scan(key_parts: []const []const u8, descending: bool, allocator: Allocator) ![]const []const u8 {
+pub const Key = struct {
+    parts: []const []const u8,
+
+    const This = @This();
+    const Separator = ':';
+
+    pub fn init(parts: []const []const u8) This {
+        return .{ .parts = parts };
+    }
+
+    pub fn toString(self: *const This, allocator: Allocator) []const u8 {
+        return util.strings_join_separator(self.parts, Separator, allocator);
+    }
+
+    pub fn lessLevel(self: *const This) Key {
+        const less_level = self.parts[0 .. self.parts.len - 1];
+        return This.init(less_level);
+    }
+};
+
+pub fn scan(key: Key, descending: bool, allocator: Allocator) ![]const []const u8 {
     var answers = std.ArrayList([]const u8).init(allocator);
     const txn = try txn_open();
     const dbi = try dbi_open(txn);
     const csr = try csr_open(txn, dbi);
+    try scanInner(csr, &answers, key, descending, allocator);
+    try txn_commit(txn);
+    warn("scan returning {} answers", .{answers.items.len});
+    return answers.toOwnedSlice();
+}
 
-    const fullkey = util.strings_join_separator(key_parts, ':', allocator);
+fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key, descending: bool, allocator: Allocator) !void {
+    warn("lmdb.scanInner {s} {}", .{ key.toString(allocator), descending });
+    const fullkey = key.toString(allocator);
     const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
     var ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_SET_RANGE);
     var ret_key = mdbValToBytes(mdb_key);
     var ret_value = mdbValToBytes(mdb_value);
-    warn("lmdb.scan {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "mdb_last" else "mdb_set_range", fullkey, ret_key, ret_value });
-    while (ret == 0 and prefix_match(key_parts[0 .. key_parts.len - 2], ret_key, allocator)) {
+    if (ret == c.MDB_NOTFOUND) {
+        warn("lmdb.scanInner cursor_get first_fail {s} set_range err#{}", .{ fullkey, ret });
+        ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_LAST);
+        if (ret != 0) {
+            warn("lmdb.scanInner first last fail {}", .{ret});
+        }
+        ret_key = mdbValToBytes(mdb_key);
+        ret_value = mdbValToBytes(mdb_value);
+        warn("lmdb.scanInner cursor_get_last {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
+    } else {
+        warn("lmdb.scanInner cursor_set_range {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
+        if (descending) {
+            ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_PREV);
+            if (ret != 0) {
+                warn("lmdb.scanInner first prev fail {}", .{ret});
+            }
+            ret_key = mdbValToBytes(mdb_key);
+            ret_value = mdbValToBytes(mdb_value);
+            warn("lmdb.scanInner first prev {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
+        }
+    }
+    while (ret == 0 and prefix_match(key.lessLevel(), ret_key, allocator)) {
         if (answers.items.len < 10) {
             try answers.append(ret_value);
-        }
+        } else break;
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_PREV else c.MDB_NEXT);
         ret_value = mdbValToBytes(mdb_value);
         ret_key = mdbValToBytes(mdb_key);
-        warn("lmdb.scan {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
+        warn("lmdb.scanInner {s} {s} key \"{s}\" val \"{s}\" {} answers", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value, answers.items.len });
     }
-    try txn_commit(txn);
-    return answers.toOwnedSlice();
 }
 
 test scan {
@@ -112,9 +157,8 @@ test scan {
     try std.testing.expect(true);
 }
 
-fn prefix_match(key_parts: []const []const u8, body: []const u8, allocator: Allocator) bool {
-    const full_key = util.strings_join_separator(key_parts, ':', allocator);
-    return std.mem.startsWith(u8, body, full_key);
+fn prefix_match(key: Key, body: []const u8, allocator: Allocator) bool {
+    return std.mem.startsWith(u8, body, key.toString(allocator));
 }
 
 test prefix_match {

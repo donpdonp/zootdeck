@@ -196,7 +196,7 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
 
 fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     const last_day = "9999-99-99";
-    const post_ids = db_kv.scan(&.{ "posts", column.filter.hostname, last_day }, true, allocator) catch unreachable;
+    const post_ids = db_kv.scan(db_kv.Key.init(&.{ "posts", column.filter.hostname, last_day }), true, allocator) catch unreachable;
     warn("column_db_sync {s} scan found {} items", .{ column.makeTitle(), post_ids.len });
     for (post_ids) |id| {
         if (db_file.read(&.{ "posts", column.filter.hostname, id, "json" }, allocator)) |post_json| {

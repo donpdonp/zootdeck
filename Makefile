@@ -3,7 +3,6 @@ TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-linux-`uname -i`-${TODAY}
 DISTDEB=zootdeck_0.6.1-1
 ZIG=zig
-#ZIG=/opt/zig/0.14.0-dev/zig
 
 build:
 	${ZIG} build -freference-trace
