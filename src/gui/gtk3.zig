@@ -496,7 +496,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic
 }
 
 fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_height: c.gint, data_ptr: *anyopaque) void {
-    if (img_width > 0 and img_height > 0) {
+    if (img_width > 0 and img_width < 65535 and img_height > 0 and img_height < 65535) {
         const colWidth = @as(*c_int, @ptrCast(@alignCast(data_ptr))).*;
         var scaleWidth = img_width;
         var scaleHeight = img_height;
