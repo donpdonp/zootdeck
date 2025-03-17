@@ -41,7 +41,7 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
     var ragel_points = c.urlPoints{ .scheme_pos = 0, .loc_pos = 0 };
     const clang = util.sliceToCstr(allocator, lang);
     _ = c.url(clang, &ragel_points);
-    warn("ragel parse \"{s}\"", .{lang});
+    warn("Ragel parse \"{s}\"", .{lang});
 
     var newTree = allocator.create(ptree) catch unreachable;
     newTree.tags = allocator.create(toot_lib.Type.TagList) catch unreachable;

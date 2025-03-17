@@ -9,6 +9,9 @@ const thread = @import("../thread.zig");
 const filter_lib = @import("../filter.zig");
 
 const theme_css = @embedFile("theme.css");
+const glade_zootdeck = @embedFile("zootdeck.glade");
+const glade_column = @embedFile("column.glade");
+const glade_toot = @embedFile("toot.glade");
 
 const c = @cImport({
     @cInclude("gtk/gtk.h");
@@ -57,10 +60,10 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     // GtkCssProvider *cssProvider = gtk_css_provider_new();
     myCssProvider = c.gtk_css_provider_new();
     _ = c.gtk_css_provider_load_from_data(myCssProvider, theme_css, theme_css.len, null);
-    c.gtk_style_context_add_provider_for_screen(c.gdk_screen_get_default(), @as(*c.GtkStyleProvider, @ptrCast(myCssProvider)), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
+    c.gtk_style_context_add_provider_for_screen(c.gdk_screen_get_default(), @ptrCast(myCssProvider), c.GTK_STYLE_PROVIDER_PRIORITY_USER);
 
     myBuilder = c.gtk_builder_new();
-    const ret = c.gtk_builder_add_from_file(myBuilder, "glade/zootdeck.glade", @as([*c][*c]c._GError, @ptrFromInt(0)));
+    const ret = c.gtk_builder_add_from_string(myBuilder, glade_zootdeck, glade_zootdeck.len, @as([*c][*c]c._GError, @ptrFromInt(0)));
     if (ret == 0) {
         warn("builder file fail", .{});
         return GUIError.GladeLoad;
@@ -156,7 +159,7 @@ pub fn add_column_schedule(in: ?*anyopaque) callconv(.C) c_int {
 pub fn add_column(colInfo: *config.ColumnInfo) void {
     const container = builder_get_widget(myBuilder, "ZootColumns");
     const column = allocator.create(Column) catch unreachable;
-    column.builder = c.gtk_builder_new_from_file("glade/column.glade");
+    column.builder = c.gtk_builder_new_from_string(glade_column, glade_column.len);
     column.columnbox = builder_get_widget(column.builder, "column");
     column.main = colInfo;
     //var line_buf: []u8 = allocator.alloc(u8, 255) catch unreachable;
@@ -383,7 +386,7 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
 
 pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
     warn("maketootbox toot #{s} {*} gui building {} images", .{ toot.id(), toot, toot.imgList.items.len });
-    const builder = c.gtk_builder_new_from_file("glade/toot.glade");
+    const builder = c.gtk_builder_new_from_string(glade_toot, glade_toot.len);
 
     //const id = toot.get("id").?.string;
     const account = toot.get("account").?.object;
