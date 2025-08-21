@@ -22,9 +22,11 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "zootdeck",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = std.Build.Module.create(b, .{
+            .target = target,
+            .optimize = optimize,
+            .root_source_file = b.path("src/main.zig"),
+        }),
     });
 
     enhance_executable(b, exe);
@@ -58,7 +60,10 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 
     const test_step = b.step("test", "Run unit tests");
-    const unit_test = b.addTest(.{ .root_source_file = b.path("src/tests.zig") });
+    const unit_test = b.addTest(.{ .root_module = std.Build.Module.create(b, .{
+        .target = target,
+        .root_source_file = b.path("src/tests.zig"),
+    }) });
     enhance_executable(b, unit_test);
     const run_unit_tests = b.addRunArtifact(unit_test);
     test_step.dependOn(&run_unit_tests.step);
