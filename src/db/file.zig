@@ -35,9 +35,9 @@ pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator
 }
 
 pub fn read(namespaces: []const []const u8, allocator: Allocator) ![]const u8 {
-    var namespace_paths = std.ArrayList([]const u8).init(allocator);
-    namespace_paths.append(cache_path) catch unreachable;
-    namespace_paths.appendSlice(namespaces) catch unreachable;
+    var namespace_paths: std.ArrayList([]const u8) = .{};
+    namespace_paths.append(allocator, cache_path) catch unreachable;
+    namespace_paths.appendSlice(allocator, namespaces) catch unreachable;
     const filename = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
     warn("db_file.read {s}", .{filename});
     return try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));

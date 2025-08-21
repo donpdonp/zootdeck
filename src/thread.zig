@@ -40,7 +40,7 @@ pub fn name(tid: u64) []const u8 {
 
 pub fn create(
     actor_name: []const u8,
-    startFn: *const fn (?*anyopaque) callconv(.C) ?*anyopaque,
+    startFn: *const fn (?*anyopaque) callconv(.c) ?*anyopaque,
     startParams: *CommandVerb,
     recvback: *const fn (*Command) void,
 ) !*Actor {
@@ -57,7 +57,7 @@ pub fn create(
         try actors.putNoClobber(actor.thread_id, actor);
         return actor;
     } else {
-        warn("ERROR thread pthread_create err: {!} {*}", .{ pthread_result, actor });
+        warn("ERROR thread pthread_create err: {x} {*}", .{ pthread_result, actor });
     }
     return error.BadValue;
 }

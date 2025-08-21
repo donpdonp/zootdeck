@@ -158,7 +158,7 @@ pub fn read(json: []const u8) !*Settings {
     const value_tree = try std.json.parseFromSlice(std.json.Value, allocator, json, .{});
     var root = value_tree.value.object;
     var settings = allocator.create(Settings) catch unreachable;
-    settings.columns = std.ArrayList(*ColumnInfo).init(allocator);
+    settings.columns = .{};
 
     if (root.get("win_x")) |w| {
         settings.win_x = w.integer;
@@ -174,7 +174,7 @@ pub fn read(json: []const u8) !*Settings {
         for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             _ = colInfo.reset();
-            colInfo.toots = toot_list.TootList.init();
+            colInfo.toots = .{ .list = .{} };
             const colconfig = allocator.create(ColumnConfig) catch unreachable;
             colInfo.config = colconfig;
             const title = value.object.get("title").?.string;
@@ -194,7 +194,7 @@ pub fn read(json: []const u8) !*Settings {
             }
             const img_only = value.object.get("img_only").?.bool;
             colInfo.config.img_only = img_only;
-            settings.columns.append(colInfo) catch unreachable;
+            settings.columns.append(allocator, colInfo) catch unreachable;
         }
     }
     return settings;

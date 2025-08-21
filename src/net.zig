@@ -15,7 +15,7 @@ const c = @cImport({
 
 const NetError = error{ JSONparse, Curl, CurlInit, DNS };
 
-pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
+pub fn go(data: ?*anyopaque) callconv(.c) ?*anyopaque {
     var actor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     //warn("net thread start {*} {}\n", actor, actor);
 

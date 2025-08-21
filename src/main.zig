@@ -39,7 +39,7 @@ pub fn main() !void {
             thread.wait(); // main ipc listener
         }
     } else |err| {
-        warn("config error: {!}", .{err});
+        warn("config error: {any}", .{err});
     }
 }
 

@@ -102,14 +102,14 @@ pub const Key = struct {
 };
 
 pub fn scan(key: Key, descending: bool, allocator: Allocator) ![]const []const u8 {
-    var answers = std.ArrayList([]const u8).init(allocator);
+    var answers: std.ArrayList([]const u8) = .{};
     const txn = try txn_open();
     const dbi = try dbi_open(txn);
     const csr = try csr_open(txn, dbi);
     try scanInner(csr, &answers, key, descending, allocator);
     try txn_commit(txn);
     warn("scan returning {} answers", .{answers.items.len});
-    return answers.toOwnedSlice();
+    return answers.toOwnedSlice(allocator);
 }
 
 fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key, descending: bool, allocator: Allocator) !void {
@@ -143,7 +143,7 @@ fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key,
     }
     while (ret == 0 and prefix_match(key.lessLevel(), ret_key, allocator)) {
         if (answers.items.len < 10) {
-            try answers.append(ret_value);
+            try answers.append(allocator, ret_value);
         } else break;
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_PREV else c.MDB_NEXT);
         ret_value = mdbValToBytes(mdb_value);

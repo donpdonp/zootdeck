@@ -20,14 +20,14 @@ pub fn init(alloca: Allocator, set: *config.Settings) !void {
     warn("GUI init()", .{});
     settings = set;
     allocator = alloca;
-    columns = std.ArrayList(*Column).init(allocator);
+    columns = .{};
     try guilib.init(alloca, set);
 }
 
 var myActor: *thread.Actor = undefined;
 var stop = false;
 
-pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
+pub fn go(data: ?*anyopaque) callconv(.c) ?*anyopaque {
     warn("GUI {s} mainloop", .{guilib.libname()});
     myActor = @as(*thread.Actor, @ptrCast(@alignCast(data)));
     if (guilib.gui_setup(myActor)) {
@@ -46,47 +46,47 @@ pub fn go(data: ?*anyopaque) callconv(.C) ?*anyopaque {
     }
     return null;
 }
-pub fn schedule(func: ?*const fn (?*anyopaque) callconv(.C) c_int, param: ?*anyopaque) void {
+pub fn schedule(func: ?*const fn (?*anyopaque) callconv(.c) c_int, param: ?*anyopaque) void {
     guilib.schedule(func, param);
 }
 
-pub fn show_main_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn show_main_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.show_main_schedule(in);
 }
 
-pub fn add_column_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn add_column_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.add_column_schedule(in);
 }
 
-pub fn column_remove_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn column_remove_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.column_remove_schedule(in);
 }
 
-pub fn column_config_oauth_url_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn column_config_oauth_url_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.column_config_oauth_url_schedule(in);
 }
 
-pub fn update_column_config_oauth_finalize_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn update_column_config_oauth_finalize_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.update_column_config_oauth_finalize_schedule(in);
 }
 
-pub fn update_column_ui_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn update_column_ui_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.update_column_ui_schedule(in);
 }
 
-pub fn update_column_netstatus_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn update_column_netstatus_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.update_column_netstatus_schedule(in);
 }
 
-pub fn update_column_toots_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn update_column_toots_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.update_column_toots_schedule(in);
 }
 
-pub fn update_author_photo_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn update_author_photo_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.update_author_photo_schedule(in);
 }
 
 pub const TootPic = guilib.TootPic;
-pub fn toot_media_schedule(in: ?*anyopaque) callconv(.C) c_int {
+pub fn toot_media_schedule(in: ?*anyopaque) callconv(.c) c_int {
     return guilib.toot_media_schedule(in);
 }

@@ -13,7 +13,7 @@ pub fn init(myAllocator: Allocator) !void {
     allocator = myAllocator;
 }
 
-pub fn go(actor_ptr: ?*anyopaque) callconv(.C) ?*anyopaque {
+pub fn go(actor_ptr: ?*anyopaque) callconv(.c) ?*anyopaque {
     const actor = @as(*thread.Actor, @ptrCast(@alignCast(actor_ptr)));
     util.log("heartbeat init()", .{});
     const sleep_seconds = 60;

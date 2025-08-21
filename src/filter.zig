@@ -45,7 +45,6 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
 
     var newTree = allocator.create(ptree) catch unreachable;
     newTree.tags = allocator.create(toot_lib.Type.TagList) catch unreachable;
-    newTree.tags.* = toot_lib.Type.TagList.init(allocator);
     var spaceParts = std.mem.tokenizeSequence(u8, lang, " ");
     var idx: usize = 0;
     while (spaceParts.next()) |part| {
@@ -55,7 +54,7 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
             warn("filter set host={s}", .{part});
         }
         if (idx > 1) {
-            newTree.tags.append(part) catch unreachable;
+            newTree.tags.append(allocator, part) catch unreachable;
             warn("filter set tag #{} {s}", .{ newTree.tags.items.len, part });
         }
     }
