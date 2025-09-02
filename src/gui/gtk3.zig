@@ -5,6 +5,7 @@ const warn = util.log;
 const config = @import("../config.zig");
 const SimpleBuffer = @import("../simple_buffer.zig");
 const toot_lib = @import("../toot.zig");
+const toot_list = @import("../toot_list.zig");
 const thread = @import("../thread.zig");
 const filter_lib = @import("../filter.zig");
 
@@ -136,7 +137,7 @@ pub fn update_column_ui_schedule(in: ?*anyopaque) callconv(.c) c_int {
 }
 
 pub const TootPic = struct {
-    toot: *toot_lib.Type,
+    toot: *toot_lib.Toot,
     img: toot_lib.Img,
 };
 
@@ -288,11 +289,12 @@ pub fn update_column_toots(column: *Column) void {
         if (column.main.inError) @as([]const u8, "INERROR") else @as([]const u8, ""),
     });
     const column_toot_zone = builder_get_widget(column.builder, "toot_zone");
-    var current = column.main.toots.first();
+    var current = column.main.toots.date_index.first;
     var idx: c_int = 0;
     if (current != null) {
         while (current) |node| {
-            const toot: *toot_lib.Toot() = node.data;
+            const tnode: *toot_list.Node = @fieldParentPtr("node", node);
+            const toot = tnode.data;
             warn("update_column_toots building {*} #{s}", .{ toot, toot.id() });
             const tootbuilderMaybe = column.guitoots.get(toot.id());
             if (column.main.filter.match(toot)) {
@@ -384,7 +386,7 @@ pub fn destroyTootBox(builder: *c.GtkBuilder) void {
     c.g_object_unref(builder);
 }
 
-pub fn makeTootBox(toot: *toot_lib.Type, column: *Column) *c.GtkBuilder {
+pub fn makeTootBox(toot: *toot_lib.Toot, column: *Column) *c.GtkBuilder {
     warn("maketootbox toot #{s} {*} gui building {} images", .{ toot.id(), toot, toot.imgList.items.len });
     const builder = c.gtk_builder_new_from_string(glade_toot, glade_toot.len);
 
@@ -460,7 +462,7 @@ fn photo_refresh(acct: []const u8, builder: *c.GtkBuilder) void {
     c.gtk_image_set_from_pixbuf(@ptrCast(avatar), pixbuf);
 }
 
-fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Type, pic: []const u8) void {
+fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Toot, pic: []const u8) void {
     const imageBox = builder_get_widget(builder, "image_box");
     c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
     const loader = c.gdk_pixbuf_loader_new();

@@ -103,7 +103,7 @@ pub const HttpInfo = struct {
     response_code: c_long,
     tree: std.json.Parsed(std.json.Value),
     column: *ColumnInfo,
-    toot: *toot_lib.Type,
+    toot: *toot_lib.Toot,
 
     pub fn response_ok(self: *HttpInfo) bool {
         return self.response_code >= 200 and self.response_code < 300;
@@ -174,7 +174,7 @@ pub fn read(json: []const u8) !*Settings {
         for (columns.array.items) |value| {
             var colInfo = allocator.create(ColumnInfo) catch unreachable;
             _ = colInfo.reset();
-            colInfo.toots = .{ .list = .{} };
+            colInfo.toots = .init(allocator);
             const colconfig = allocator.create(ColumnConfig) catch unreachable;
             colInfo.config = colconfig;
             const title = value.object.get("title").?.string;
@@ -200,23 +200,29 @@ pub fn read(json: []const u8) !*Settings {
     return settings;
 }
 
-pub fn writefile(settings: *Settings, filename: []const u8) void {
+pub fn writefile(settings: *Settings, filename: []const u8) !void {
     var configFile = allocator.create(ConfigFile) catch unreachable;
     configFile.win_x = settings.win_x;
     configFile.win_y = settings.win_y;
-    var column_infos = std.ArrayList(*ColumnConfig).init(allocator);
+    var column_infos = std.ArrayList(*ColumnConfig).empty;
     for (settings.columns.items) |column| {
         warn("config.writefile writing column {s}", .{column.config.title});
-        column_infos.append(column.config) catch unreachable;
+        column_infos.append(allocator, column.config) catch unreachable;
     }
     configFile.columns = column_infos.items;
 
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
-        std.json.stringify(configFile, std.json.StringifyOptions{}, file.writer()) catch unreachable;
+        var buf: [64]u8 = undefined;
+        const fwriter = file.writer(&buf);
+        var fwi = fwriter.interface;
+        const fwip = &fwi;
+        var w: std.json.Stringify = .{ .writer = fwip, .options = .{ .whitespace = .indent_2 } };
+        w.print("{}", .{configFile}) catch unreachable;
+        try fwi.flush(); // dont forget to flush
         warn("config saved. {s} {} bytes", .{ filename, file.getPos() catch unreachable });
         file.close();
     } else |err| {
-        warn("config save fail. {!}", .{err});
+        warn("config save fail. {}", .{err});
     } // existing file is OK
 }
 

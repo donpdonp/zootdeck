@@ -19,17 +19,17 @@ pub fn init(alloc: Allocator) !void {
 }
 
 pub fn has(namespaces: []const []const u8, key: []const u8, allocator: Allocator) bool {
-    var namespace_paths = std.ArrayList([]const u8).init(allocator);
-    namespace_paths.append(cache_path) catch unreachable;
-    namespace_paths.appendSlice(namespaces) catch unreachable;
-    namespace_paths.append(key) catch unreachable;
+    var namespace_paths: std.ArrayList([]const u8) = .{};
+    namespace_paths.append(allocator, cache_path) catch unreachable;
+    namespace_paths.appendSlice(allocator, namespaces) catch unreachable;
+    namespace_paths.append(allocator, key) catch unreachable;
     const keypath = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
     var found = false;
     if (std.fs.cwd().access(keypath, .{ .mode = .read_only })) {
         warn("db_file.has found {s}", .{keypath});
         found = true;
     } else |err| {
-        warn("db_file.has did not find {s} {!}", .{ keypath, err });
+        warn("db_file.has did not find {s} {}", .{ keypath, err });
     }
     return found;
 }
@@ -48,9 +48,9 @@ pub fn write(namespaces: []const []const u8, key: []const u8, value: []const u8,
     const cache_dir = std.fs.openDirAbsolute(cache_path, .{ .access_sub_paths = true }) catch unreachable;
     std.fs.Dir.makePath(cache_dir, namespace) catch unreachable;
 
-    var namespace_paths = std.ArrayList([]const u8).init(allocator);
-    namespace_paths.append(cache_path) catch unreachable;
-    namespace_paths.appendSlice(namespaces) catch unreachable;
+    var namespace_paths: std.ArrayList([]const u8) = .{};
+    namespace_paths.append(allocator, cache_path) catch unreachable;
+    namespace_paths.appendSlice(allocator, namespaces) catch unreachable;
     const dirpath = std.fs.path.join(allocator, namespace_paths.items) catch unreachable;
     var dir = std.fs.Dir.makeOpenPath(std.fs.cwd(), dirpath, .{}) catch unreachable;
     defer dir.close();

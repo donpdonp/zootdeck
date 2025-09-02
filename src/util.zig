@@ -27,11 +27,17 @@ pub fn cstrToSliceCopy(allocator: Allocator, cstr: [*c]const u8) []const u8 {
 }
 
 pub fn json_stringify(value: anytype) []u8 {
-    return std.json.stringifyAlloc(alloc, value, .{}) catch unreachable;
+    const fmt = std.json.fmt(value, .{ .whitespace = .indent_2 });
+
+    var writer = std.Io.Writer.Allocating.init(alloc);
+    fmt.format(&writer.writer) catch unreachable;
+
+    const str = writer.toOwnedSlice() catch unreachable;
+    return str;
 }
 
 pub fn strings_join_separator(parts: []const []const u8, separator: u8, allocator: Allocator) []const u8 {
-    var buf = std.ArrayList(u8).init(allocator);
+    var buf = std.array_list.Managed(u8).init(allocator);
     for (parts, 0..) |part, idx| {
         // todo abort if part contains separator
 

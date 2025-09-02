@@ -1,10 +1,10 @@
 const std = @import("std");
 
 pub const SimpleU8 = struct {
-    list: std.ArrayList(u8),
+    list: std.array_list.Managed(u8),
 
     pub fn initSize(allocator: std.mem.Allocator, size: usize) !SimpleU8 {
-        var self = SimpleU8{ .list = std.ArrayList(u8).init(allocator) };
+        var self = SimpleU8{ .list = .init(allocator) };
         try self.resize(size);
         return self;
     }

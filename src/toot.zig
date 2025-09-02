@@ -5,7 +5,7 @@ const testing = std.testing;
 const util = @import("util.zig");
 const warn = util.log;
 
-pub const Type = Toot();
+pub const Toot = TootType();
 
 pub const Img = struct {
     bytes: []const u8,
@@ -13,7 +13,7 @@ pub const Img = struct {
     id: []const u8,
 };
 
-pub fn Toot() type {
+pub fn TootType() type {
     return struct {
         hashmap: std.json.Value,
         tagList: TagList,
@@ -21,9 +21,9 @@ pub fn Toot() type {
 
         const Self = @This();
         const TagType = []const u8;
-        pub const TagList = std.ArrayList(TagType);
+        pub const TagList = std.array_list.Managed(TagType);
         const ImgBytes = []const u8;
-        const ImgList = std.ArrayList(Img);
+        const ImgList = std.array_list.Managed(Img);
         const K = []const u8;
         const V = std.json.Value;
         pub fn init(hash: std.json.Value, allocator: Allocator) *Self {
@@ -107,12 +107,12 @@ test "Toot" {
     const content_value = std.json.Value{ .string = "I am a post." };
     _ = tootHash.object.put("content", content_value) catch unreachable;
 
-    const toot = Type.init(tootHash, allocator);
+    const toot = Toot.init(tootHash, allocator);
     try testing.expect(toot.tagList.items.len == 0);
 
     const content_with_tag_value = std.json.Value{ .string = "Kirk or Picard? #startrek" };
     _ = tootHash.object.put("content", content_with_tag_value) catch unreachable;
-    const toot2 = Type.init(tootHash, allocator);
+    const toot2 = Toot.init(tootHash, allocator);
     try testing.expect(toot2.tagList.items.len == 1);
     try testing.expect(std.mem.order(u8, toot2.tagList.items[0], "#startrek") == std.math.Order.eq);
 }

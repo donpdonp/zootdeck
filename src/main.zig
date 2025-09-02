@@ -113,7 +113,7 @@ fn profileget(column: *config.ColumnInfo, allocator: std.mem.Allocator) void {
     _ = thread.create("net", net.go, verb, profileback) catch unreachable;
 }
 
-fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator) void {
+fn photoget(toot: *toot_lib.Toot, url: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     var httpInfo = allocator.create(config.HttpInfo) catch unreachable;
     httpInfo.url = url;
@@ -125,7 +125,7 @@ fn photoget(toot: *toot_lib.Type, url: []const u8, allocator: std.mem.Allocator)
     _ = thread.create("net", net.go, verb, photoback) catch unreachable;
 }
 
-fn mediaget(column: *config.ColumnInfo, toot: *toot_lib.Type, media_id: ?[]const u8, url: []const u8, allocator: std.mem.Allocator) void {
+fn mediaget(column: *config.ColumnInfo, toot: *toot_lib.Toot, media_id: ?[]const u8, url: []const u8, allocator: std.mem.Allocator) void {
     var verb = allocator.create(thread.CommandVerb) catch unreachable;
     verb.http = allocator.create(config.HttpInfo) catch unreachable;
     verb.http.url = url;
@@ -174,12 +174,12 @@ fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
                             }
                         },
                         else => {
-                            warn("!netback json unknown root tagtype {!}", .{json_parsed.value});
+                            warn("!netback json unknown root tagtype {any}", .{json_parsed.value});
                             return error.JSONparse;
                         },
                     }
                 } else |err| {
-                    warn("net json parse err {!}", .{err});
+                    warn("net json parse err {any}", .{err});
                     http.response_code = 1000;
                     return error.JSONparse;
                 }
@@ -201,7 +201,7 @@ fn column_db_sync(column: *config.ColumnInfo, allocator: std.mem.Allocator) void
     for (post_ids) |id| {
         if (db_file.read(&.{ "posts", column.filter.hostname, id, "json" }, allocator)) |post_json| {
             const parsed = std.json.parseFromSlice(std.json.Value, allocator, post_json, .{}) catch unreachable;
-            const toot: *toot_lib.Type = toot_lib.Type.init(parsed.value, allocator);
+            const toot: *toot_lib.Toot = toot_lib.Toot.init(parsed.value, allocator);
             if (!column.toots.contains(toot)) {
                 column.toots.sortedInsert(toot, alloc);
                 if (toot.get("media_attachments")) |images| { // media is not cached (yet), fetch now
@@ -227,12 +227,12 @@ fn cache_save(column: *config.ColumnInfo, items: []std.json.Value) void {
     column.inError = false;
     warn("cache_load parsed count {} adding to {s}", .{ items.len, column.makeTitle() });
     for (items) |json_value| {
-        const toot = toot_lib.Type.init(json_value, alloc);
+        const toot = toot_lib.Toot.init(json_value, alloc);
         cache_write_post(column, toot, alloc);
     }
 }
 
-fn media_attachments(column: *config.ColumnInfo, toot: *toot_lib.Type, images: std.json.Array) void {
+fn media_attachments(column: *config.ColumnInfo, toot: *toot_lib.Toot, images: std.json.Array) void {
     for (images.items) |image| {
         const img_url = image.object.get("preview_url").?.string;
         const img_id = image.object.get("id").?.string;
@@ -300,7 +300,7 @@ fn profileback(command: *thread.Command) void {
     }
 }
 
-fn cache_write_post(column: *config.ColumnInfo, toot: *toot_lib.Type, allocator: std.mem.Allocator) void {
+fn cache_write_post(column: *config.ColumnInfo, toot: *toot_lib.Toot, allocator: std.mem.Allocator) void {
     var account = toot.get("account").?.object;
     const host = column.filter.hostname;
 
@@ -354,22 +354,22 @@ fn guiback(command: *thread.Command) void {
     if (command.id == 3) { // add column
         var colInfo = alloc.create(config.ColumnInfo) catch unreachable;
         _ = colInfo.reset();
-        colInfo.toots = toot_list.TootList.init();
+        colInfo.toots = toot_list.TootList.init(alloc);
         colInfo.last_check = 0;
-        settings.columns.append(colInfo) catch unreachable;
+        settings.columns.append(alloc, colInfo) catch unreachable;
         warn("add column: settings.columns.len {}", .{settings.columns.items.len});
         const colConfig = alloc.create(config.ColumnConfig) catch unreachable;
         colInfo.config = colConfig.reset();
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
         gui.schedule(gui.add_column_schedule, @as(*anyopaque, @ptrCast(colInfo)));
-        config.writefile(settings, config.config_file_path());
+        config.writefile(settings, config.config_file_path()) catch unreachable;
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
         warn("guiback save config column title: ({d}){s}", .{ column.config.title.len, column.config.title });
         column.inError = false;
         column.refreshing = false;
-        config.writefile(settings, config.config_file_path());
+        config.writefile(settings, config.config_file_path()) catch unreachable;
     }
     if (command.id == 5) { // column remove
         const column = command.verb.column;
@@ -381,7 +381,7 @@ fn guiback(command: *thread.Command) void {
                 break;
             }
         }
-        config.writefile(settings, config.config_file_path());
+        config.writefile(settings, config.config_file_path()) catch unreachable;
         gui.schedule(gui.column_remove_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 6) { //oauth
@@ -412,11 +412,11 @@ fn guiback(command: *thread.Command) void {
     if (command.id == 9) { // image-only button
         const column = command.verb.column;
         column.config.img_only = !column.config.img_only;
-        config.writefile(settings, config.config_file_path());
+        config.writefile(settings, config.config_file_path()) catch unreachable;
         gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 10) { // window size changed
-        config.writefile(settings, config.config_file_path());
+        config.writefile(settings, config.config_file_path()) catch unreachable;
     }
     if (command.id == 11) { // Quit
         warn("byebye...", .{});
@@ -488,7 +488,7 @@ fn oauthtokenback(command: *thread.Command) void {
             if (json_parsed.value == .object) {
                 if (json_parsed.value.object.get("access_token")) |cid| {
                     column.config.token = cid.string;
-                    config.writefile(settings, config.config_file_path());
+                    config.writefile(settings, config.config_file_path()) catch unreachable;
                     column.last_check = 0;
                     profileget(column, alloc);
                     gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));

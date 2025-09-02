@@ -27,7 +27,7 @@ pub fn go(data: ?*anyopaque) callconv(.c) ?*anyopaque {
     if (httpget(actor.allocator, actor.payload.http)) |body| {
         actor.payload.http.body = body;
     } else |err| {
-        warn("net.go http {!} #{}", .{ err, actor.payload.http.response_code });
+        warn("net.go http {} #{}", .{ err, actor.payload.http.response_code });
     }
     thread.signal(actor, command);
     return null;
@@ -46,7 +46,7 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
         _ = c.curl_easy_setopt(curl, c.CURLOPT_SSL_VERIFYPEER, zero);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_SSL_VERIFYHOST, zero);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_WRITEFUNCTION, curl_write);
-        var body_buffer = std.ArrayList(u8).init(allocator);
+        var body_buffer = std.array_list.Managed(u8).init(allocator);
         _ = c.curl_easy_setopt(curl, c.CURLOPT_WRITEDATA, &body_buffer);
 
         //var slist: ?[*c]c.curl_slist = null;
@@ -101,8 +101,8 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
     }
 }
 
-pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) callconv(.C) usize {
-    var buf = @as(*std.ArrayList(u8), @ptrCast(@alignCast(userdata)));
+pub fn curl_write(ptr: [*c]const u8, _: usize, nmemb: usize, userdata: *anyopaque) callconv(.c) usize {
+    var buf = @as(*std.array_list.Managed(u8), @ptrCast(@alignCast(userdata)));
     const body_part: []const u8 = ptr[0..nmemb];
     buf.appendSlice(body_part) catch {};
     return nmemb;
