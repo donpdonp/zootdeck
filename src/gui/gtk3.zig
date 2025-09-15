@@ -85,6 +85,7 @@ pub fn gui_setup(actor: *thread.Actor) !void {
     const h = @as(c.gint, @intCast(settings.win_y));
     //  c.gtk_widget_set_size_request(main_window, w, h);
     c.gtk_window_resize(@as(*c.GtkWindow, @ptrCast(main_window)), w, h);
+    _ = g_signal_connect(main_window, "key_press_event", key_press, null);
     _ = g_signal_connect(main_window, "destroy", gtk_quit, null);
 }
 
@@ -870,6 +871,12 @@ pub fn mainloop() bool {
         stop = true;
     }
     return stop;
+}
+
+// gboolean my_keypress_function (GtkWidget *widget, GdkEventKey *event, gpointer data) {
+pub fn key_press(_: *c.GtkWidget, event_key: *c.GdkEventKey, _: *c.gpointer) callconv(.c) void {
+    const event_key_struct: *c.struct__GdkEventKey = @ptrCast(event_key);
+    warn("gtk key_press. {} {}", .{ event_key, event_key_struct.keyval });
 }
 
 pub fn gtk_quit() callconv(.c) void {
