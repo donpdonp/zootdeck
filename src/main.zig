@@ -50,7 +50,7 @@ fn hello() void {
 fn initialize(allocator: std.mem.Allocator) !void {
     try config.init(allocator);
     try heartbeat.init(allocator);
-    try db_kv.init(allocator);
+    try db_kv.init();
     try db_file.init(allocator);
     try statemachine.init();
 }
@@ -72,7 +72,7 @@ fn stateNext(allocator: std.mem.Allocator) void {
 
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
-        columns_net_freshen(allocator);
+        // columns_net_freshen(allocator);
         for (settings.columns.items) |column| {
             column_db_sync(column, allocator);
         }
@@ -327,15 +327,15 @@ fn cache_write_post(column: *config.ColumnInfo, toot: *toot_lib.Toot, allocator:
         photoget(toot, avatar_url, allocator);
     }
 
-    if (toot.get("media_attachments")) |images| {
-        for (images.array.items) |image| {
-            const img_id = image.object.get("id").?.string;
-            const img_url = image.object.get("preview_url").?.string;
-            if (!db_file.has(&.{ "posts", host, toot.id(), "images" }, img_id, alloc)) {
-                mediaget(column, toot, img_id, img_url, alloc);
-            }
-        }
-    }
+    // if (toot.get("media_attachments")) |images| {
+    //     for (images.array.items) |image| {
+    //         const img_id = image.object.get("id").?.string;
+    //         const img_url = image.object.get("preview_url").?.string;
+    //         if (!db_file.has(&.{ "posts", host, toot.id(), "images" }, img_id, alloc)) {
+    //             mediaget(column, toot, img_id, img_url, alloc);
+    //         }
+    //     }
+    // }
 }
 
 fn guiback(command: *thread.Command) void {

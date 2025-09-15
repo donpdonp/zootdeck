@@ -447,9 +447,9 @@ pub fn makeTootBox(toot: *toot_lib.Toot, column: *Column) *c.GtkBuilder {
         }
     }
 
-    for (toot.imgList.items) |img| {
+    for (toot.imgList.items) |_| {
         warn("toot #{s} rebuilding with img", .{toot.id()});
-        toot_media(column, builder, toot, img.bytes);
+        // toot_media(column, builder, toot, img.bytes);
     }
 
     return builder;
@@ -501,6 +501,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Toot, pic
 }
 
 fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_height: c.gint, data_ptr: *anyopaque) void {
+    std.debug.print("pixloaderSizePrepared img was out of bounds", .{});
     if (img_width > 0 and img_width < 65535 and img_height > 0 and img_height < 65535) {
         const colWidth = @as(*c_int, @ptrCast(@alignCast(data_ptr))).*;
         var scaleWidth = img_width;
@@ -514,7 +515,7 @@ fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_heig
         warn("toot_media pixloaderSizePrepared col width {}px img {}x{} scaled {}x{}", .{ colWidth, img_width, img_height, scaleWidth, scaleHeight });
         c.gdk_pixbuf_loader_set_size(loader, scaleWidth, scaleHeight);
     } else {
-        warn("pixloaderSizePrepared img {}x{} was out of bounds", .{ img_width, img_height });
+        warn("pixloaderSizePrepared img {d}x{d} was out of bounds", .{ img_width, img_height });
     }
 }
 
