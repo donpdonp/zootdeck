@@ -212,13 +212,11 @@ pub fn writefile(settings: *Settings, filename: []const u8) !void {
     configFile.columns = column_infos.items;
 
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
-        var buf: [64]u8 = undefined;
-        const fwriter = file.writer(&buf);
-        var fwi = fwriter.interface;
-        const fwip = &fwi;
-        var w: std.json.Stringify = .{ .writer = fwip, .options = .{ .whitespace = .indent_2 } };
-        w.print("{}", .{configFile}) catch unreachable;
-        try fwi.flush(); // dont forget to flush
+        var buf: [4096]u8 = undefined;
+        var buf_fixed_writer: std.io.Writer = .fixed(&buf);
+        var w: std.json.Stringify = .{ .writer = &buf_fixed_writer, .options = .{} };
+        w.write(configFile) catch unreachable;
+        _ = file.write(buf[0..buf_fixed_writer.end]) catch unreachable;
         warn("config saved. {s} {} bytes", .{ filename, file.getPos() catch unreachable });
         file.close();
     } else |err| {
