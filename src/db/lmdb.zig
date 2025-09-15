@@ -10,9 +10,9 @@ const c = @cImport({
 });
 
 var env: *c.MDB_env = undefined;
-const dbpath = "./db";
+const dbpath: [:0]const u8 = "./db";
 
-pub fn init(allocator: Allocator) !void {
+pub fn init() !void {
     var mdb_ret: c_int = 0;
     mdb_ret = c.mdb_env_create(@as([*c]?*c.MDB_env, @ptrCast(&env)));
     if (mdb_ret != 0) {
@@ -25,7 +25,7 @@ pub fn init(allocator: Allocator) !void {
         return error.BadValue;
     }
     std.posix.mkdir(dbpath, 0o0755) catch {};
-    mdb_ret = c.mdb_env_open(env, util.sliceToCstr(allocator, dbpath), 0, 0o644);
+    mdb_ret = c.mdb_env_open(env, dbpath, 0, 0o644);
     if (mdb_ret != 0) {
         warn("mdb_env_open failed {}\n", .{mdb_ret});
         return error.BadValue;
@@ -156,7 +156,7 @@ fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key,
 test scan {
     const thread = @import("../thread.zig");
     try thread.init(std.testing.allocator);
-    try init(std.testing.allocator);
+    try init();
     try std.testing.expect(true);
 }
 
