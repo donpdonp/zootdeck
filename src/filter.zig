@@ -13,7 +13,7 @@ const c = @cImport({
 
 pub const ptree = struct {
     hostname: string,
-    tags: *toot_lib.Toot.TagList,
+    tags: toot_lib.Toot.TagList,
 
     const Self = @This();
 
@@ -44,7 +44,7 @@ pub fn parse(allocator: Allocator, lang: []const u8) *ptree {
     warn("Ragel parse \"{s}\"", .{lang});
 
     var newTree = allocator.create(ptree) catch unreachable;
-    newTree.tags = allocator.create(toot_lib.Toot.TagList) catch unreachable;
+    newTree.tags = toot_lib.Toot.TagList.init(allocator);
     var spaceParts = std.mem.tokenizeSequence(u8, lang, " ");
     var idx: usize = 0;
     while (spaceParts.next()) |part| {

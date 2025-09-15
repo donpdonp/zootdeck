@@ -55,19 +55,26 @@ pub const TootList = struct {
 
     pub fn sortedInsert(self: *Self, item: *toot_lib.Toot, allocator: Allocator) void {
         const itemDate = item.get("created_at").?.string;
+        warn("sortedInsert #{s} date {s}", .{ item.id(), itemDate });
         const node = allocator.create(Node) catch unreachable;
         node.data = item;
         var current = self.date_index.first;
-        while (current) |list_item_node| {
-            const list_item: *Node = @fieldParentPtr("node", list_item_node);
-            const listItemDate = list_item.data.get("created_at").?.string;
-            if (std.mem.order(u8, itemDate, listItemDate) == std.math.Order.gt) {
-                self.date_index.insertBefore(&list_item.node, &node.node);
-                return;
-            } else {}
-            current = list_item.node.next;
+        if (current != null) {
+            while (current) |list_item_node| {
+                const list_item: *Node = @fieldParentPtr("node", list_item_node);
+                const listItemDate = list_item.data.get("created_at").?.string;
+                if (std.mem.order(u8, itemDate, listItemDate) == std.math.Order.gt) {
+                    self.date_index.insertBefore(&list_item.node, &node.node);
+                    return;
+                } else {}
+                current = list_item.node.next;
+            }
+            if (self.date_index.last) |last| {
+                self.date_index.insertAfter(last, &node.node);
+            }
+        } else {
+            self.date_index.prepend(&node.node);
         }
-        self.list.append(item) catch unreachable;
     }
 
     pub fn count(self: *Self) usize {
