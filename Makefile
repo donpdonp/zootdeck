@@ -11,10 +11,7 @@ format:
 	${ZIG} fmt src
 
 run: build
-	./zig-out/bin/zootdeck
-
-push:
-	pijul push donpdonp@nest.pijul.com:donpdonp/tootdeck
+	cd zig-out && ./bin/zootdeck
 
 test:
 	zig build test
@@ -41,5 +38,8 @@ deb:
 	dpkg-deb --build ${DISTDEB}
 	mv ${DISTDEB}.deb ${DISTDEB}-amd64.deb
 
-	
+push:
+	jj git push --allow-new -c @-
+	jj bookmark set main -r @-
+	jj git push --allow-new --bookmark main
 
