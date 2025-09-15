@@ -873,10 +873,30 @@ pub fn mainloop() bool {
     return stop;
 }
 
+const GdkEventKey = extern struct {
+    type: c.GdkEventType,
+    window: *c.GdkWindow,
+    send_event: c.gint8,
+    time: c.guint32,
+    state: c.guint,
+    keyval: c.guint,
+    length: c.gint,
+    string: [*]u8,
+    hardware_keycode: c.guint16,
+    group: c.guint8,
+    is_modifier: c.guint8,
+};
+
 // gboolean my_keypress_function (GtkWidget *widget, GdkEventKey *event, gpointer data) {
-pub fn key_press(_: *c.GtkWidget, event_key: *c.GdkEventKey, _: *c.gpointer) callconv(.c) void {
-    const event_key_struct: *c.struct__GdkEventKey = @ptrCast(event_key);
-    warn("gtk key_press. {} {}", .{ event_key, event_key_struct.keyval });
+pub fn key_press(_: *c.GtkWidget, key_event: *GdkEventKey, _: *c.gpointer) callconv(.c) void {
+    const key_str = key_event.string[0..@intCast(key_event.length)];
+    warn("{}", .{key_event});
+    if (std.mem.eql(u8, key_str, "q")) {
+        gtk_quit();
+    }
+    if (key_event.state == 4 and key_event.keyval == 99) {
+        gtk_quit();
+    }
 }
 
 pub fn gtk_quit() callconv(.c) void {
