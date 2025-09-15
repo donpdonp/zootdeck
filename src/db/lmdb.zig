@@ -1,6 +1,7 @@
 // db.zig
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+
 const util = @import("../util.zig");
 const warn = util.log;
 
@@ -153,6 +154,8 @@ fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key,
 }
 
 test scan {
+    const thread = @import("../thread.zig");
+    try thread.init(std.testing.allocator);
     try init(std.testing.allocator);
     try std.testing.expect(true);
 }
@@ -162,11 +165,11 @@ fn prefix_match(key: Key, body: []const u8, allocator: Allocator) bool {
 }
 
 test prefix_match {
-    try std.testing.expect(prefix_match(&.{"A"}, "AB", std.testing.allocator));
-    try std.testing.expect(prefix_match(&.{"A:"}, "A:", std.testing.allocator));
-    try std.testing.expect(prefix_match(&.{""}, "A:", std.testing.allocator));
-    try std.testing.expect(!prefix_match(&.{"B"}, "AB", std.testing.allocator));
-    try std.testing.expect(!prefix_match(&.{"BB"}, "B", std.testing.allocator));
+    try std.testing.expect(prefix_match(Key.init(&.{"A"}), "AB", std.testing.allocator));
+    try std.testing.expect(prefix_match(Key.init(&.{"A:"}), "A:", std.testing.allocator));
+    try std.testing.expect(prefix_match(Key.init(&.{""}), "A:", std.testing.allocator));
+    try std.testing.expect(!prefix_match(Key.init(&.{"B"}), "AB", std.testing.allocator));
+    try std.testing.expect(!prefix_match(Key.init(&.{"BB"}), "B", std.testing.allocator));
 }
 
 pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocator: Allocator) !void {
@@ -189,7 +192,7 @@ pub fn write(namespace: []const u8, key: []const u8, value: []const u8, allocato
 fn sliceToMdbVal(data: []const u8, allocator: Allocator) *c.MDB_val {
     var mdb_val = allocator.create(c.MDB_val) catch unreachable;
     mdb_val.mv_size = data.len;
-    mdb_val.mv_data = @constCast(@ptrCast(data.ptr));
+    mdb_val.mv_data = @ptrCast(@constCast(data.ptr));
     return mdb_val;
 }
 

@@ -237,7 +237,7 @@ test "read" {
         try std.testing.expectEqual(800, settings.win_x);
         std.testing.allocator.destroy(settings);
     } else |err| {
-        warn("warn: {!}", .{err});
+        warn("warn: {}", .{err});
         try std.testing.expect(false);
     }
 }
