@@ -425,7 +425,7 @@ fn guiback(command: *thread.Command) void {
 }
 
 fn heartback(command: *thread.Command) void {
-    warn("heartback() on tid {} received {}", .{ thread.self(), command.verb });
+    warn("heartback() on tid {} received {}", .{ thread.self(), @TypeOf(command.verb) });
     //columns_net_freshen(alloc);
 }
 

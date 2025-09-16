@@ -610,7 +610,7 @@ fn main_check_resize(selfptr: *anyopaque) callconv(.c) void {
         thread.signal(myActor, command);
     }
     if (h != settings.win_y) {
-        warn("main_check_resize, win_y {} != gtk_height {}\n", .{ settings.win_x, w });
+        warn("main_check_resize, win_y {} != gtk_height {}", .{ settings.win_x, w });
         settings.win_y = h;
         var verb = allocator.create(thread.CommandVerb) catch unreachable;
         verb.idle = undefined;
