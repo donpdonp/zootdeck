@@ -894,7 +894,7 @@ pub fn key_press(_: *c.GtkWidget, key_event: *GdkEventKey, _: *c.gpointer) callc
     if (std.mem.eql(u8, key_str, "q")) {
         gtk_quit();
     }
-    if (key_event.state == 4 and key_event.keyval == 99) {
+    if (key_event.state == 4 and (key_event.keyval == 'c' or key_event.keyval == 'q')) {
         gtk_quit();
     }
 }
