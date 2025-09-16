@@ -21,7 +21,7 @@ test-each:
 
 dist:
 	mkdir ${DIST}
-	cp -r ./zig-out/bin/zootdeck img glade ${DIST}/
+	cp -r ./zig-out/bin/zootdeck img ${DIST}/
 	cp config.json.example ${DIST}/config.json
 	tar czf ${DIST}.tar.gz ${DIST}
 	ls -l ${DIST}
@@ -29,7 +29,7 @@ dist:
 
 deb:
 	mkdir -p ${DISTDEB}/opt/
-	cp -r img glade ${DISTDEB}/opt/
+	cp -r img ${DISTDEB}/opt/
 	mkdir -p ${DISTDEB}/usr/bin
 	cp -r zig-out/bin/zootdeck ${DISTDEB}/usr/bin/
 	mkdir -p ${DISTDEB}/DEBIAN
