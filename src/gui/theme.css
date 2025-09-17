@@ -15,10 +15,9 @@
 .column_config_url_entry {  }
 .column_config_remove { margin-top: 1em }
 
-
 .toot_author_name {
   color: white;
-  background-color: #555;
+//  background-color: #555;
 }
 .toot_author_url {
   color: #aaa;
@@ -44,6 +43,9 @@
   background: #DDD;
   padding: 1px 5px;
   border-radius: 15px;
+}
+.toot_separator {
+  background: grey;
 }
 
 .net_error {
