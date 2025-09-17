@@ -9,10 +9,10 @@ const toot_list = @import("../toot_list.zig");
 const thread = @import("../thread.zig");
 const filter_lib = @import("../filter.zig");
 
-const theme_css = @embedFile("theme.css");
-const glade_zootdeck = @embedFile("zootdeck.glade");
-const glade_column = @embedFile("column.glade");
-const glade_toot = @embedFile("toot.glade");
+const theme_css = @embedFile("gtk3/theme.css");
+const glade_zootdeck = @embedFile("gtk3/zootdeck.glade");
+const glade_column = @embedFile("gtk3/column.glade");
+const glade_toot = @embedFile("gtk3/toot.glade");
 
 const c = @cImport({
     @cInclude("gtk/gtk.h");
