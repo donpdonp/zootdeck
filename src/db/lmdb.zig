@@ -114,7 +114,7 @@ pub fn scan(key: Key, descending: bool, allocator: Allocator) ![]const []const u
 }
 
 fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key, descending: bool, allocator: Allocator) !void {
-    warn("lmdb.scanInner {s} {}", .{ key.toString(allocator), descending });
+    warn("lmdb.scanInner {s} {s}", .{ key.toString(allocator), if (descending) "descending" else "ascending" });
     const fullkey = key.toString(allocator);
     const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
@@ -129,27 +129,27 @@ fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key,
         }
         ret_key = mdbValToBytes(mdb_key);
         ret_value = mdbValToBytes(mdb_value);
-        warn("lmdb.scanInner cursor_get_last {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
+        warn("lmdb.scanInner cursor_get_last {s} key \"{s}\" val \"{s}\"", .{ fullkey, ret_key, ret_value });
     } else {
-        warn("lmdb.scanInner cursor_set_range {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
-        if (descending) {
+        warn("lmdb.scanInner cursor_set_range {s} -> \"{s}\" = \"{s}\"", .{ fullkey, ret_key, ret_value });
+        if (descending) { // ignore ret_key/ret_value from cursor_get(set_range) because its the value *after* the last row of the prefix we want
             ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_PREV);
             if (ret != 0) {
                 warn("lmdb.scanInner first prev fail {}", .{ret});
             }
             ret_key = mdbValToBytes(mdb_key);
             ret_value = mdbValToBytes(mdb_value);
-            warn("lmdb.scanInner first prev {s} {s} key \"{s}\" val \"{s}\"", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value });
+            warn("lmdb.scanInner backup one-step from {s} \"{s}\" = \"{s}\"", .{ fullkey, ret_key, ret_value });
         }
     }
     while (ret == 0 and prefix_match(key.lessLevel(), ret_key, allocator)) {
         if (answers.items.len < 10) {
             try answers.append(allocator, ret_value);
+            warn("lmdb.scanInner {s} matched \"{s}\" = \"{s}\" {} answers", .{ key.lessLevel().toString(allocator), ret_key, ret_value, answers.items.len });
         } else break;
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, if (descending) c.MDB_PREV else c.MDB_NEXT);
         ret_value = mdbValToBytes(mdb_value);
         ret_key = mdbValToBytes(mdb_key);
-        warn("lmdb.scanInner {s} {s} key \"{s}\" val \"{s}\" {} answers", .{ if (descending) "descending" else "ascending", fullkey, ret_key, ret_value, answers.items.len });
     }
 }
 
