@@ -72,10 +72,10 @@ fn stateNext(allocator: std.mem.Allocator) void {
 
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
-        // columns_net_freshen(allocator);
         for (settings.columns.items) |column| {
             column_db_sync(column, allocator);
         }
+        columns_net_freshen(allocator);
     }
 }
 

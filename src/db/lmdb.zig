@@ -109,12 +109,11 @@ pub fn scan(key: Key, descending: bool, allocator: Allocator) ![]const []const u
     const csr = try csr_open(txn, dbi);
     try scanInner(csr, &answers, key, descending, allocator);
     try txn_commit(txn);
-    warn("scan returning {} answers", .{answers.items.len});
+    warn("lmdb.scan {s} returned {} answers", .{ key.toString(allocator), answers.items.len });
     return answers.toOwnedSlice(allocator);
 }
 
 fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key, descending: bool, allocator: Allocator) !void {
-    warn("lmdb.scanInner {s} {s}", .{ key.toString(allocator), if (descending) "descending" else "ascending" });
     const fullkey = key.toString(allocator);
     const mdb_key = sliceToMdbVal(fullkey, allocator);
     const mdb_value = sliceToMdbVal("", allocator);
@@ -125,7 +124,7 @@ fn scanInner(csr: ?*c.MDB_cursor, answers: *std.ArrayList([]const u8), key: Key,
         warn("lmdb.scanInner cursor_get first_fail {s} set_range err#{}", .{ fullkey, ret });
         ret = c.mdb_cursor_get(csr, mdb_key, mdb_value, c.MDB_LAST);
         if (ret != 0) {
-            warn("lmdb.scanInner first last fail {}", .{ret});
+            return; // empty database
         }
         ret_key = mdbValToBytes(mdb_key);
         ret_value = mdbValToBytes(mdb_value);
