@@ -448,9 +448,9 @@ pub fn makeTootBox(toot: *toot_lib.Toot, column: *Column) *c.GtkBuilder {
         }
     }
 
-    for (toot.imgList.items) |_| {
+    for (toot.imgList.items) |img| {
         warn("toot #{s} rebuilding with img", .{toot.id()});
-        // toot_media(column, builder, toot, img.bytes);
+        toot_media(column, builder, toot, img.bytes);
     }
 
     return builder;
@@ -467,12 +467,11 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Toot, pic
     const imageBox = builder_get_widget(builder, "image_box");
     c.gtk_widget_get_allocation(column.columnbox, &myAllocation);
     const loader = c.gdk_pixbuf_loader_new();
-    // todo: size-prepared signal
     const colWidth = @as(c_int, @intFromFloat(@as(f32, @floatFromInt(myAllocation.width)) / @as(f32, @floatFromInt(columns.items.len)) * 0.9));
     const colHeight: c_int = -1; // seems to work
     const colWidth_ptr = allocator.create(c_int) catch unreachable;
     colWidth_ptr.* = colWidth;
-    _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, colWidth_ptr);
+    // _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, colWidth_ptr);
     const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
     if (loadYN == c.gtk_true()) {
         const pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);

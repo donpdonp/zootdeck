@@ -251,7 +251,7 @@ fn media_attachments(column: *config.ColumnInfo, toot: *toot_lib.Toot, images: s
                     warn("!!media_attachments file read error {}", .{err});
                 }
             } else {
-                // mediaget(column, toot, img_id, img_url, alloc);
+                mediaget(column, toot, img_id, img_url, alloc);
             }
         }
     }
