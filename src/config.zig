@@ -20,7 +20,17 @@ pub const Settings = struct {
     win_y: i64,
     columns: std.ArrayList(*ColumnInfo),
     config_path: []const u8,
+
+    pub fn default() Settings {
+        return Settings{
+            .win_x = 0,
+            .win_y = 0,
+            .columns = .{},
+            .config_path = "",
+        };
+    }
 };
+pub var SETTINGS = Settings.default();
 
 // on-disk config
 pub const ConfigFile = struct {
@@ -146,29 +156,26 @@ pub fn config_file_path() []const u8 {
     return config_path;
 }
 
-pub fn readfile(filename: []const u8) !*Settings {
+pub fn readfile(filename: []const u8) !void {
     util.log("config file {s}", .{filename});
     const json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
-    var settings = try read(json);
-    settings.config_path = filename;
-    return settings;
+    try read(json);
+    SETTINGS.config_path = filename;
 }
 
-pub fn read(json: []const u8) !*Settings {
-    const value_tree = try std.json.parseFromSlice(std.json.Value, allocator, json, .{});
-    var root = value_tree.value.object;
-    var settings = allocator.create(Settings) catch unreachable;
-    settings.columns = .{};
+pub fn read(json: []const u8) !void {
+    var root = (try std.json.parseFromSlice(std.json.Value, allocator, json, .{})).value.object;
+    SETTINGS.columns = .{};
 
     if (root.get("win_x")) |w| {
-        settings.win_x = w.integer;
+        SETTINGS.win_x = w.integer;
     } else {
-        settings.win_x = 800;
+        SETTINGS.win_x = 800;
     }
     if (root.get("win_y")) |h| {
-        settings.win_y = h.integer;
+        SETTINGS.win_y = h.integer;
     } else {
-        settings.win_y = 600;
+        SETTINGS.win_y = 600;
     }
     if (root.get("columns")) |columns| {
         for (columns.array.items) |value| {
@@ -194,18 +201,17 @@ pub fn read(json: []const u8) !*Settings {
             }
             const img_only = value.object.get("img_only").?.bool;
             colInfo.config.img_only = img_only;
-            settings.columns.append(allocator, colInfo) catch unreachable;
+            SETTINGS.columns.append(allocator, colInfo) catch unreachable;
         }
     }
-    return settings;
 }
 
-pub fn writefile(settings: *Settings, filename: []const u8) !void {
+pub fn writefile(filename: []const u8) !void {
     var configFile = allocator.create(ConfigFile) catch unreachable;
-    configFile.win_x = settings.win_x;
-    configFile.win_y = settings.win_y;
+    configFile.win_x = SETTINGS.win_x;
+    configFile.win_y = SETTINGS.win_y;
     var column_infos = std.ArrayList(*ColumnConfig).empty;
-    for (settings.columns.items) |column| {
+    for (SETTINGS.columns.items) |column| {
         column_infos.append(allocator, column.config) catch unreachable;
     }
     configFile.columns = column_infos.items;

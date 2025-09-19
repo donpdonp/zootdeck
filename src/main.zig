@@ -20,16 +20,13 @@ const toot_lib = @import("./toot.zig");
 const html_lib = @import("./html.zig");
 const filter_lib = @import("./filter.zig");
 
-var settings: *config.Settings = undefined;
-
 pub fn main() !void {
     try thread.init(alloc);
     hello(); // wait for thread.init so log entry for main thread will have a name
     try initialize(alloc);
 
-    if (config.readfile(config.config_file_path())) |config_data| {
-        settings = config_data;
-        try gui.init(alloc, settings);
+    if (config.readfile(config.config_file_path())) {
+        try gui.init(alloc, &config.SETTINGS);
         const dummy_payload = try alloc.create(thread.CommandVerb);
         _ = try thread.create("gui", gui.go, dummy_payload, guiback);
         _ = try thread.create("heartbeat", heartbeat.go, dummy_payload, heartback);
@@ -59,20 +56,20 @@ fn stateNext(allocator: std.mem.Allocator) void {
     if (statemachine.state == .Init) {
         statemachine.setState(.Setup); // transition
         gui.schedule(gui.show_main_schedule, null);
-        for (settings.columns.items) |column| {
+        for (config.SETTINGS.columns.items) |column| {
             if (column.config.token) |token| {
                 _ = token;
                 profileget(column, allocator);
             }
         }
-        for (settings.columns.items) |column| {
+        for (config.SETTINGS.columns.items) |column| {
             gui.schedule(gui.add_column_schedule, column);
         }
     }
 
     if (statemachine.state == .Setup) {
         statemachine.setState(.Running); // transition
-        for (settings.columns.items) |column| {
+        for (config.SETTINGS.columns.items) |column| {
             column_db_sync(column, allocator);
         }
         columns_net_freshen(allocator);
@@ -356,32 +353,32 @@ fn guiback(command: *thread.Command) void {
         _ = colInfo.reset();
         colInfo.toots = toot_list.TootList.init(alloc);
         colInfo.last_check = 0;
-        settings.columns.append(alloc, colInfo) catch unreachable;
-        warn("add column: settings.columns.len {}", .{settings.columns.items.len});
+        config.SETTINGS.columns.append(alloc, colInfo) catch unreachable;
+        warn("add column: settings.columns.len {}", .{config.SETTINGS.columns.items.len});
         const colConfig = alloc.create(config.ColumnConfig) catch unreachable;
         colInfo.config = colConfig.reset();
         colInfo.filter = filter_lib.parse(alloc, colInfo.config.filter);
         gui.schedule(gui.add_column_schedule, @as(*anyopaque, @ptrCast(colInfo)));
-        config.writefile(settings, config.config_file_path()) catch unreachable;
+        config.writefile(config.config_file_path()) catch unreachable;
     }
     if (command.id == 4) { // save config params
         const column = command.verb.column;
         warn("guiback save config column title: ({d}){s}", .{ column.config.title.len, column.config.title });
         column.inError = false;
         column.refreshing = false;
-        config.writefile(settings, config.config_file_path()) catch unreachable;
+        config.writefile(config.config_file_path()) catch unreachable;
     }
     if (command.id == 5) { // column remove
         const column = command.verb.column;
         warn("gui col remove {s}", .{column.config.title});
         //var colpos: usize = undefined;
-        for (settings.columns.items, 0..) |col, idx| {
+        for (config.SETTINGS.columns.items, 0..) |col, idx| {
             if (col == column) {
-                _ = settings.columns.orderedRemove(idx);
+                _ = config.SETTINGS.columns.orderedRemove(idx);
                 break;
             }
         }
-        config.writefile(settings, config.config_file_path()) catch unreachable;
+        config.writefile(config.config_file_path()) catch unreachable;
         gui.schedule(gui.column_remove_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 6) { //oauth
@@ -412,11 +409,11 @@ fn guiback(command: *thread.Command) void {
     if (command.id == 9) { // image-only button
         const column = command.verb.column;
         column.config.img_only = !column.config.img_only;
-        config.writefile(settings, config.config_file_path()) catch unreachable;
+        config.writefile(config.config_file_path()) catch unreachable;
         gui.schedule(gui.update_column_toots_schedule, @as(*anyopaque, @ptrCast(column)));
     }
     if (command.id == 10) { // window size changed
-        config.writefile(settings, config.config_file_path()) catch unreachable;
+        config.writefile(config.config_file_path()) catch unreachable;
     }
     if (command.id == 11) { // Quit
         warn("byebye...", .{});
@@ -431,7 +428,7 @@ fn heartback(command: *thread.Command) void {
 
 fn columns_net_freshen(allocator: std.mem.Allocator) void {
     warn("columns_net_freshen", .{});
-    for (settings.columns.items) |column| {
+    for (config.SETTINGS.columns.items) |column| {
         const now = config.now();
         const refresh = 60;
         const since = now - column.last_check;
@@ -488,7 +485,7 @@ fn oauthtokenback(command: *thread.Command) void {
             if (json_parsed.value == .object) {
                 if (json_parsed.value.object.get("access_token")) |cid| {
                     column.config.token = cid.string;
-                    config.writefile(settings, config.config_file_path()) catch unreachable;
+                    config.writefile(config.config_file_path()) catch unreachable;
                     column.last_check = 0;
                     profileget(column, alloc);
                     gui.schedule(gui.update_column_config_oauth_finalize_schedule, @as(*anyopaque, @ptrCast(column)));
