@@ -219,7 +219,7 @@ pub fn writefile(filename: []const u8) !void {
     if (std.fs.cwd().createFile(filename, .{ .truncate = true })) |*file| {
         var buf: [4096]u8 = undefined;
         var buf_fixed_writer: std.io.Writer = .fixed(&buf);
-        var w: std.json.Stringify = .{ .writer = &buf_fixed_writer, .options = .{} };
+        var w: std.json.Stringify = .{ .writer = &buf_fixed_writer, .options = .{ .whitespace = .indent_2 } };
         w.write(configFile) catch unreachable;
         _ = file.write(buf[0..buf_fixed_writer.end]) catch unreachable;
         warn("config saved. {s} {} bytes", .{ filename, file.getPos() catch unreachable });
