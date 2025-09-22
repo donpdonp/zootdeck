@@ -215,7 +215,7 @@ pub fn columns_resize() void {
         const container = builder_get_widget(myBuilder, "ZootColumns");
         const app_width = c.gtk_widget_get_allocated_width(container);
         const avg_col_width = @divTrunc(app_width, @as(c_int, @intCast(columns.items.len)));
-        warn("columns_resize app_width {} col_width {} columns {}", .{ app_width, avg_col_width, columns.items.len });
+        warn("columns_resize app_width {} per_col_width {} columns {}", .{ app_width, avg_col_width, columns.items.len });
         for (columns.items) |col| {
             c.gtk_widget_get_allocation(col.columnbox, &myAllocation);
         }
@@ -471,7 +471,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Toot, pic
     const colHeight: c_int = -1; // seems to work
     const colWidth_ptr = allocator.create(c_int) catch unreachable;
     colWidth_ptr.* = colWidth;
-    // _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, colWidth_ptr);
+    _ = g_signal_connect(loader, "size-prepared", pixloaderSizePrepared, colWidth_ptr);
     const loadYN = c.gdk_pixbuf_loader_write(loader, pic.ptr, pic.len, null);
     if (loadYN == c.gtk_true()) {
         const pixbuf = c.gdk_pixbuf_loader_get_pixbuf(loader);
@@ -500,8 +500,7 @@ fn toot_media(column: *Column, builder: *c.GtkBuilder, toot: *toot_lib.Toot, pic
     }
 }
 
-fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_height: c.gint, data_ptr: *anyopaque) void {
-    std.debug.print("pixloaderSizePrepared img was out of bounds", .{});
+fn pixloaderSizePrepared(loader: *c.GdkPixbufLoader, img_width: c.gint, img_height: c.gint, data_ptr: *anyopaque) callconv(.c) void {
     if (img_width > 0 and img_width < 65535 and img_height > 0 and img_height < 65535) {
         const colWidth = @as(*c_int, @ptrCast(@alignCast(data_ptr))).*;
         var scaleWidth = img_width;

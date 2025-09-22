@@ -72,7 +72,7 @@ fn stateNext(allocator: std.mem.Allocator) void {
         for (config.SETTINGS.columns.items) |column| {
             column_db_sync(column, allocator);
         }
-        columns_net_freshen(allocator);
+        //columns_net_freshen(allocator);
     }
 }
 
