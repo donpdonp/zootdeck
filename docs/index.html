@@ -3,37 +3,46 @@
   body { color: white;
          background-color: #777;}
   a { color: white; }
+  #header {  text-align: center; }
+  #features { text-align: left; font-size: 120%; }
   .name { font-size: 150%; }
   .spacious { padding: 0.5em 0; }
   .logo { width: 1.5em; vertical-align: middle; }
-  .header {  text-align: center; }
   .screenshot {  text-align: center; }
-  #features { text-align: left; width: 70%; }
+  .flex { display: flex; justify-content: center; }
+  .flex .item { margin: 0 1.5em; }
 </style>
 <body>
-  <div class="header spacious">
-    <div class="name">
-      <img class="logo" src="img/zootlogo.png" align="middle">
-      zootdeck
+  <div class="flex">
+    <div id="header" class="item spacious">
+      <div class="name">
+        <img class="logo" src="img/zootlogo.png" align="middle">
+        zootdeck
+      </div>
+      <div class="tagline">
+        The linux desktop fediverse reader.
+      </div>
     </div>
-    <div class="tagline">
-      The linux desktop fediverse reader.
+  
+    <div id="releases" class="item spacious">
+      <div> Latest release: 20250924 </div>
+      <a href="https://github.com/donpdonp/zootdeck/releases">Github Releases Page</a>
     </div>
-  </div>
-
-  <div id="features">
-    <li> Visit public timeline of any mastodon server quickly and easily
-    <li> Filter posts by tag
-    <li> Image-only mode
-    <li> Open Source, linux native, GTK3
-  </div>
-
-  <div class="releases spacious">
-    <a href="https://github.com/donpdonp/zootdeck/releases">Github Releases Page</a>
   </div>
 
   <div class="screenshot">
      <img src="img/zoot-shot1.png">
-   </div>
+  </div>
+
+  <div id="features">
+    <span>Features</span>
+    <div class="list">
+      <li> Visit public timeline of any mastodon server quickly and easily
+      <li> Filter posts by tag
+      <li> Image-only mode
+      <li> Open Source, linux native, GTK3
+    </div>
+  </div>
+
 </body>
 </html>
