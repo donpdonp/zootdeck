@@ -1,7 +1,7 @@
 GITEPOCH=$(shell git log -1 --format="%at")
 TODAY=$(shell date +%Y.%m.%d -d @${GITEPOCH})
 DIST=zootdeck-linux-`uname -i`-${TODAY}
-DISTDEB=zootdeck_0.6.1-1
+DISTDEB=zootdeck_0.6.5-1
 ZIG=zig
 
 build:
@@ -11,7 +11,7 @@ format:
 	${ZIG} fmt src
 
 run: build
-	cd zig-out && ./bin/zootdeck
+	./zig-out/bin/zootdeck
 
 test:
 	zig build test

@@ -49,7 +49,7 @@
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Refresh now</property>
                     <property name="margin_right">5</property>
-                    <property name="pixbuf">../img/reload-icon.svg</property>
+                    <property name="pixbuf">img/reload-icon.svg</property>
                   </object>
                 </child>
               </object>
@@ -171,7 +171,7 @@
                   <object class="GtkImage" id="column_config_icon">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="pixbuf">../img/gears.svg</property>
+                    <property name="pixbuf">img/gears.svg</property>
                   </object>
                 </child>
               </object>
