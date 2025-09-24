@@ -24,6 +24,7 @@
                 <property name="wrap">True</property>
                 <property name="wrap-mode">word-char</property>
                 <property name="selectable">True</property>
+                <property name="ellipsize">middle</property>
                 <style>
                   <class name="toot_text"/>
                 </style>

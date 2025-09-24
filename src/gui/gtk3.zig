@@ -604,7 +604,6 @@ fn main_check_resize(selfptr: *anyopaque) callconv(.c) void {
         var command = allocator.create(thread.Command) catch unreachable;
         command.id = 10;
         command.verb = verb;
-        warn("main_check_resize() verb {*}\n", .{verb});
         thread.signal(myActor, command);
     }
     if (h != settings.win_y) {
