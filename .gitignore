@@ -8,5 +8,6 @@
 /ragel/*.c
 /ragel/*.o
 /*.deb
+/*.gz
 .zigmod
 deps.zig
