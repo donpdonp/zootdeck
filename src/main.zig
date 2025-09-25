@@ -231,24 +231,28 @@ fn cache_save(column: *config.ColumnInfo, items: []std.json.Value) void {
 
 fn media_attachments(column: *config.ColumnInfo, toot: *toot_lib.Toot, images: std.json.Array) void {
     for (images.items) |image| {
-        const img_url = image.object.get("preview_url").?.string;
         const img_id = image.object.get("id").?.string;
-        warn("toot #{s} has media #{s} {s}", .{ toot.id(), img_id, img_url });
-        if (!toot.containsImg(img_id)) {
-            const hostname = column.filter.hostname;
-            if (db_file.has(&.{ "posts", hostname, toot.id(), "images" }, img_id, alloc)) {
-                if (db_file.read(&.{ "posts", hostname, toot.id(), "images", img_id }, alloc)) |img_bytes| {
-                    const tootpic = alloc.create(gui.TootPic) catch unreachable;
-                    tootpic.toot = toot;
-                    const img = toot_lib.Img{ .id = img_id, .url = img_url, .bytes = img_bytes };
-                    tootpic.img = img;
-                    toot.addImg(img);
-                    gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
-                } else |err| {
-                    warn("!!media_attachments file read error {}", .{err});
+        if (image.object.get("preview_url")) |img_url_value| {
+            if (img_url_value == .string) {
+                const img_url = img_url_value.string;
+                warn("toot #{s} has media #{s} {s}", .{ toot.id(), img_id, img_url });
+                if (!toot.containsImg(img_id)) {
+                    const hostname = column.filter.hostname;
+                    if (db_file.has(&.{ "posts", hostname, toot.id(), "images" }, img_id, alloc)) {
+                        if (db_file.read(&.{ "posts", hostname, toot.id(), "images", img_id }, alloc)) |img_bytes| {
+                            const tootpic = alloc.create(gui.TootPic) catch unreachable;
+                            tootpic.toot = toot;
+                            const img = toot_lib.Img{ .id = img_id, .url = img_url, .bytes = img_bytes };
+                            tootpic.img = img;
+                            toot.addImg(img);
+                            gui.schedule(gui.toot_media_schedule, @as(*anyopaque, @ptrCast(tootpic)));
+                        } else |err| {
+                            warn("!!media_attachments file read error {}", .{err});
+                        }
+                    } else {
+                        mediaget(column, toot, img_id, img_url, alloc);
+                    }
                 }
-            } else {
-                mediaget(column, toot, img_id, img_url, alloc);
             }
         }
     }
