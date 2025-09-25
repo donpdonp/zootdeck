@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const thread = @import("./thread.zig");
+const config = @import("./config.zig");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
 var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
@@ -172,4 +173,41 @@ pub fn htmlEntityDecode(str: []const u8, allocator: Allocator) ![]const u8 {
 test "htmlEntityParse" {
     const stripped = htmlEntityDecode("amp&amp;pam", alloc) catch unreachable;
     try std.testing.expect(std.mem.eql(u8, stripped, "amp&pam"));
+}
+
+pub fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) {
+    if (http.response_ok()) {
+        if (http.body.len > 0) {
+            if (http.content_type.len == 0 or http.content_type_json()) {
+                if (std.json.parseFromSlice(std.json.Value, alloc, http.body, .{ .allocate = .alloc_always })) |json_parsed| {
+                    switch (json_parsed.value) {
+                        .array => return json_parsed,
+                        .object => {
+                            if (json_parsed.value.object.get("error")) |err| {
+                                warn("netback mastodon err {s}", .{err.string});
+                                return error.MastodonReponseErr;
+                            } else {
+                                warn("netback mastodon unknown response {}", .{json_parsed.value.object});
+                                return error.MastodonReponseErr;
+                            }
+                        },
+                        else => {
+                            warn("!netback json unknown root tagtype {any}", .{json_parsed.value});
+                            return error.JSONparse;
+                        },
+                    }
+                } else |err| {
+                    warn("net json parse err {any}", .{err});
+                    http.response_code = 1000;
+                    return error.JSONparse;
+                }
+            } else {
+                return error.HTTPContentNotJson;
+            }
+        } else { // empty body
+            return error.JSONparse;
+        }
+    } else {
+        return error.HTTPResponseNot2xx;
+    }
 }
