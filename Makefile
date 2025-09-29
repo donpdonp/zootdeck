@@ -5,7 +5,7 @@ DISTDEB=zootdeck_0.6.5-1
 ZIG=zig
 
 build:
-	${ZIG} build -freference-trace
+	${ZIG} build -freference-trace -fincremental --summary all
 
 format:
 	${ZIG} fmt src

@@ -296,7 +296,7 @@ pub fn update_column_toots(column: *Column) void {
         while (current) |node| {
             const tnode: *toot_list.Node = @fieldParentPtr("node", node);
             const toot = tnode.data;
-            warn("update_column_toots building {*} #{s}", .{ toot, toot.id() });
+            warn("update_column_toots building #{s}", .{toot.id()});
             const tootbuilderMaybe = column.guitoots.get(toot.id());
             if (column.main.filter.match(toot)) {
                 if (tootbuilderMaybe) |kv| {
@@ -309,6 +309,7 @@ pub fn update_column_toots(column: *Column) void {
                 _ = column.guitoots.put(toot.id(), tootbuilder) catch unreachable;
                 c.gtk_box_pack_start(@as(*c.GtkBox, @ptrCast(column_toot_zone)), tootbox, c.gtk_true(), c.gtk_true(), 0);
                 c.gtk_box_reorder_child(@as(*c.GtkBox, @ptrCast(column_toot_zone)), tootbox, idx);
+                warn("update_column_toots added #{s} total {}", .{ toot.id(), column.main.toots.count() });
             } else {
                 if (tootbuilderMaybe) |kv| {
                     const builder = kv;
