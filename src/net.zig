@@ -74,10 +74,9 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
             var ccontent_type: [*c]const u8 = undefined;
             _ = c.curl_easy_getinfo(curl, c.CURLINFO_CONTENT_TYPE, &ccontent_type);
             req.content_type = util.cstrToSliceCopy(allocator, ccontent_type);
-            util.log("# {s} {s} {} bytes", .{
-                req.url,
-                req.content_type,
-                body_buffer.items.len,
+            util.log("{s} {s} {s} {} bytes", .{
+                @tagName(req.verb), req.url,
+                req.content_type,   body_buffer.items.len,
             });
             return body_buffer.toOwnedSliceSentinel(0);
         } else if (res == c.CURLE_OPERATION_TIMEDOUT) {
