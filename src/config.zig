@@ -191,10 +191,8 @@ pub fn read(json: []const u8) !void {
             colInfo.filter = filter_lib.parse(allocator, filter);
             const tokenTag = value.object.get("token");
             if (tokenTag) |tokenKV| {
-                if (@TypeOf(tokenKV) == []const u8) {
-                    colInfo.config.token = tokenKV.value.string;
-                } else {
-                    colInfo.config.token = null;
+                if (tokenKV == .string) {
+                    colInfo.config.token = tokenKV.string;
                 }
             } else {
                 colInfo.config.token = null;
