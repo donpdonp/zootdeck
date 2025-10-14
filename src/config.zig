@@ -190,12 +190,11 @@ pub fn read(json: []const u8) !void {
             colInfo.config.filter = filter;
             colInfo.filter = filter_lib.parse(allocator, filter);
             const tokenTag = value.object.get("token");
+            colInfo.config.token = null;
             if (tokenTag) |tokenKV| {
                 if (tokenKV == .string) {
                     colInfo.config.token = tokenKV.string;
                 }
-            } else {
-                colInfo.config.token = null;
             }
             const img_only = value.object.get("img_only").?.bool;
             colInfo.config.img_only = img_only;

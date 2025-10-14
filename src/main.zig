@@ -57,8 +57,7 @@ fn stateNext(allocator: std.mem.Allocator) void {
         statemachine.setState(.Setup); // transition
         gui.schedule(gui.show_main_schedule, null);
         for (config.SETTINGS.columns.items) |column| {
-            if (column.config.token) |token| {
-                _ = token;
+            if (column.config.token) |_| {
                 profileget(column, allocator);
             }
         }
