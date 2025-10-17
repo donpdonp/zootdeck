@@ -52,8 +52,10 @@ pub fn httpget(allocator: std.mem.Allocator, req: *config.HttpInfo) ![]const u8 
         //var slist: ?[*c]c.curl_slist = null;
         var slist = @as([*c]c.curl_slist, @ptrFromInt(0)); // 0= new list
         slist = c.curl_slist_append(slist, "Accept: application/json");
-        if (req.token) |_| {
-            //warn("Authorization: {s}\n", .{token});
+        if (req.token) |token| {
+            const auth_header = std.fmt.allocPrint(allocator, "Authorization: bearer {s}", .{token}) catch unreachable;
+            const auth_header_c = util.sliceToCstr(allocator, auth_header);
+            slist = c.curl_slist_append(slist, auth_header_c);
         }
         _ = c.curl_easy_setopt(curl, c.CURLOPT_HTTPHEADER, slist);
 

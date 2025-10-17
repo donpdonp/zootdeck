@@ -46,7 +46,7 @@ pub const ColumnInfo = struct {
     refreshing: bool,
     last_check: Time,
     inError: bool,
-    account: ?std.json.ObjectMap,
+    account: ?std.json.Parsed(std.json.Value),
     oauthClientId: ?[]const u8,
     oauthClientSecret: ?[]const u8,
 
@@ -68,7 +68,7 @@ pub const ColumnInfo = struct {
         if (column.config.token) |_| {
             var addon: []const u8 = undefined;
             if (column.account) |account| {
-                addon = account.get("acct").?.string;
+                addon = account.value.object.get("acct").?.string;
             } else {
                 addon = "_";
             }

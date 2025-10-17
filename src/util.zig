@@ -187,8 +187,7 @@ pub fn http_json_parse(http: *config.HttpInfo) !std.json.Parsed(std.json.Value) 
                                 warn("netback mastodon err {s}", .{err.string});
                                 return error.MastodonReponseErr;
                             } else {
-                                warn("netback mastodon unknown response {}", .{json_parsed.value.object});
-                                return error.MastodonReponseErr;
+                                return json_parsed;
                             }
                         },
                         else => {

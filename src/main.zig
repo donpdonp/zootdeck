@@ -256,7 +256,7 @@ fn profileback(command: *thread.Command) void {
     thread.destroy(command.actor); // TODO: thread one-shot
     const reqres = command.verb.http;
     if (reqres.response_code >= 200 and reqres.response_code < 300) {
-        reqres.column.account = reqres.tree.value.object;
+        reqres.column.account = util.http_json_parse(reqres) catch unreachable;
         gui.schedule(gui.update_column_ui_schedule, @as(*anyopaque, @ptrCast(reqres.column)));
     } else {
         //warn("profile fail http status {!}", .{reqres.response_code});
