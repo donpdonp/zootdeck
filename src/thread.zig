@@ -16,7 +16,7 @@ pub const Actor = struct { thread_id: c.pthread_t, client: *ipc.Client, payload:
 
 pub const Command = packed struct { id: u16, verb: *const CommandVerb, actor: *Actor };
 
-pub const CommandVerb = packed union { login: *config.LoginInfo, http: *config.HttpInfo, column: *config.ColumnInfo, auth: *config.ColumnAuth, idle: u16 };
+pub const CommandVerb = packed union { login: *config.LoginInfo, http: *config.HttpInfo, column: *config.ColumnInfo, auth: *config.ColumnAuth, idle: u64 };
 
 pub const ActorList = std.AutoArrayHashMap(u64, *Actor);
 var actors: ActorList = undefined;

@@ -25,11 +25,14 @@ pub fn build(b: *std.Build) void {
         .root_module = std.Build.Module.create(b, .{
             .target = target,
             .optimize = optimize,
+            .link_libc = true,
             .root_source_file = b.path("src/main.zig"),
         }),
     });
 
-    enhance_executable(b, exe);
+    enhance_executable(b, exe.root_module);
+    const gen_ragel = b.addSystemCommand(&.{ "ragel", "-o", "ragel/lang.c", "ragel/lang.c.rl" });
+    exe.step.dependOn(&gen_ragel.step);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
@@ -62,15 +65,16 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     const unit_test = b.addTest(.{ .root_module = std.Build.Module.create(b, .{
         .target = target,
+        .link_libc = true,
         .root_source_file = b.path("src/tests.zig"),
     }) });
-    enhance_executable(b, unit_test);
+    enhance_executable(b, unit_test.root_module);
+    unit_test.step.dependOn(&gen_ragel.step);
     const run_unit_tests = b.addRunArtifact(unit_test);
     test_step.dependOn(&run_unit_tests.step);
 }
 
-fn enhance_executable(b: *std.Build, exe: *std.Build.Step.Compile) void {
-    exe.linkLibC();
+fn enhance_executable(b: *std.Build, exe: *std.Build.Module) void {
     exe.addIncludePath(b.path("."));
     exe.addIncludePath(.{ .cwd_relative = "/usr/include/gtk-3.0" });
     exe.addIncludePath(.{ .cwd_relative = "/usr/include/glib-2.0" });
@@ -80,13 +84,11 @@ fn enhance_executable(b: *std.Build, exe: *std.Build.Step.Compile) void {
     exe.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
     exe.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
     exe.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
-    exe.linkSystemLibrary("gtk-3");
-    exe.linkSystemLibrary("gdk-3");
-    exe.linkSystemLibrary("curl");
-    exe.linkSystemLibrary("lmdb");
-    exe.linkSystemLibrary("gumbo");
+    exe.linkSystemLibrary("gtk-3", .{});
+    exe.linkSystemLibrary("gdk-3", .{});
+    exe.linkSystemLibrary("curl", .{});
+    exe.linkSystemLibrary("lmdb", .{});
+    exe.linkSystemLibrary("gumbo", .{});
 
-    const gen_ragel = b.addSystemCommand(&.{ "ragel", "-o", "ragel/lang.c", "ragel/lang.c.rl" });
     exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
-    exe.step.dependOn(&gen_ragel.step);
 }
