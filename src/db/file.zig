@@ -7,10 +7,11 @@ const Allocator = std.mem.Allocator;
 const cache_dir_name = "cache";
 var cache_path: []const u8 = undefined;
 
-pub fn init(alloc: Allocator) !void {
-    const cwd = std.fs.cwd();
-    const cwd_path = std.fs.Dir.realpathAlloc(cwd, alloc, ".") catch unreachable;
-    const parts: []const []const u8 = &[_][]const u8{ cwd_path, cache_dir_name };
+pub fn init(alloc: Allocator, io: std.Io) !void {
+    var buf: [256]u8 = undefined;
+    const cwd = std.Io.Dir.cwd();
+    _ = std.Io.Dir.realPath(cwd, io, &buf) catch unreachable;
+    const parts: []const []const u8 = &[_][]const u8{ &buf, cache_dir_name };
     cache_path = std.fs.path.join(alloc, parts) catch unreachable;
     std.posix.mkdir(cache_path, 0o755) catch |err| {
         if (err != error.PathAlreadyExists) return err;

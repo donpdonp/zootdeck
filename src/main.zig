@@ -23,7 +23,8 @@ const filter_lib = @import("./filter.zig");
 pub fn main() !void {
     try thread.init(alloc);
     hello(); // wait for thread.init so log entry for main thread will have a name
-    try initialize(alloc);
+    var threaded = std.Io.Threaded.init(alloc, .{});
+    try initialize(alloc, std.Io.Threaded.io(&threaded));
 
     if (config.readfile(config.config_file_path())) {
         try gui.init(alloc, &config.SETTINGS);
@@ -44,11 +45,11 @@ fn hello() void {
     util.log("zootdeck {s} {s} zig {s}", .{ @tagName(builtin.os.tag), @tagName(builtin.cpu.arch), builtin.zig_version_string });
 }
 
-fn initialize(allocator: std.mem.Allocator) !void {
+fn initialize(allocator: std.mem.Allocator, io: std.Io) !void {
     try config.init(allocator);
     try heartbeat.init(allocator);
     try db_kv.init();
-    try db_file.init(allocator);
+    try db_file.init(allocator, io);
     try statemachine.init();
 }
 
