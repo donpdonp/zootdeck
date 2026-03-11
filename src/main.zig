@@ -20,13 +20,13 @@ const toot_lib = @import("./toot.zig");
 const html_lib = @import("./html.zig");
 const filter_lib = @import("./filter.zig");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     try thread.init(alloc);
     hello(); // wait for thread.init so log entry for main thread will have a name
     var threaded = std.Io.Threaded.init(alloc, .{});
     try initialize(alloc, std.Io.Threaded.io(&threaded));
 
-    if (config.readfile(config.config_file_path())) {
+    if (config.readfile(init.io, config.config_file_path(init.io))) {
         try gui.init(alloc, &config.SETTINGS);
         const dummy_payload = try alloc.create(thread.CommandVerb);
         _ = try thread.create("gui", gui.go, dummy_payload, guiback);

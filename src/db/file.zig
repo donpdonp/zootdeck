@@ -13,9 +13,11 @@ pub fn init(alloc: Allocator, io: std.Io) !void {
     _ = std.Io.Dir.realPath(cwd, io, &buf) catch unreachable;
     const parts: []const []const u8 = &[_][]const u8{ &buf, cache_dir_name };
     cache_path = std.fs.path.join(alloc, parts) catch unreachable;
-    std.posix.mkdir(cache_path, 0o755) catch |err| {
-        if (err != error.PathAlreadyExists) return err;
-    };
+    const cache_pathz = std.fmt.allocPrintSentinel(alloc, "{s}", .{cache_path}, 0) catch unreachable;
+    const c_err = std.c.mkdir(cache_pathz, 0o755);
+    if (c_err != 0) {
+        warn("db_file.init could not mkdir {s}", .{cache_path});
+    }
     warn("cache dir {s}", .{cache_path});
 }
 

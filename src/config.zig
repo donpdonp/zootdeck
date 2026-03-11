@@ -135,18 +135,18 @@ pub fn init(alloc: Allocator) !void {
     allocator = alloc;
 }
 
-pub fn config_file_path() []const u8 {
-    const home_path = std.posix.getenv("HOME").?;
-    const home_dir = std.fs.openDirAbsolute(home_path, .{}) catch unreachable;
-    const config_dir_path = std.fs.path.join(allocator, &.{ home_path, ".config", "zootdeck" }) catch unreachable;
-    home_dir.makePath(config_dir_path) catch unreachable; // try every time
-    const config_dir = std.fs.openDirAbsolute(config_dir_path, .{}) catch unreachable;
+pub fn config_file_path(io: std.Io) []const u8 {
+    const home_path = std.mem.span(std.c.getenv("HOME").?);
+    const home_dir = std.Io.Dir.openDirAbsolute(io, home_path, .{}) catch unreachable;
+    const config_dir_subpath = std.fs.path.join(allocator, &.{ ".config", "zootdeck" }) catch unreachable;
+    std.Io.Dir.createDirPath(home_dir, io, config_dir_subpath) catch unreachable; // try every time
+    const config_dir = std.Io.Dir.openDir(home_dir, io, config_dir_subpath, .{}) catch unreachable;
     const filename = "config.json";
-    const config_path = std.fs.path.join(allocator, &.{ config_dir_path, filename }) catch unreachable;
-    config_dir.access(filename, .{}) catch |err| switch (err) {
+    const config_path = std.fs.path.join(allocator, &.{ config_dir_subpath, filename }) catch unreachable;
+    config_dir.access(io, filename, .{}) catch |err| switch (err) {
         error.FileNotFound => {
             warn("Warning: creating new {s}", .{config_path});
-            config_dir.writeFile(.{ .sub_path = filename, .data = "{}\n" }) catch unreachable;
+            config_dir.writeFile(io, .{ .sub_path = filename, .data = "{}\n" }) catch unreachable;
         },
         else => {
             warn("readfile err {any}", .{err});
@@ -156,9 +156,9 @@ pub fn config_file_path() []const u8 {
     return config_path;
 }
 
-pub fn readfile(filename: []const u8) !void {
+pub fn readfile(io: std.Io, filename: []const u8) !void {
     util.log("config file {s}", .{filename});
-    const json = try std.fs.cwd().readFileAlloc(allocator, filename, std.math.maxInt(usize));
+    const json = try std.Io.Dir.cwd().readFileAlloc(io, filename, allocator, std.Io.Limit.unlimited);
     try read(json);
     SETTINGS.config_path = filename;
 }
