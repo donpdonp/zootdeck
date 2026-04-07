@@ -2,8 +2,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const warn = util.log;
-var GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{}){};
-const alloc = GeneralPurposeAllocator.allocator(); // take the ptr in a separate step
+var deb = std.heap.DebugAllocator(.{}){};
+const alloc = deb.allocator(); // take the ptr in a separate step
 
 const oauth = @import("./oauth.zig");
 const gui = @import("./gui.zig");

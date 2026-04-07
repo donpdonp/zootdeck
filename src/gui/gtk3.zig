@@ -49,7 +49,7 @@ pub fn init(alloca: std.mem.Allocator, set: *config.Settings) !void {
     warn("{s} init()", .{libname()});
     settings = set;
     allocator = alloca;
-    columns = .{};
+    columns = .empty;
     var argc: c_int = undefined;
     const argv: ?[*]?[*]?[*]u8 = null;
     const tf = c.gtk_init_check(@as([*]c_int, @ptrCast(&argc)), argv);

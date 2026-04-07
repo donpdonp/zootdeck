@@ -20,7 +20,7 @@ pub fn init(alloca: Allocator, set: *config.Settings) !void {
     warn("GUI init()", .{});
     settings = set;
     allocator = alloca;
-    columns = .{};
+    columns = .empty;
     try guilib.init(alloca, set);
 }
 

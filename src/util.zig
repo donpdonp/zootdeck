@@ -4,7 +4,7 @@ const thread = @import("./thread.zig");
 const config = @import("./config.zig");
 const warn = std.debug.print;
 const Allocator = std.mem.Allocator;
-var GPAllocator = std.heap.GeneralPurposeAllocator(.{}){};
+var GPAllocator = std.heap.DebugAllocator(.{}){};
 const alloc = GPAllocator.allocator();
 
 const SimpleBuffer = @import("./simple_buffer.zig");

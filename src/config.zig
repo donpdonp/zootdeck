@@ -25,7 +25,7 @@ pub const Settings = struct {
         return Settings{
             .win_x = 0,
             .win_y = 0,
-            .columns = .{},
+            .columns = .empty,
             .config_path = "",
         };
     }
@@ -165,7 +165,7 @@ pub fn readfile(io: std.Io, filename: []const u8) !void {
 
 pub fn read(json: []const u8) !void {
     var root = (try std.json.parseFromSlice(std.json.Value, allocator, json, .{})).value.object;
-    SETTINGS.columns = .{};
+    SETTINGS.columns = .empty;
 
     if (root.get("win_x")) |w| {
         SETTINGS.win_x = w.integer;
