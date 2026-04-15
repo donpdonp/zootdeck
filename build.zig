@@ -20,17 +20,27 @@ pub fn build(b: *std.Build) void {
     // running `zig build`).
     // b.installArtifact(lib);
 
+    const translate_c = b.addTranslateC(.{
+        .root_source_file = b.path("c/c.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const c_module = translate_c.createModule();
+    enhance_module(b, c_module);
+
     const exe = b.addExecutable(.{
         .name = "zootdeck",
-        .root_module = std.Build.Module.create(b, .{
+        .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
-            .link_libc = true,
             .root_source_file = b.path("src/main.zig"),
+            .imports = &.{.{
+                .name = "c",
+                .module = c_module,
+            }},
         }),
     });
 
-    enhance_executable(b, exe.root_module);
     const gen_ragel = b.addSystemCommand(&.{ "ragel", "-o", "ragel/lang.c", "ragel/lang.c.rl" });
     exe.step.dependOn(&gen_ragel.step);
 
@@ -68,27 +78,27 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
         .root_source_file = b.path("src/tests.zig"),
     }) });
-    enhance_executable(b, unit_test.root_module);
+    enhance_module(b, unit_test.root_module);
     unit_test.step.dependOn(&gen_ragel.step);
     const run_unit_tests = b.addRunArtifact(unit_test);
     test_step.dependOn(&run_unit_tests.step);
 }
 
-fn enhance_executable(b: *std.Build, exe: *std.Build.Module) void {
-    exe.addIncludePath(b.path("."));
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gtk-3.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/glib-2.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/pango-1.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/gdk-pixbuf-2.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/atk-1.0" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
-    exe.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
-    exe.linkSystemLibrary("gtk-3", .{});
-    exe.linkSystemLibrary("gdk-3", .{});
-    exe.linkSystemLibrary("curl", .{});
-    exe.linkSystemLibrary("lmdb", .{});
-    exe.linkSystemLibrary("gumbo", .{});
+fn enhance_module(b: *std.Build, mod: *std.Build.Module) void {
+    mod.addIncludePath(b.path("."));
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/gtk-3.0" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/glib-2.0" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/pango-1.0" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/gdk-pixbuf-2.0" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/atk-1.0" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/harfbuzz" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/include/cairo" });
+    mod.addIncludePath(.{ .cwd_relative = "/usr/lib/x86_64-linux-gnu/glib-2.0/include" });
+    mod.linkSystemLibrary("gtk-3", .{});
+    mod.linkSystemLibrary("gdk-3", .{});
+    mod.linkSystemLibrary("curl", .{});
+    mod.linkSystemLibrary("lmdb", .{});
+    mod.linkSystemLibrary("gumbo", .{});
 
-    exe.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
+    mod.addCSourceFile(.{ .file = b.path("ragel/lang.c") });
 }

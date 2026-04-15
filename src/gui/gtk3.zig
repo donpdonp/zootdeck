@@ -14,9 +14,7 @@ const glade_zootdeck = @embedFile("gtk3/zootdeck.glade");
 const glade_column = @embedFile("gtk3/column.glade");
 const glade_toot = @embedFile("gtk3/toot.glade");
 
-const c = @cImport({
-    @cInclude("gtk/gtk.h");
-});
+const c = @import("c");
 
 const GUIError = error{
     GtkInit,

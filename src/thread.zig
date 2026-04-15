@@ -18,7 +18,7 @@ pub const Command = packed struct { id: u16, verb: *const CommandVerb, actor: *A
 
 pub const CommandVerb = packed union { login: *config.LoginInfo, http: *config.HttpInfo, column: *config.ColumnInfo, auth: *config.ColumnAuth, idle: u64 };
 
-pub const ActorList = std.AutoArrayHashMap(u64, *Actor);
+pub const ActorList = std.AutoHashMap(u64, *Actor);
 var actors: ActorList = undefined;
 
 pub fn init(myAllocator: Allocator) !void {
